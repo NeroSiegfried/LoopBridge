@@ -1,0 +1,230 @@
+@import url('../fonts/CabinetGrotesk_Complete/Fonts/WEB/css/cabinet-grotesk.css');
+
+
+.academy-hero{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 300px 80px 150px;
+    background-color: #f6fffa;
+
+}
+
+.academy-hero h1 {
+    font-family: CabinetGrotesk-Bold, sans-serif;
+    font-size: 60px;
+    font-weight: bold;
+    color: var(--lb-blue-dark);
+}
+
+.hero-body {
+    flex: 1;
+    font-family: 'schibsted-grotesk', sans-serif;
+    font-size: 20px;
+}
+
+.hero-body p {
+    margin: 30px 0 40px;
+}
+
+.academy-hero-img {
+    flex: 1;
+    display: flex;
+    justify-content: flex-end;
+}
+
+.primary-btn {
+    font-size: 18px;
+    font-family: 'schibsted-grotesk', sans-serif;
+    border: none;
+    padding: 16px 41px;
+    border-radius: 35px;
+    background-color: var(--lb-green);
+    color: white;
+}
+
+.pathways {
+    padding: 60px 80px 100px;
+    background-color: #f8fffd;
+}
+
+.pathways h2 {
+    text-align: left;
+    font-size: 48px;
+    margin-bottom: 20px;
+}
+
+.pathways p {
+    font-family: 'schibsted-grotesk', sans-serif;
+    font-size: 24px;
+    font-weight: 300;
+}
+
+.track-cards {
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    margin-top: 40px;
+}
+
+.card-item {
+    flex: 1;
+    border-radius: 12px;
+    border: 1px solid var(--gray-dark);
+    background-color: white;
+}
+
+.card-head{
+    background: linear-gradient(180deg, rgba(225,255,238,0.4) 0%, rgba(217,248,210,0.4) 86%);
+    padding: 20px;
+}
+
+.card-highlight {
+    background-color: #d5ffda;
+    display: inline-block;
+    padding: 5px 10px;
+    border-radius: 18px;
+    font-size: 14px;
+    color: var(--black-mid);
+}
+
+.intermediate .card-highlight {
+    background-color: #dec4ff;;
+}
+
+.intermediate .card-head{
+    background: linear-gradient(180deg, #f7f0ff66 0%, #e0c9fe66 100%);
+    padding: 20px;
+}
+
+.intermediate .card-list li::before {
+    color: #9747ff;
+}
+
+.advanced .card-highlight {
+    background-color: #ffcdb6;
+}
+
+.advanced .card-head{
+    background: linear-gradient(180deg, #ffe6da66 0%, #f8c8b166 100%);
+    padding: 20px;
+}
+
+.advanced .card-list li::before {
+    color: #ff6e2a;
+}
+
+.card-title {
+    font-family: CabinetGrotesk-Bold, sans-serif;
+    font-size: 24px;
+    margin: 20px 0 10px;
+    color: var(--lb-blue-dark);
+}
+
+.card-subheading {
+    font-size: 16px;
+    color: var(--black-mid);
+}
+
+.card-body {
+    padding: 20px;
+    font-family: 'schibsted-grotesk', sans-serif;
+    font-size: 16px;
+    color: var(--black-mid);
+}
+
+.card-list{
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin: 20px 0;
+    list-style: none;
+    padding-left: 0;
+}
+
+.card-list li {
+    position: relative;
+    padding-left: 30px;
+}
+
+.card-list li::before {
+    content: "\2726";
+    font-family: "Font Awesome 5 Free";
+    font-weight: 900;
+    font-size: 18px;
+    position: absolute;
+    left: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    width: 20px;
+    height: 20px;
+    color: var(--lb-green);
+}
+
+.card-btn {
+
+    border: 1px solid var(--gray-dark);
+    background-color: transparent;
+    color: var(--black-mid);
+    font-family: 'schibsted-grotesk', sans-serif;
+    font-size: 16px;
+    padding: 11px 16px;
+    border-radius: 35px;
+    width: 100%;
+    margin: 20px 0;
+}
+
+.intro {
+    padding: 160px 80px;
+    font-family: 'schibsted-grotesk', sans-serif;
+    font-size: 44px;
+    font-weight: 400;
+    color: var(--lb-blue-dark);
+    text-align: center;
+}
+
+.intro .icon {
+    color: white;
+    font-size: 40px;
+    display: inline-flex;
+    justify-content: center;
+    align-items: center;
+    width: 60px;
+    height: 60px;
+    border-radius: 50%;
+}
+
+.grad-hat {
+    background-color: #ff6e2a;
+}
+.wallet {
+    background-color: var(--lb-green);
+}
+.ether {
+    background-color: #9747ff;
+}
+
+.philosophy {
+    padding: 160px 80px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 20px;
+}
+
+.tagline {
+    flex: 1.5;
+    text-align: left;
+}
+
+.philosophy-body {
+    flex: 2;
+    display: flex;
+    flex-direction: column;
+    margin-left: 80px;
+    font-family: 'schibsted-grotesk', sans-serif;
+    font-size: 24px;
+    color: var(--black-dark);
+    gap: 30px;
+    font-weight: 300;
+}

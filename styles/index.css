@@ -523,12 +523,14 @@ footer {
         width: calc(100% - 2.5rem);
         margin: 1.25rem;
         position: relative;
+        border-radius: 38px;
     }
 
     /* Adjust the navbar's bottom border when the dropdown is visible */
     .navbar:has(.nav-menu.active) {
-        border-bottom-left-radius: 3.75rem; /* Remove bottom-left corner rounding */
-        border-bottom-right-radius: 3.75rem; /* Remove bottom-right corner rounding */
+        border-bottom-left-radius: 0; /* Remove bottom-left corner rounding */
+        border-bottom-right-radius: 0; /* Remove bottom-right corner rounding */
+        
     }
     
     .menu-toggle {
