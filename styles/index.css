@@ -36,6 +36,7 @@ img {
     border: 0.0625rem solid var(--gray-mid);
     border-radius: 3.75rem;
     background-color: #ffffff;
+    z-index: 1;
 }
 
 .menu-toggle {
@@ -522,7 +523,7 @@ footer {
     .navbar {
         width: calc(100% - 2.5rem);
         margin: 1.25rem;
-        position: relative;
+        position: absolute;
         border-radius: 38px;
     }
 

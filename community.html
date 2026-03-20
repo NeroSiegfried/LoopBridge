@@ -21,32 +21,91 @@
                 <img src="./images/logos/LB text no symbol black 2.png" alt="LoopBridge Logo" class="logo">
             </a>
         </div>
-        <div class="nav-links">
-            <a href="./academy.html">Academy</a>
-            <a href="#">Exchange</a>
-            <a href="#" class="active">Community</a>
-            <a href="#">About</a>
-            <a href="#">Blog</a>
-            <a href="#">FAQs</a>
-        </div>
-        <div class="nav-join">
-            <a href="#">Join the Community</a>
+        <button class="menu-toggle" id="mobile-menu-btn">
+            <i class="fa-solid fa-bars"></i>
+        </button>
+        <div class="nav-menu" id="nav-menu">
+            <div class="nav-links">
+                <a href="./academy.html">Academy</a>
+                <a href="#">Exchange</a>
+                <a href="#" class="active">Community</a>
+                <a href="#">About</a>
+                <a href="#">Blog</a>
+                <a href="#">FAQs</a>
+            </div>
+            <div class="nav-join">
+                <a href="#">Join the Community</a>
+            </div>
         </div>
     </nav>
 
 
     <section class="community-hero">
-        <h1>
+        <div class="body">
+            <h1>
             Grow Smarter, Together
         </h1>
         <p>
             Progress in web3 often relies on being in sync with the rest of the community – moving when the market moves, and learning fast enough to keep up with the wave.
         </p>
-        <button class="community-hero-button">Join the Community</button>
+        <button class="community-hero-btn">Join the Community</button>
+        <div class="community-hero-img">
+            <img src="./images/community-hands.svg" alt="Hero Picture">
+        </div>
+        </div>
     </section>
 
-
-
+    <section class="pathways">
+        <h2>Community Platforms (Where to Join)</h2>
+        <p>
+            Join LoopBridge through the channels below
+        </p>
+        <div class="platforms">
+            <div class="platform-card-item">
+                <div class="platform-icon whatsapp"><i class="fa-brands fa-whatsapp"></i></div>
+                <h4 class="platform-name">WhatsApp</h4>
+                <div class="platform-body">
+                    <p class="platform-subheading">Trade, chat, and share updates instantly — the fastest way to stay  in the loop.</p>
+                <a href="" class="platform-link">Join the Community →
+                </a>
+                </div>
+            </div>
+            <div class="platform-card-item">
+                <div class="platform-icon discord"><i class="fa-brands fa-discord"></i></div>
+                <h4 class="platform-name">Discord</h4>
+                <div class="platform-body">
+                    <p class="platform-subheading">Join structured discussions, complete fun tasks, voice sessions, and  live strategy rooms.</p>
+                <a href="" class="platform-link">Join the Community →</a>
+                </div>
+            </div>
+            <div class="platform-card-item">
+                <div class="platform-icon youtube"><i class="fa-brands fa-youtube"></i></div>
+                <h4 class="platform-name">YouTube</h4>
+                <div class="platform-body">
+                    <p class="platform-subheading">Watch community-led lessons, live sessions, and event replays.
+</p>
+                <a href="" class="platform-link">Join the Community →</a>
+                </div>
+            </div>
+            <div class="platform-card-item">
+                <div class="platform-icon twitter"><i class="fa-brands fa-x-twitter"></i></div>
+                <h4 class="platform-name">X (Twitter)</h4>
+                <div class="platform-body">
+                    <p class="platform-subheading">Follow the movement, grow your X following, and join public  discussions.
+</p>
+                <a href="" class="platform-link">Join the Community →</a>
+                </div>
+            </div>
+            <div class="platform-card-item">
+                <div class="platform-icon telegram"><i class="fa-brands fa-telegram"></i></div>
+                <h4 class="platform-name">Telegram</h4>
+                <div class="platform-body">
+                    <p class="platform-subheading">Signals, insights, and updates in real time. Learn, trade, and grow with  people moving in sync through New Finance.</p>
+                <a href="" class="platform-link">Join the Community →</a>
+                </div>
+            </div>
+        </div>
+    </section>
 
 
     <section class="newsletter">
@@ -124,7 +183,7 @@ of Post-Modern Finance</div>
             Crypto assets are volatile and involve risk. LoopBridge provides education, community, and  tools, but financial decisions are your responsibility. Learn before you trade.<br/>
             © <span class="year">2026</span> Loopbridge. All rights reserved.
         </div>
-
     </footer>
+    <script src="./scripts/index.js"></script>
 </body>
 </html>
