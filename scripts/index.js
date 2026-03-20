@@ -1,4 +1,27 @@
 document.addEventListener("DOMContentLoaded", () => {
+    /* --- MOBILE MENU TOGGLE LOGIC --- */
+    const mobileMenuBtn = document.getElementById("mobile-menu-btn");
+    const navMenu = document.getElementById("nav-menu");
+    const menuIcon = mobileMenuBtn.querySelector("i");
+    const hero = document.querySelector(".hero");
+
+    mobileMenuBtn.addEventListener("click", () => {
+    const isActive = navMenu.classList.contains("active");
+
+    if (isActive) {
+        // Hide the dropdown menu
+        navMenu.classList.remove("active");
+        menuIcon.classList.remove("fa-xmark");
+        menuIcon.classList.add("fa-bars");
+    } else {
+        // Show the dropdown menu
+        navMenu.classList.add("active");
+        menuIcon.classList.remove("fa-bars");
+        menuIcon.classList.add("fa-xmark");
+    }
+});
+
+    /* --- CIRCLES ANIMATION LOGIC --- */
     const circleEffect = document.querySelector(".circle-effect");
 
     // List of base colors from the image
@@ -27,42 +50,44 @@ document.addEventListener("DOMContentLoaded", () => {
 
     // Function to create and animate a circle
     function createCircle() {
-    const circle = document.createElement("div");
-    circle.classList.add("circle");
+        if (!circleEffect) return;
 
-    // Random size between 10px and 25px
-    const size = Math.floor(Math.random() * (25 - 10 + 1)) + 10;
-    circle.style.width = `${size}px`;
-    circle.style.height = `${size}px`;
+        const circle = document.createElement("div");
+        circle.classList.add("circle");
 
-    // Random initial position
-    const posX = Math.random() * 100; // Percentage for left position
-    const posY = Math.random() * 100; // Percentage for top position
-    circle.style.left = `${posX}%`;
-    circle.style.top = `${posY}%`;
+        // Random size between 10px and 25px
+        const size = Math.floor(Math.random() * (25 - 10 + 1)) + 10;
+        circle.style.width = `${size}px`;
+        circle.style.height = `${size}px`;
 
-    // Random color
-    circle.style.backgroundColor = getRandomColor();
+        // Random initial position
+        const posX = Math.random() * 100; // Percentage for left position
+        const posY = Math.random() * 100; // Percentage for top position
+        circle.style.left = `${posX}%`;
+        circle.style.top = `${posY}%`;
 
-    // Random animation duration
-    const duration = Math.random() * 5 + 5; // Between 5s and 10s
-    circle.style.animationDuration = `${duration}s`;
+        // Random color
+        circle.style.backgroundColor = getRandomColor();
 
-    // Random movement direction
-    const translateX = Math.random() * 100 - 50; // Random horizontal movement (-50px to 50px)
-    const translateY = Math.random() * 100 - 50; // Random vertical movement (-50px to 50px)
-    circle.style.setProperty("--translateX", `${translateX}px`);
-    circle.style.setProperty("--translateY", `${translateY}px`);
+        // Random animation duration
+        const duration = Math.random() * 5 + 5; // Between 5s and 10s
+        circle.style.animationDuration = `${duration}s`;
 
-    // Append the circle to the circle-effect div
-    circleEffect.appendChild(circle);
+        // Random movement direction
+        const translateX = Math.random() * 6.25 - 3.125; // -50px to 50px mapped to rem
+        const translateY = Math.random() * 6.25 - 3.125;
+        circle.style.setProperty("--translateX", `${translateX}rem`);
+        circle.style.setProperty("--translateY", `${translateY}rem`);
 
-    // Remove the circle after its animation ends and create a new one
-    setTimeout(() => {
-        circle.remove();
-        createCircle();
-    }, duration * 1000);
-}
+        // Append the circle to the circle-effect div
+        circleEffect.appendChild(circle);
+
+        // Remove the circle after its animation ends and create a new one
+        setTimeout(() => {
+            circle.remove();
+            createCircle();
+        }, duration * 1000);
+    }
 
     // Generate 40 circles
     for (let i = 0; i < 40; i++) {
