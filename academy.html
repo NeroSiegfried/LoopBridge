@@ -3,8 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home Page</title>
+    <title>Academy</title>
     <link rel="stylesheet" href="./styles/index.css">
+    <link rel="stylesheet" href="./styles/academy.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&family=Schibsted+Grotesk:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
@@ -15,12 +16,12 @@
 <body>
     <nav class="navbar">
         <div class="logo">
-            <a href="#">
+            <a href="./index.html">
                 <img src="./images/logos/LB text no symbol black 2.png" alt="LoopBridge Logo" class="logo">
             </a>
         </div>
         <div class="nav-links">
-            <a href="./academy.html">Academy</a>
+            <a href="#" class="active">Academy</a>
             <a href="#">Exchange</a>
             <a href="#">Community</a>
             <a href="#">About</a>
@@ -31,91 +32,112 @@
             <a href="#">Join the Community</a>
         </div>
     </nav>
-    <header class="hero">
-        <div class="hero-img">
-            <img src="./images/Homepage 1.png" alt="Hero Picture">
+    <header class="academy-hero">
+        <div class="hero-body">
+            <h1>Learn <span class="accent-two">Web3</span> in Practice, <br/>
+                Not Just in Theory
+            </h1>
+            <p>LoopBridge Academy turns curiosity into confidence through hands-on lessons, visual explainers, and real-world application.
+            </p>
+            <button class="primary-btn">Start Learning</button>
+
+        </div>
+        <div class="academy-hero-img">
+            <img src="./images/distance-education.svg" alt="Hero Picture">
         </div>
     </header>
-    <section class="why">
-        <h2>Why LoopBridge Exists</h2>
-        <div class="sections">
-            <div class="section discovered">
-                <h3 class="section-title"><span class="emoji">🤔</span>What we discovered</h3>
-                <div class="section-body">
-                    Finance is changing in front of our eyes. One day it’s a new coin, the next it’s futures,  an airdrop, NFTs, or a project that everyone is suddenly talking about. Most people  either jump in blind or stand back confused — both are risky.
+    <section class="pathways">
+        <h2>Learning Pathways</h2>
+        <p>
+            Select a suitable learning track to get started
+        </p>
+        <div class="track-cards">
+            <div class="card-item beginner">
+                <div class="card-head">
+                    <div class="card-highlight">Getting Started in New Finance</div>
+                    <div class="card-title">Beginner Track</div>
+                    <div class="card-subheading">Build a solid foundation in crypto, wallets, security, and blockchain basics.</div>
                 </div>
-                <div class="vector">
-                    <img src="./images/what-we-discovered-vector.svg" alt="Vector of a stack of coins">
+                <div class="card-body">
+                    <ul class="card-list">
+                        <li>What is Cryptocurrency?</li>
+                        <li>How to Set Up and Secure Your Wallet</li>
+                        <li>Understanding Naira ↔ Crypto Trading</li>
+                        <li>The Basics of Airdrops and Tokens</li>
+                    </ul>
+                    <button class="card-btn">Start the Beginner Path</button>
                 </div>
-                
             </div>
-            <div class="section solution">
-                <h3 class="section-title"><span class="emoji">💡</span>Our Solution</h3>
-                <div class="section-body">
-                    LoopBridge was built to give people a clearer way forward. We give you lessons that turn into practice in our Academy,  a way to trade directly on WhatsApp without extra apps, and a community where results and strategies circulate daily. 
-            </div>
-            <div class="vector">
-                    <img src="./images/our-solution-vector.svg" alt="Vector of a stack of coins">
+            <div class="card-item intermediate">
+                <div class="card-head">
+                    <div class="card-highlight">Trading & Application</div>
+                    <div class="card-title">Intermediate Track</div>
+                    <div class="card-subheading">Go beyond holding tokens. Learn to trade safely, read markets, and use real strategies.</div>
                 </div>
+                <div class="card-body">
+                    <ul class="card-list">
+                        <li>How to Read a Candlestick Chart</li>
+                        <li>Spot vs Futures Trading</li>
+                        <li>Managing Risk Like a Pro</li>
+                        <li>How to Trade on WhatsApp with LoopBridge</li>
+                    </ul>
+                    <button class="card-btn">Explore Trading Lessons</button>
+                </div>
+            </div>
+            <div class="card-item advanced">
+                <div class="card-head">
+                    <div class="card-highlight">Building and Earning in Web3</div>
+                    <div class="card-title">Advanced Track</div>
+                    <div class="card-subheading">Discover how to participate, build, or contribute to the PostModern Finance economy.</div>
+                </div>
+                <div class="card-body">
+                    <ul class="card-list">
+                        <li>How to Identify Promising Projects Early</li>
+                        <li>Participating in DAOs</li>
+                        <li>Understanding Onchain Income Streams</li>
+                        <li>Contributing to Web3 Communities</li>
+                    </ul>
+                    <button class="card-btn">Go Advanced</button>
+                </div>
+            </div>
         </div>
     </section>
-    <section class="join">
-        <div class="join-left">
-            <h2>Join the <br/>LoopBridge Squad</h2>
-            <div class="circle-effect">
-                <!-- Want to create an effect here-->
-            </div>
-        </div>
-        <div class="join-right">
-            <div class="box academy">
-                <div class="icon">
-                    <i class="fa-solid fa-book-open"></i>
-                </div>
-                <h3 class="box-title">Academy</h3>
-                <div class="box-body">The specially curated Lessons that show you what Web3 looks like in practice, not  just theory.      
-</div>
-                <button class="box-button">Learn Now</button>
-            </div>
-            <div class="box whatsapp">
-                <div class="icon">
-                    <i class="fa-brands fa-whatsapp"></i>
-                </div>
-                <h3 class="box-title">WhatsApp Exchange (Naira)</h3>
-                <div class="box-body">No confusing apps. Trade Fiat ↔ Crypto directly on WhatsApp,  where you already chat every day.
-
-</div>
-                <button class="box-button">Trade on WhatsApp</button>
-            </div>
-            <div class="box community">
-                <div class="icon">
-                    <i class="fa-solid fa-users"></i>
-                </div>
-                <h3 class="box-title">Community</h3>
-                <div class="box-body">Your portfolio grows faster when you’re not alone. Our community is where knowledge, strategies, and results circulate daily.   
-</div>
-                <button class="box-button">Join the Community</button>
-
-            </div>
-            <div class="box newsletter">
-                <div class="icon">
-                    <i class="fa-solid fa-newspaper"></i>
-                </div>
-                <h3 class="box-title">Finance Newsletter</h3>
-                <div class="box-body">Don’t wait for the trend to go mainstream. Our newsletter gives you a first look at the shifts shaping New Finance, so you can act quickly.   
-</div>
-                <button class="box-button">Subscribe Now</button>
-                
-            </div>
+    <section class="intro">
+        <blockquote>
+        We design LoopBridge Academy 
+        <span class="icon grad-hat">
+            <i class="fa-solid fa-graduation-cap"></i>
+        </span> 
+        for people who want to understand New Finance 
+        <span class="icon wallet">
+            <i class="fa-solid fa-wallet"></i>
+        </span> 
+        by doing, not memorizing. Every course and guide is designed to show you real-life applications of web3 
+        <span class="icon ether">
+            <i class="fab fa-ethereum"></i>
+        </span> 
+        — how to use the tools, read the markets, and make decisions that grow your finances with clarity and confidence.
+    </blockquote>
+    </section>
+    <section class="philosophy">
+        <h2 class="tagline">Why <span class="accent-two">We Teach</span> the Way We Do</h2>
+        <div class="philosophy-body">
+            <p>
+                We believe learning New Finance should be practical, falsifiable, and community-driven. That’s why LoopBridge Academy is designed around real use cases, visual lessons, and  peer collaboration.
+            </p>
+            <p>
+                We call this approach PostModern Learning — because just like PostModern Finance, it’s  open, interactive, and shaped by participation.
+            </p>
+            
         </div>
     </section>
     <section class="newsletter">
         <div class="inner-section">
             <div class="body">
-                <h2>Grow Smarter<span class="accent">.</span><br/>
-                    Trade Faster<span class="accent">.</span>
-                    Stay Ahead<span class="accent">.</span>
+                <h2>Learn Together<span class="accent">,</span>
+                    Grow Together<span class="accent">.</span>
                 </h2>
-                <p>LoopBridge gives you a place to learn, trade, and share wins — so you’re always inside the action, never left outside it.</p>
+                <p>Join the LoopBridge community to discuss lessons, share strategies, and apply what you  learn in real time.</p>
                 <button class="newsletter-button">Join the Community</button>
             </div>
             <div class="image">
@@ -187,7 +209,5 @@ of Post-Modern Finance</div>
 
     </footer>
     
-
-    <script src="./scripts/index.js"></script>
 </body>
 </html>

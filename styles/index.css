@@ -1,4 +1,4 @@
-@import url('./fonts/CabinetGrotesk_Complete/Fonts/WEB/css/cabinet-grotesk.css');
+@import url('../fonts/CabinetGrotesk_Complete/Fonts/WEB/css/cabinet-grotesk.css');
 
 
 
@@ -22,9 +22,11 @@
 }
 
 .navbar {
+    position: absolute;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    width: calc(100% - 80px);
     padding: 10px 40px;
     font-family: "Schibsted Grotesk", sans-serif;
     margin: 80px 40px;
@@ -38,6 +40,10 @@
     text-decoration: none;
     color: #333;
     font-weight: 600;
+}
+
+.navbar a.active {
+    color: var(--lb-green);
 }
 
 .nav-join {
@@ -55,7 +61,7 @@
     display: flex;
     justify-content: right;
     align-items: center;
-    padding: 50px 0 60px;
+    padding: 300px 0 60px;
 }
 
 .why {
@@ -235,7 +241,7 @@ section h2 {
 
 section.newsletter {
     background-color: #f6fffa;
-    padding: 60px 40px 100px;
+    padding: 160px 40px;
 }
 
 .newsletter h2 {
@@ -261,10 +267,10 @@ section.newsletter {
     width: 100%; /* Match the width of the container */
     height: 100%; /* Match the height of the container */
     background-color: #ffffff10; /* Lighter color for the uncovered areas */
-    -webkit-mask: url('./images/stripe-pattern.svg') no-repeat center center; /* Apply the SVG as a mask */
+    -webkit-mask: url('../images/stripe-pattern.svg') no-repeat center center; /* Apply the SVG as a mask */
     -webkit-mask-size: cover; /* Scale the mask to cover the container */
     -webkit-mask-composite: destination-in; /* Invert the mask behavior */
-    mask: url('./images/stripe-pattern.svg') no-repeat center center; /* Fallback for other browsers */
+    mask: url('../images/stripe-pattern.svg') no-repeat center center; /* Fallback for other browsers */
     mask-size: cover; /* Scale the mask to cover the container */
     mask-composite: intersect; /* Invert the mask behavior */
     z-index: 1; /* Ensure it appears above the background */
@@ -306,6 +312,10 @@ section.newsletter {
 
 .accent {
     color: #56ffa1;
+}
+
+.accent-two {
+    color: var(--lb-green);
 }
 
 footer {
