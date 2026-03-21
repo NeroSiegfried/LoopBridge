@@ -11,6 +11,7 @@
     --lb-blue-dark: #013352;
     --lb-blue-light: #00c1df;
     --lb-blue-text: #013352;
+    --lb-blue-pt: #184059;
 }
 
 * {
@@ -39,6 +40,11 @@ img {
     z-index: 1;
 }
 
+.navbar .logo {
+    flex: 0 1 auto;
+}
+
+
 .menu-toggle {
     display: none;
     background: none;
@@ -50,6 +56,7 @@ img {
 
 .nav-menu {
     display: flex;
+    flex: 1 1 0;
     justify-content: space-between;
     align-items: center;
     transition: max-height 0.3s ease;
@@ -63,6 +70,7 @@ img {
 .nav-links {
     display: flex;
     justify-content: center;
+    flex: 1 1 0;
 }
 
 .nav-links a {
@@ -82,6 +90,7 @@ img {
     background-color: var(--lb-green);
     color: white;
     text-align: center;
+    flex: 0 1 auto;
 }
 
 .nav-join a {
