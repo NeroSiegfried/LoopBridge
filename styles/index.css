@@ -366,14 +366,14 @@ section.newsletter {
     mask: url('../images/stripe-pattern.svg') no-repeat center center;
     mask-size: cover;
     mask-composite: intersect;
-    z-index: 1;
+    z-index: 0;
     pointer-events: none;
 }
 
 .inner-section .body,
 .inner-section .image {
     position: relative;
-    z-index: 2;
+    z-index: 1;
 }
 
 .inner-section .body {
