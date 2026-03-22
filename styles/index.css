@@ -24,8 +24,23 @@ img {
     height: auto;
 }
 
+.section-container {
+    display: flex;
+    gap: 40px;
+    justify-content: space-between;
+    align-items: center;
+    max-width: 1400px;
+    margin: auto;
+}
+
 /* NAVBAR */
 .navbar {
+    max-width: 1400px;
+    margin: auto;
+    position: relative;
+}
+
+.nav-container {
     position: absolute;
     display: flex;
     justify-content: space-between;
@@ -165,6 +180,10 @@ img {
     color: var(--lb-blue-dark);
 }
 
+.why .section-container {
+    flex-direction: column;
+}
+
 section h2 {
     font-family: CabinetGrotesk-Bold, sans-serif;
     text-align: center;
@@ -229,13 +248,16 @@ section h2 {
 
 /* JOIN */
 .join {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
     padding: 3.75rem 2.5rem;
     gap: 2.5rem;
     position: relative;
     overflow: hidden;
+}
+
+.join .section-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
 }
 
 .join h2 {
@@ -412,6 +434,11 @@ footer {
     padding: 6.25rem 2.5rem;
 }
 
+.footer-container {
+    max-width: 1400px;
+    margin: auto;
+}
+
 .footer-content {
     display: flex;
     justify-content: space-between;
@@ -507,6 +534,11 @@ footer {
 
 /* TABLET (up to 1024px) */
 @media (max-width: 64rem) {
+
+    .join-top p {
+        margin-left: 5rem;
+    }
+    
     .join-bottom {
         grid-template-columns: repeat(2, 1fr);
     }
@@ -626,7 +658,7 @@ footer {
         width: 100%;
     }
 
-    .hero {
+    .hero .section-container {
         flex-direction: column;
         padding: 10rem 1.25rem 3.75rem; 
         text-align: left;
@@ -642,19 +674,35 @@ footer {
     }
 
     .buttons {
-        flex-direction: column;
+        display: flex;
+        justify-content: center;
+        align-items: center;
         width: 100%;
+        max-width: 700px;
+        margin: 0 auto;
     }
 
-    .hero-btn {
-        width: 100%;
+    .hero-button {
+        flex: 1;
     }
+
+
+    
 }    
 
 /* MOBILE PHONES (up to 768px) */
 @media (max-width: 48rem) {
     .menu-toggle {
         display: block; /* Show hamburger icon */
+    }
+
+    .buttons {
+        flex-direction: column;
+        width: 100%;
+    }
+
+    .hero-btn {
+        width: 100%;
     }
 
     .sections {
