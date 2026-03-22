@@ -1,3 +1,7 @@
+.section-container {
+    display: block;
+}
+
 .community-hero {
     background-color: #f6fffa;
     color: var(--lb-blue-text);
