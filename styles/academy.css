@@ -46,6 +46,10 @@
     background-color: #f8fffd;
 }
 
+.pathways .section-container {
+    display: block;
+}
+
 .pathways h2 {
     text-align: left;
     font-size: 3rem; /* 48px */
@@ -67,6 +71,9 @@
 
 .card-item {
     flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
     border-radius: 0.75rem; /* 12px */
     border: 1px solid var(--gray-dark);
     background-color: white;
@@ -125,10 +132,14 @@
 }
 
 .card-body {
+    flex: 1;
     padding: 1.25rem; /* 20px */
     font-family: 'schibsted-grotesk', sans-serif;
     font-size: 1rem; /* 16px */
     color: var(--black-mid);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
 }
 
 .card-list {
@@ -231,7 +242,7 @@
 /* ========================================= */
 
 @media (max-width: 62rem) {
-    .academy-hero {
+    .academy-hero .section-container {
         flex-direction: column;
         padding: 10rem 1.25rem 3.75rem; /* 160px 20px 60px */
         text-align: left;
@@ -274,9 +285,13 @@
     }
 
     .philosophy {
-        flex-direction: column;
         padding: 3.75rem 1.25rem; /* 60px 20px */
+    }
+
+    .philosophy .section-container{
+        flex-direction: column;
         align-items: flex-start;
+        gap: 0;
     }
 
     .philosophy-body {
