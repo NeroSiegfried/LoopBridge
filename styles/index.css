@@ -561,7 +561,7 @@ footer {
 
 /* MOBILE AND SMALL TABLETS (up to 992px) */
 @media (max-width: 62rem) {
-    .navbar {
+    .nav-container {
         width: calc(100% - 2.5rem);
         margin: 1.25rem;
         position: absolute;
@@ -569,7 +569,7 @@ footer {
     }
 
     /* Adjust the navbar's bottom border when the dropdown is visible */
-    .navbar:has(.nav-menu.active) {
+    .nav-container:has(.nav-menu.active) {
         border-bottom-left-radius: 0; /* Remove bottom-left corner rounding */
         border-bottom-right-radius: 0; /* Remove bottom-right corner rounding */
         

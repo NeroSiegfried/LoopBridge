@@ -9,13 +9,13 @@
 }
 
 .about-hero h1 {
-    font-size: 76px;
+    font-size: clamp(38px, 8vw, 76px);
     font-family: CabinetGrotesk-Bold, sans-serif;
 }
 
 .about-hero p {
     font-family: 'Schibsted Grotesk', sans-serif;
-    font-size: 20px;
+    font-size: clamp(16px, 2vw, 20px);
     font-weight: 200;
 }
 
@@ -93,14 +93,14 @@
 
 .section-body h2 {
     text-align: left;
-    font-size: 3rem;
+    font-size: clamp(32px, 5vw, 48px);
     margin-bottom: 2rem;
     margin-top: 0;
 }
 
 .section-body p {
     font-family: 'Schibsted Grotesk', sans-serif;
-    font-size: 24px;
+    font-size: clamp(16px, 2vw, 24px);
     font-weight: 200;
     margin-bottom: 40px;
 }
@@ -186,18 +186,28 @@ section.team{
     margin: auto;
     display: flex;
     flex-direction: column;
+    width: 100%;
 }
 
 .members {
-    display: flex;
+    display: grid;
     gap: 40px;
-    justify-content: space-between;
+    width: 100%;
+    grid-template-columns: repeat(auto-fit, 280px);
+    justify-content: center;
+}
+
+.member {
+    display: flex;
+    flex-direction: column;
     align-items: center;
+    text-align: center;
 }
 
 .member-image {
-    width: 300px;
-    height: 300px;
+    width: 100%;
+    max-width: 300px;
+    aspect-ratio: 1;
     border-radius: 12px;
     overflow: hidden;
     margin-bottom: 20px;
@@ -248,4 +258,49 @@ section.team{
 
 .accent-three {
     color: #d9d9d9;
+}
+
+@media (max-width: 1200px) {
+    .mission .section-container{
+        flex-direction: column;
+    }
+
+    .section-body {
+        max-width: none;
+    }
+
+    .hero-pictures {
+        flex-direction: column;
+    }
+
+    .hero-pictures > .pic, .middle-pics {
+        width: 100%;
+        aspect-ratio: 19/9;
+    }
+    .middle-pics {
+        flex-direction: row;
+    }
+
+    .middle-pics > .pic {
+        flex: 1;
+        height: 100%;
+    }
+
+    .hero-pictures img {
+        object-position: top;
+    }
+}
+
+@media (max-width: 768px) {
+    .what-we-do .section-container, .vision .section-container {
+        flex-direction: column-reverse;
+    }
+
+    .mission .cards {
+        grid-template-columns: 1fr; /* Stack cards vertically on small screens */
+    }
+
+    .card-item {
+        min-width: none;
+    }
 }

@@ -83,14 +83,19 @@
     margin-top: 3.75rem;
     padding: 0.8125rem 2.5625rem;
     font-size: 1.125rem;
-    display: inline-block;
-    animation: marquee 10s linear infinite;
+    position: relative;
+    display: flex;
+    align-items: center;
+    overflow: hidden; /* Highly recommended */
 }
 
 .marquee-content{
     display: flex;
     gap: 2.5rem;
+    animation: marquee linear infinite;
+    will-change: transform;
 }
+
 
 .left{
     display: flex;
@@ -108,6 +113,16 @@
     align-items: center;
     padding: 1rem;
     gap: 2.5rem;
+    white-space: nowrap;
+}
+
+@keyframes marquee {
+    from {
+        transform: translateX(-10%)
+    }
+    to {
+        transform: translateX(-110%);
+    }
 }
 
 .currency .name, .currency .numbers {
@@ -312,13 +327,18 @@
 }
 
 .warnings {
-    display: flex;
     padding: 160px 60px;
+    text-align: center;
+    background-color: #f6fffa;
+}
+
+.warnings .section-container{
+    display: flex;
     gap: 2rem;
     font-family: 'schibsted-grotesk', sans-serif;
     font-size: 18px;
     font-weight: 200;
-    background-color: #f6fffa;
+    
 }
 
 .warnings h2 {
@@ -335,6 +355,9 @@
 @media (max-width: 1200px) {
     .warnings{
         padding: 40px;
+    }
+
+    .warnings .section-container{
         flex-direction: column;
     }
 
