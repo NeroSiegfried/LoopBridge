@@ -562,8 +562,8 @@ footer {
 /* MOBILE AND SMALL TABLETS (up to 992px) */
 @media (max-width: 62rem) {
     .nav-container {
-        width: calc(100% - 2.5rem);
-        margin: 1.25rem;
+        width: calc(100% - 5rem);
+        margin: 5rem 2.5rem;
         position: absolute;
         border-radius: 38px;
     }

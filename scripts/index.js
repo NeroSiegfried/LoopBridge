@@ -22,10 +22,16 @@ document.addEventListener("DOMContentLoaded", () => {
             return;
         }
 
-        // Menu is opening. Add the menu's full natural height on top of the
-        // element's original padding-top so its background stays flush with
-        // the top of the viewport and only the inner content shifts down.
-        firstBelowNav.style.paddingTop = (originalPaddingTop + navMenu.scrollHeight) + "px";
+        // The total space needed is:
+        //   bottom of the nav pill + full height of the open menu
+        //   minus where the element currently starts in the viewport
+        // This accounts for the nav-container's top margin and the pill's
+        // own height, both of which sit above the menu and would otherwise
+        // cause an overlap.
+        const navBottom = navContainer.getBoundingClientRect().bottom;
+        const elementTop = firstBelowNav.getBoundingClientRect().top;
+        const extraSpace = navBottom + navMenu.scrollHeight - elementTop;
+        firstBelowNav.style.paddingTop = (originalPaddingTop + extraSpace) + "px";
     }
 
     mobileMenuBtn.addEventListener("click", () => {
