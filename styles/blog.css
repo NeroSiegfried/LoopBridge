@@ -120,6 +120,8 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    flex-wrap: wrap;
+    row-gap: 10px;
 }
 
 .category-buttons {
@@ -127,7 +129,7 @@
     gap: 0.5rem;
 }
 
-.category-button {
+.category-button, .load-btn {
     font-family: 'Schibsted Grotesk', sans-serif;
     font-weight: 500;
     color: var(--black-dark);
@@ -139,17 +141,21 @@
     border: 1px solid var(--gray-dark);
 }
 
+.category-button.active {
+    background-color: var(--lb-green);
+    color: white;
+    border: none;
+}
+
+/* Dropdown wrapper — positioning context for the absolutely positioned menu */
 .dropdown-section {
-    position: relative; /* Remove position relative from here */
+    position: relative;
+    display: inline-block;
+    margin-left: auto;
 }
 
-.dropdown-btn {
-    margin-left: 10px;
-}
-
-/* Base dropdown styling */
+/* Base dropdown button */
 .category-dropdown {
-    position: relative; /* Anchor the dropdown menu to the button */
     display: inline-flex;
     align-items: center;
     justify-content: space-between;
@@ -163,42 +169,51 @@
     cursor: pointer;
 }
 
-/* Add the caret */
+/* Caret icon */
 .category-dropdown .dropdown-btn {
     margin-left: 10px;
     transition: transform 0.3s ease;
 }
 
-/* Rotate caret when dropdown is active */
+/* Rotate caret when dropdown is open */
 .category-dropdown.active .dropdown-btn {
-    transform: rotate(180deg); /* Rotate caret upside-down */
+    transform: rotate(180deg);
 }
 
-/* Dropdown menu styling */
+/* When open, flatten bottom corners so it flows into the menu */
+.category-dropdown.active {
+    border-bottom-left-radius: 0;
+    border-bottom-right-radius: 0;
+    border-bottom-color: transparent;
+}
+
+/* Dropdown menu — flush with the button */
 .dropdown-menu {
     position: absolute;
-    top: calc(100% + 5px);
+    top: 100%; /* Directly below the button, no gap */
     left: 0;
-    min-width: 100%; /* Match the width of .category-dropdown exactly */
+    width: 100%; /* Match full width of .dropdown-section (same as the button) */
     background-color: white;
     border: 1px solid var(--gray-dark);
-    border-radius: 8px;
+    border-top: none; /* Remove top border so it's flush with the button */
+    border-radius: 0 0 8px 8px; /* Only round the bottom corners */
     box-shadow: 0px 4px 6px rgba(0, 0, 0, 0.1);
-    z-index: 10;
+    z-index: 2;
     display: none;
     flex-direction: column;
-    padding: 5px 0;
+    padding: 8px 0;
+    gap: 8px;
 }
 
-/* Show dropdown menu when active */
+/* Show the menu when the button has .active */
 .category-dropdown.active ~ .dropdown-menu {
     display: flex;
 }
 
-/* Dropdown menu items */
+/* Individual dropdown items */
 .dropdown-item {
     padding: 5px 11px;
-    font-size: 14px;
+    font-size: 16px;
     font-family: 'Schibsted Grotesk', sans-serif;
     color: var(--black-mid);
     cursor: pointer;
@@ -206,5 +221,116 @@
 }
 
 .dropdown-item:hover {
-    background-color: var(--gray-mid); /* Highlight on hover */
+    background-color: var(--gray-mid);
+}
+
+.article-container {
+    padding: 20px 20px 24px;
+    border-radius: 16px;
+    border: 1px solid var(--gray-mid);
+}
+
+.feed .articles {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.25rem;
+}
+
+.feed .article-image {
+    height: 200px;
+    border-radius: 12px;
+    object-fit: cover;
+    object-position: center;
+    background-color: #e9fded;
+    margin-bottom: 10px;
+}
+
+.load-btn {
+    margin: 5rem auto 0;
+    display: block;
+    padding: 12px 18px;
+    border-radius: 49px;
+}
+
+.newletter .body {
+    margin-left: 0;
+}
+
+.newsletter .section-container {
+    display: block;
+}
+
+.newsletter .body, .newsletter .image {
+    margin: 0;
+}
+
+.newsletter h2 {
+    font-size: clamp(32px, 4vw, 48px);
+    font-family: CabinetGrotesk-Variable, sans-serif;
+    font-weight: 600;
+    margin-top: 0;
+}
+
+.newsletter p {
+    font-family: 'Schibsted Grotesk', sans-serif;
+    font-size: clamp(16px, 1.5vw, 18px);
+    font-weight: 100;
+    margin-top: 20px;
+    line-height: 2rem;
+    color: var(--gray-mid);
+}
+
+.subscribe-section {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 16px;
+    border-radius: 34px;
+    background-color: #ffffff33;
+    margin-top: 3.125rem;
+}
+
+.subscribe-section input {
+    flex: 1;
+    border: none;
+    background: transparent;
+    color: white;
+    font-family: 'Schibsted Grotesk', sans-serif;
+    font-size: clamp(14px, 1.5vw, 16px);
+}
+
+.subscribe-section input::placeholder {
+    color: #ffffff99;
+}
+
+.newsletter-button {
+    margin: 0;
+}
+
+.newsletter .image {
+    width: 100%; /* Ensure the image fills the container */
+    height: 100%; /* Maintain aspect ratio */
+    background-image: url('../images/Blog (Bottom Banner) 1.png'); /* Set the image as the background */
+    background-size: auto 130%; /* Ensure the image covers the entire container */
+    background-position: 90% 30%; /* Center the image */
+    mask-image: url('../images/banner-vector.svg'); /* Apply the SVG as a mask */
+    mask-size: 100% 100%; /* Ensure the mask covers the entire container */
+    mask-position: center; /* Position the mask at the top right */
+    mask-repeat: no-repeat; /* Prevent the mask from repeating */
+    -webkit-mask-image: url('../images/banner-vector.svg'); /* Add WebKit support */
+    -webkit-mask-size: contain;
+    -webkit-mask-position: center;
+    -webkit-mask-repeat: no-repeat;
+}
+
+
+.inner-section::before {
+    -webkit-mask: none;
+    mask: none;
+}
+
+.inner-section {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    padding: 3.75rem;
+    gap: 30px;
 }
