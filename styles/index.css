@@ -334,9 +334,9 @@ section h2 {
 }
 
 .academy .icon { background-color: var(--lb-blue-light); }
-.whatsapp .icon { background-color: var(--lb-green); }
-.community .icon { background-color: #ff6e2a; }
-.newsletter .icon { background-color: #9747ff; }
+.whatsapp .icon, .articles .icon { background-color: var(--lb-green); }
+.community .icon, .courses .icon { background-color: #ff6e2a; }
+.newsletter .icon, .glossary .icon { background-color: #9747ff; }
 
 /* CIRCLE EFFECT */
 .circle-effect {
