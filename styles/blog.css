@@ -122,6 +122,7 @@
     align-items: center;
     flex-wrap: wrap;
     row-gap: 10px;
+    margin-bottom: 10px;
 }
 
 .category-buttons {
@@ -384,8 +385,17 @@
 
 @media (max-width: 900px) {
 
+
+    .article-container {
+        padding: 0;
+    }
+
+    .feed .article-image{
+        height: 300px;
+    }
+
     .newsletter .inner-section {
-        padding: 2rem;
+        padding: 2.5rem 1.5rem;
     }
 
     .subscribe-section{
@@ -434,8 +444,17 @@
 }
 
 @media (max-width: 600px) {
+
+    .blog-header .blog-inner-section {
+        padding: 3rem 1rem;
+    }
+
+    .blog-header p {
+        padding: 0;
+    }
     .categories {
-        display: block;
+        display: grid;
+        gap: 10px;
     }
     .category-dropdown {
         width: 100%;
