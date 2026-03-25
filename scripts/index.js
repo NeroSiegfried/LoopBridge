@@ -5,21 +5,53 @@ document.addEventListener("DOMContentLoaded", () => {
     const menuIcon = mobileMenuBtn.querySelector("i");
     const hero = document.querySelector(".hero");
 
-    mobileMenuBtn.addEventListener("click", () => {
-    const isActive = navMenu.classList.contains("active");
+    const navContainer = document.querySelector(".nav-container");
+    const navbar = document.querySelector(".navbar");
+    const firstBelowNav = navbar.nextElementSibling;
 
-    if (isActive) {
-        // Hide the dropdown menu
-        navMenu.classList.remove("active");
-        menuIcon.classList.remove("fa-xmark");
-        menuIcon.classList.add("fa-bars");
-    } else {
-        // Show the dropdown menu
-        navMenu.classList.add("active");
-        menuIcon.classList.remove("fa-bars");
-        menuIcon.classList.add("fa-xmark");
+    // Store the element's original padding-top once, before we ever touch it.
+    const originalPaddingTop = parseFloat(getComputedStyle(firstBelowNav).paddingTop);
+
+    function updatePageOffset() {
+        const isMobile = window.matchMedia("(max-width: 62rem)").matches;
+        firstBelowNav.style.transition = "padding-top 0.35s ease";
+
+        if (!isMobile || !navMenu.classList.contains("active")) {
+            // Desktop, or menu just closed — restore original padding-top.
+            firstBelowNav.style.paddingTop = originalPaddingTop + "px";
+            return;
+        }
+
+        // Menu is opening. Add the menu's full natural height on top of the
+        // element's original padding-top so its background stays flush with
+        // the top of the viewport and only the inner content shifts down.
+        firstBelowNav.style.paddingTop = (originalPaddingTop + navMenu.scrollHeight) + "px";
     }
-});
+
+    mobileMenuBtn.addEventListener("click", () => {
+        const isActive = navMenu.classList.contains("active");
+
+        if (isActive) {
+            navMenu.classList.remove("active");
+            menuIcon.classList.remove("fa-xmark");
+            menuIcon.classList.add("fa-bars");
+        } else {
+            navMenu.classList.add("active");
+            menuIcon.classList.remove("fa-bars");
+            menuIcon.classList.add("fa-xmark");
+        }
+
+        updatePageOffset();
+    });
+
+    // On resize back to desktop, restore original padding-top.
+    window.addEventListener("resize", () => {
+        if (!window.matchMedia("(max-width: 62rem)").matches) {
+            firstBelowNav.style.paddingTop = "";
+            firstBelowNav.style.transition = "";
+        }
+    });
+
 
     /* --- CIRCLES ANIMATION LOGIC --- */
     const circleEffect = document.querySelector(".circle-effect");

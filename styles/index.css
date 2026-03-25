@@ -580,28 +580,25 @@ footer {
     }
 
     .nav-menu {
-        display: none; /* Hide standard nav by default */
+        display: flex;
+        flex-direction: column;
         position: absolute;
         top: 100%;
         left: -1px;
         width: calc(100% + 2px);
         background: #ffffff;
-        flex-direction: column;
-        padding: 0;
         border-radius: 0 0 1.25rem 1.25rem;
         border: 1px solid var(--gray-mid);
         border-top: none;
         overflow: hidden;
-        transform-origin: top;
-        transform: scaleY(0);
-        transition: transform 0.3s ease, padding 0.3s ease;
+        max-height: 0;
+        padding: 0 1.5rem;
+        transition: max-height 0.35s ease, padding 0.35s ease;
     }
 
     .nav-menu.active {
-        display: flex;
-        transform: scaleY(1);
+        max-height: 60rem; /* Large enough to never clip content */
         padding: 1.5rem;
-        flex-direction: column;
     }
 
     .nav-menu.visible {

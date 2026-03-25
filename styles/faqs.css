@@ -116,8 +116,33 @@
 .QnA-item .question {
     font-size: clamp(16px, 2vw, 18px);
     font-weight: 500;
-    margin-bottom: 0.5rem;
+    margin-bottom: 0;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    cursor: pointer;
+    user-select: none;
+}
+
+.QnA-item .question .button {
+    transition: transform 0.3s ease;
+    flex-shrink: 0;
+    margin-left: 1rem;
+}
+
+
+.QnA-item .answer {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.35s ease, margin-top 0.35s ease;
+    margin-top: 0;
+    font-size: clamp(14px, 1.5vw, 16px);
+    font-weight: 400;
+    color: #494949;
+    line-height: 1.5rem;
+}
+
+.QnA-item.active .answer {
+    max-height: 20rem; /* Large enough for any answer */
+    margin-top: 0.75rem;
 }
