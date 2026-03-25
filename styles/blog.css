@@ -127,6 +127,7 @@
 .category-buttons {
     display: flex;
     gap: 0.5rem;
+    flex-wrap: wrap;
 }
 
 .category-button, .load-btn {
@@ -252,45 +253,47 @@
     border-radius: 49px;
 }
 
-.newletter .body {
+.newsletter .body {
     margin-left: 0;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 0.5rem;
 }
 
 .newsletter .section-container {
     display: block;
 }
 
-.newsletter .body, .newsletter .image {
-    margin: 0;
-}
 
 .newsletter h2 {
     font-size: clamp(32px, 4vw, 48px);
     font-family: CabinetGrotesk-Variable, sans-serif;
     font-weight: 600;
-    margin-top: 0;
+    margin-top: 10px;
 }
 
 .newsletter p {
     font-family: 'Schibsted Grotesk', sans-serif;
     font-size: clamp(16px, 1.5vw, 18px);
     font-weight: 100;
-    margin-top: 20px;
     line-height: 2rem;
     color: var(--gray-mid);
 }
 
 .subscribe-section {
-    display: flex;
+    display: inline-flex;
     justify-content: space-between;
     padding: 10px 16px;
     border-radius: 34px;
     background-color: #ffffff33;
-    margin-top: 3.125rem;
+    margin-top: 1rem;
+    max-width: 500px;
 }
 
 .subscribe-section input {
     flex: 1;
+    max-width: 350px;
     border: none;
     background: transparent;
     color: white;
@@ -304,14 +307,15 @@
 
 .newsletter-button {
     margin: 0;
+    font-weight: 200;
 }
 
 .newsletter .image {
     width: 100%; /* Ensure the image fills the container */
     height: 100%; /* Maintain aspect ratio */
     background-image: url('../images/Blog (Bottom Banner) 1.png'); /* Set the image as the background */
-    background-size: auto 130%; /* Ensure the image covers the entire container */
-    background-position: 90% 30%; /* Center the image */
+    background-size: auto 160%; /* Ensure the image covers the entire container */
+    background-position: 75% 20%; /* Center the image */
     mask-image: url('../images/banner-vector.svg'); /* Apply the SVG as a mask */
     mask-size: 100% 100%; /* Ensure the mask covers the entire container */
     mask-position: center; /* Position the mask at the top right */
@@ -333,4 +337,110 @@
     grid-template-columns: 1fr 1fr;
     padding: 3.75rem;
     gap: 30px;
+}
+
+@media (max-width: 1200px) {
+    .featured .articles, .feed .articles {
+        grid-template-columns: repeat(2, 1fr);
+    }
+    .inner-section {
+        display: flex;
+        flex-direction: column;
+        gap: 0;
+    }
+
+    .category-buttons {
+        justify-content: space-between;
+    }
+
+    .newsletter .image {
+        background-position: 70% 25%;
+        width: 100%;
+        aspect-ratio: 16/9;
+    }
+
+    .subscribe-section {
+        align-self: center;
+        min-width: 500px;
+    }
+
+}
+
+@media (max-width: 991px) {
+    .blog-header .blog-inner-section {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        gap: 1rem;
+        border-radius: 16px;
+        padding: 6rem;
+        position: relative;
+        background-image: url('../images/Blog\ \(Top\ Banner\)\ 1.png');
+        background-size: cover;
+        background-position: 80% 50%;
+        background-repeat: no-repeat;
+    }
+}
+
+@media (max-width: 900px) {
+
+    .newsletter .inner-section {
+        padding: 2rem;
+    }
+
+    .subscribe-section{
+        display: flex;
+        flex-direction: column;
+        gap: 10px;
+        background-color: transparent;
+        width: 100%;
+        padding: 0;
+        min-width: 0;
+    }
+
+    .subscribe-section .newsletter-input {
+        background-color: #345c75;
+        padding: 11px 16px 11px 22px;
+        border-radius: 35px;
+        max-width: none;
+        font-size: 16px;
+    }
+
+    .subscribe-section .newsletter-button {
+        padding: 11px 16px;
+        border-radius: 35px;
+    }
+
+    .inner-section .body {
+        width: 100%;
+    }
+}
+
+@media (max-width: 800px) {
+    .featured .articles, .feed .articles {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+    }
+
+    .featured .article-card, .feed .article-container {
+        max-width: 500px;
+        width: 100%;
+    }
+
+    .blog-header .blog-inner-section {
+        padding: 3rem;
+    }
+}
+
+@media (max-width: 600px) {
+    .categories {
+        display: block;
+    }
+    .category-dropdown {
+        width: 100%;
+    }
+    .dropdown-section {
+        width: 100%;
+    }
 }
