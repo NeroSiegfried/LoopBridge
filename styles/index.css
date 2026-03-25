@@ -52,7 +52,7 @@ img {
     border: 0.0625rem solid var(--gray-mid);
     border-radius: 3.75rem;
     background-color: #ffffff;
-    z-index: 1;
+    z-index: 2;
 }
 
 .navbar .logo {
@@ -583,8 +583,8 @@ footer {
         display: none; /* Hide standard nav by default */
         position: absolute;
         top: 100%;
-        left: 0;
-        width: 100%;
+        left: -1px;
+        width: calc(100% + 2px);
         background: #ffffff;
         flex-direction: column;
         padding: 0;

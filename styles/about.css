@@ -303,4 +303,21 @@ section.team{
     .card-item {
         min-width: none;
     }
+
+    .members {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+
+    .member {
+        flex: 1 1 0;
+    }
+
+    .member-image {
+        max-width: none;
+        width: 100%;
+    }
 }
