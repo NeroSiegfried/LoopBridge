@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Academy</title>
+    <title>Home Page</title>
     <link rel="stylesheet" href="./styles/index.css">
     <link rel="stylesheet" href="./styles/academy.css">
+    <link rel="stylesheet" href="./styles/courses.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&family=Schibsted+Grotesk:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
@@ -26,7 +27,7 @@
             </button>
             <div class="nav-menu" id="nav-menu">
                 <div class="nav-links">
-                    <a href="#" class="active">Academy</a>
+                    <a href="./academy.html">Academy</a>
                     <a href="./exchange.html">Exchange</a>
                     <a href="./community.html">Community</a>
                     <a href="./about.html">About</a>
@@ -39,77 +40,77 @@
             </div>
         </div>
     </nav>
-    <header class="academy-hero">
+
+    <header class="courses-hero">
         <div class="section-container">
             <div class="hero-body">
-                <h1>Learn <span class="accent-two">Web3</span> in Practice, <br/>
-                    Not Just in Theory
+                <h1>
+                    Courses for Every Stage of New Finance
                 </h1>
-                <p>LoopBridge Academy turns curiosity into confidence through hands-on lessons, visual explainers, and real-world application.
+                <p>LoopBridge courses are designed to guide you from beginner to advanced Web3 learning through real-world application.
                 </p>
-                <button class="primary-btn">Start Learning</button>
 
             </div>
-            <div class="academy-hero-img">
-                <img src="./images/Academy (Top Banner).png" alt="Hero Picture">
+            <div class="courses-hero-img">
+                <div class="image-background">
+                    <img src="./images/courses-hero-illustration.svg" alt="Hero Picture">
+                </div>
             </div>
         </div>
     </header>
+
     <section class="pathways">
         <div class="section-container">
-            <h2>Learning Pathways</h2>
-            <p>
-                Clear paths designed to help you learn, apply, and grow in New Finance at your own pace.
-            </p>
+            <h2>Learning Tracks</h2>
             <div class="path-cards">
-                <div class="box articles">
+                <div class="box beginner">
                     <div class="box-content">
                         <div class="box-head">
-                            <div class="card-highlight">Getting Started in New Finance</div>
-                            <div class="icon">
-                                <i class="fa-solid fa-newspaper"></i>
+                            <div class="box-image">
                             </div>
-                            <h3 class="box-title">Articles</h3>
+                            <h3 class="box-title">Beginner Track</h3>
                         </div>
                         <div class="box-body">
                             <p>
-                                Short, practical reads that break down Web3, markets, and emerging trends without the noise. Designed to help you understand everything. 
+                                Build a strong foundation in Web3, crypto, and security. 
                             </p> 
-                            <a href="./articles.html"><button class="box-button">Read Articles</button></a>   
+                            <a href="#">
+                                <button class="box-button"> <div class="text">Start Track</div> <i class="fa-solid fa-angle-right"></i></button>
+                            </a>   
                         </div>
                     </div>
                 </div>
-                <div class="box courses">
+                <div class="box intermediate">
                     <div class="box-content">
                         <div class="box-head">
-                            <div class="card-highlight">Building and Earning in Web3</div>
-                            <div class="icon">
-                                <i class="fa-solid fa-book-open"></i>
+                            <div class="box-image">
                             </div>
-                            <h3 class="box-title">Courses</h3>
+                            <h3 class="box-title">Intermediate Track</h3>
                         </div>
                         <div class="box-body">
                             <p>
-                                Structured learning paths that guide you from fundamentals to confident application. Every course focuses on real-world use. 
+                                Learn how to trade, read markets, and apply strategies
                             </p> 
-                            <a href="./courses.html"><button class="box-button">Start Learning</button> </a>  
+                            <a href="#">
+                                <button class="box-button"> <div class="text">Start Track</div> <i class="fa-solid fa-angle-right"></i></button>
+                            </a>
                         </div>
                     </div>
                 </div>
-                <div class="box glossary">
+                <div class="box advanced">
                     <div class="box-content">
                         <div class="box-head">
-                            <div class="card-highlight">Trading and Application</div>
-                            <div class="icon">
-                                <i class="fa-solid fa-book"></i>
+                            <div class="box-image">
                             </div>
-                            <h3 class="box-title">Glossary</h3>
+                            <h3 class="box-title">Advanced Track</h3>
                         </div>
                         <div class="box-body">
                             <p>
-                                Clear, simple explanations of crypto and Web3 terms in plain language. Built to remove confusion so you can make informed decisions.
+                                Explore deeper participation, analysis, and onchain opportunities
                             </p>
-                            <button class="box-button">Browse Glossary</button>   
+                            <a href="#">
+                                <button class="box-button"> <div class="text">Start Track</div> <i class="fa-solid fa-angle-right"></i></button>
+                            </a>
                         </div>
                     </div>
                 </div>
@@ -117,35 +118,7 @@
             </div>
         </div>
     </section>
-    <section class="philosophy">
-        <div class="section-container">
-            <h2 class="tagline">Why <span class="accent-two">We Teach</span> the Way We Do</h2>
-            <div class="philosophy-body">
-                <p>
-                    We believe learning New Finance should be practical, falsifiable, and community-driven. That’s why LoopBridge Academy is designed around real use cases, visual lessons, and  peer collaboration.
-                </p>
-                <p>
-                    We call this approach PostModern Learning — because just like PostModern Finance, it’s  open, interactive, and shaped by participation.
-                </p>
-                
-            </div>
-        </div>
-    </section>
-    <section class="newsletter">
-        <div class="inner-section">
-            <div class="body">
-                <h2>Learn Together<span class="accent">,</span>
-                    Grow Together<span class="accent">.</span>
-                </h2>
-                <p>Join the LoopBridge community to discuss lessons, share strategies, and apply what you  learn in real time.</p>
-                <button class="newsletter-button">Join the Community</button>
-            </div>
-            <div class="image">
-                <img src="./images/globe.png" alt="Globe with a network of people around it">
-            </div>
-            
-        </div>
-    </section>
+
     <footer>
         <div class="footer-container">
             <div class="footer-content">

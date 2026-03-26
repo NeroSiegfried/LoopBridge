@@ -123,6 +123,10 @@
     flex-grow: 1;
 }
 
+.box-body a {
+    margin-top: 1.25rem;
+}
+
 .box .box-button {
     border: 1px solid var(--gray-dark);
     background-color: transparent;
@@ -131,8 +135,8 @@
     font-size: 1rem; /* 16px */
     padding: 0.6875rem 1rem; /* 11px 16px */
     border-radius: 2.1875rem; /* 35px */
-    width: 100%;
-    margin-top: 1.25rem; /* 20px */
+    width: 100%; /* 20px */
+    margin-top: 0;
     font-weight: 600;
 }
 
