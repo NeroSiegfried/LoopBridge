@@ -1,0 +1,206 @@
+.track-hero {
+    padding: 12rem 2.5rem 3rem;
+}
+
+.track-hero .track-inner-section {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    border-radius: 16px;
+    padding: clamp(2rem, 4.5vw, 3rem) clamp(1rem, 4vw, 3rem);
+    background-color: var(--lb-blue-dark);
+}
+
+.track-hero .hero-body {
+    flex: 1.5;
+    padding: 0;
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+    justify-content: center;
+    margin: 0;
+}
+
+.track-hero h1 {
+    margin-bottom: 0;
+    font-family: CabinetGrotesk-Variable, sans-serif;
+    font-size: clamp(38px, 4vw, 40px);
+    font-weight: 600;
+    color: white;
+}
+
+.track-hero p {
+    font-family: 'schibsted-grotesk', sans-serif;
+    font-weight: 100;
+    color: var(--gray-mid);
+    font-size: clamp(16px, 2vw, 20px);
+    padding: 0 clamp(0, 5vw, 10rem);
+    margin: 0;
+    line-height: 2rem;
+}
+
+.track-hero .hero-image {
+    flex: 1;
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+}
+
+.courses-section .section-container {
+    display: block;
+}
+
+.courses-section {
+    padding: 0 2.5rem 6rem;
+}
+
+.controls {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 2rem;
+}
+
+.count {
+    font-family: CabinetGrotesk-Variable, sans-serif;
+    font-weight: 600;
+    font-size: 24px;
+    color: var(--lb-blue-text);
+}
+
+.filter {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+}
+
+.search {
+    padding: 6px 65px 6px 16px;
+    background-color: white;
+    border: 1px solid var(--gray-dark);
+    border-radius: 34px;
+    position: relative;
+}
+
+.search input {
+    width: 100%;
+    padding-left: 2.5rem;
+    border: none;
+    outline: none;
+    font-size: 1rem;
+    font-family: 'schibsted-grotesk', sans-serif;
+}
+
+.search input::placeholder {
+    color: var(--black-mid);
+}
+
+.search-icon{
+    position: absolute;
+    left: 20px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--black-mid);
+    pointer-events: none;
+}
+
+.dropdown-section {
+    font-size: 1rem;
+    font-family: 'schibsted-grotesk', sans-serif;
+    color: var(--black-mid);
+    padding: 8px 11px;
+    border: 1px solid var(--gray-dark);
+    border-radius: 8px;
+    display: flex;
+    gap: 1rem;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.dropdown-btn {
+    font-size: 24px;
+    font-weight: 100;
+}
+
+.courses {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+}
+
+.courses a {
+    text-decoration: none;
+}
+
+.course-container {
+    padding: 20px 19px 28px;
+    border: 1px solid var(--gray-dark);
+    border-radius: 12px;
+}
+
+.course-card{
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%;
+}
+
+.course-body {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    justify-content: space-between;
+    flex: 1;
+}
+
+.courses-section .course-image {
+    height: 200px;
+    border-radius: 16px;
+    object-fit: cover;
+    object-position: center;
+    background-color: #e9fded;
+    margin-bottom: 10px;
+    position: relative;
+}
+
+.course-price {
+    font-family: 'Schibsted Grotesk', sans-serif;
+    font-weight: 300;
+    color: white;
+    font-size: clamp(12px, 1.5vw, 14px);
+    background-color: #00608b;
+    border-radius: 19px;
+    display: inline-block;
+    padding: 4px 14px;
+    position: absolute;
+    top: 12px;
+    right: 21px;
+}
+
+.course-price.paid {
+    background-color: var(--lb-green);
+}
+
+.course-title {
+    font-family: 'CabinetGrotesk-Variable', sans-serif;
+    font-weight: 600;
+    color: var(--lb-blue-text);
+    font-size: clamp(16px, 2vw, 24px);
+    margin: 6px 0;
+}
+
+.course-description {
+    font-family: 'Schibsted Grotesk', sans-serif;
+    font-weight: 200;
+    color: var(--lb-blue-pt);
+    font-size: clamp(14px, 1.5vw, 16px);
+}
+
+.course-author {
+    font-family: 'Schibsted Grotesk', sans-serif;
+    font-weight: 200;
+    color: var(--black-mid);
+    font-size: clamp(12px, 1.5vw, 14px);
+}
