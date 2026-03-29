@@ -74,7 +74,7 @@ img {
     flex: 1 1 0;
     justify-content: space-between;
     align-items: center;
-    transition: max-height 0.3s ease;
+    transition: max-height 0.3s ease, border;
 }
 
 .nav-menu.visible {
@@ -588,7 +588,7 @@ footer {
         width: calc(100% + 2px);
         background: #ffffff;
         border-radius: 0 0 1.25rem 1.25rem;
-        border: 1px solid var(--gray-mid);
+        border: 0;
         border-top: none;
         overflow: hidden;
         max-height: 0;
@@ -599,6 +599,7 @@ footer {
     .nav-menu.active {
         max-height: 60rem; /* Large enough to never clip content */
         padding: 1.5rem;
+        border: 1px solid var(--gray-mid);
     }
 
     .nav-menu.visible {

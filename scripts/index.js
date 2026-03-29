@@ -38,11 +38,27 @@ document.addEventListener("DOMContentLoaded", () => {
         const isActive = navMenu.classList.contains("active");
 
         if (isActive) {
+            // Retract menu immediately
             navMenu.classList.remove("active");
             menuIcon.classList.remove("fa-xmark");
             menuIcon.classList.add("fa-bars");
+
+            // Restore border-radius immediately after menu finishes retracting (ease-out)
+            setTimeout(() => {
+                navContainer.style.transition = "border-radius 0.15s ease-out";
+                navContainer.style.borderBottomLeftRadius = "";
+                navContainer.style.borderBottomRightRadius = "";
+            }, 350);
         } else {
-            navMenu.classList.add("active");
+            // Flatten corners with ease-in first, then expand menu
+            navContainer.style.transition = "border-radius 0.15s ease-in";
+            navContainer.style.borderBottomLeftRadius = "0";
+            navContainer.style.borderBottomRightRadius = "0";
+
+            setTimeout(() => {
+                navMenu.classList.add("active");
+            }, 150);
+
             menuIcon.classList.remove("fa-bars");
             menuIcon.classList.add("fa-xmark");
         }
