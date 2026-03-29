@@ -29,7 +29,6 @@ document.addEventListener("DOMContentLoaded", () => {
             + 48
             + parseFloat(menuStyle.borderTopWidth)
             + parseFloat(menuStyle.borderBottomWidth);
-            console.log(navMenu.scrollHeight, menuStyle.paddingTop, menuStyle.paddingBottom, menuStyle.borderTopWidth, menuStyle.borderBottomWidth);
 
         // b+c. Add that height on top of firstBelowNav's original CSS padding
         firstBelowNav.style.paddingTop = (originalPaddingTop + menuHeight) + "px";
