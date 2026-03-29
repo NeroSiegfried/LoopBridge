@@ -1,0 +1,167 @@
+[
+    {
+        "id": "course-001",
+        "title": "Web3 & Metaverse Fundamentals",
+        "slug": "web3-metaverse-fundamentals",
+        "description": "Build a strong foundation in Web3, crypto, and security essentials.",
+        "image": "./images/courses-hero-illustration.svg",
+        "author": { "name": "Adeoluwa Boboye", "avatar": "./images/user-placeholder.svg" },
+        "duration": "8 hours",
+        "level": "Beginner",
+        "track": "beginner",
+        "price": 0,
+        "publishedAt": "2026-01-15",
+        "topics": [
+            {
+                "title": "Blockchain Fundamentals",
+                "subsections": [
+                    { "title": "Introduction to blockchain technology", "type": "video", "duration": "5 min" },
+                    { "title": "How blocks are linked and validated", "type": "video", "duration": "5 min" },
+                    { "title": "Public vs private blockchains", "type": "video", "duration": "5 min" },
+                    { "title": "Quiz: Blockchain Basics", "type": "quiz", "duration": "3 min" }
+                ]
+            },
+            {
+                "title": "Crypto Fundamentals",
+                "subsections": [
+                    { "title": "What is cryptocurrency?", "type": "video", "duration": "5 min" },
+                    { "title": "How wallets and keys work", "type": "video", "duration": "5 min" },
+                    { "title": "Understanding gas fees", "type": "video", "duration": "5 min" },
+                    { "title": "Quiz: Crypto Fundamentals", "type": "quiz", "duration": "3 min" }
+                ]
+            },
+            {
+                "title": "Web3 & Metaverse",
+                "subsections": [
+                    { "title": "What is Web3?", "type": "video", "duration": "5 min" },
+                    { "title": "Decentralized applications (dApps)", "type": "video", "duration": "5 min" },
+                    { "title": "The Metaverse explained", "type": "video", "duration": "5 min" },
+                    { "title": "Quiz: Web3 & Metaverse", "type": "quiz", "duration": "3 min" }
+                ]
+            }
+        ],
+        "overview": "This course introduces you to the core concepts behind Web3, blockchain, and the metaverse. You'll learn how blockchain technology works, what makes crypto different from traditional money, and how decentralized applications are changing the internet.",
+        "learningObjectives": [
+            "Understand the fundamentals of blockchain technology and how it works",
+            "Navigate the crypto landscape including wallets, tokens, and gas fees",
+            "Grasp the essentials of DeFi, Web3, and the evolving metaverse"
+        ]
+    },
+    {
+        "id": "course-002",
+        "title": "Setting Up and Securing Your Wallet",
+        "slug": "wallet-security",
+        "description": "Learn to create, manage, and protect your cryptocurrency wallets.",
+        "image": "",
+        "author": { "name": "LoopBridge Team", "avatar": "./images/user-placeholder.svg" },
+        "duration": "4 hours",
+        "level": "Beginner",
+        "track": "beginner",
+        "price": 0,
+        "publishedAt": "2026-01-20",
+        "topics": [
+            {
+                "title": "Wallet Types",
+                "subsections": [
+                    { "title": "Hot wallets vs cold wallets", "type": "video", "duration": "6 min" },
+                    { "title": "Setting up MetaMask", "type": "video", "duration": "8 min" },
+                    { "title": "Quiz: Wallet Types", "type": "quiz", "duration": "3 min" }
+                ]
+            },
+            {
+                "title": "Security Best Practices",
+                "subsections": [
+                    { "title": "Protecting your seed phrase", "type": "video", "duration": "5 min" },
+                    { "title": "Recognizing phishing attacks", "type": "video", "duration": "5 min" },
+                    { "title": "Quiz: Security", "type": "quiz", "duration": "3 min" }
+                ]
+            }
+        ],
+        "overview": "Your crypto wallet is the most important tool in Web3. This course teaches you how to choose the right wallet, set it up securely, and protect your assets from common threats.",
+        "learningObjectives": [
+            "Choose between hot and cold wallets based on your needs",
+            "Set up and configure a MetaMask wallet",
+            "Implement security best practices to protect your private keys"
+        ]
+    },
+    {
+        "id": "course-003",
+        "title": "Naira-to-Crypto Trading Basics",
+        "slug": "naira-crypto-trading",
+        "description": "Understand how to buy and sell crypto using Nigerian Naira on peer-to-peer platforms.",
+        "image": "",
+        "author": { "name": "LoopBridge Team", "avatar": "./images/user-placeholder.svg" },
+        "duration": "5 hours",
+        "level": "Beginner",
+        "track": "beginner",
+        "price": 0,
+        "publishedAt": "2026-02-01",
+        "topics": [],
+        "overview": "Learn the fundamentals of buying and selling crypto with Naira through WhatsApp-based OTC platforms and P2P exchanges.",
+        "learningObjectives": [
+            "Understand how P2P trading works",
+            "Navigate exchange rates and fees",
+            "Use LoopBridge's WhatsApp exchange safely"
+        ]
+    },
+    {
+        "id": "course-004",
+        "title": "How to Read a Candlestick Chart",
+        "slug": "candlestick-charts",
+        "description": "Learn to read and interpret candlestick charts for smarter trading decisions.",
+        "image": "",
+        "author": { "name": "Adeoluwa Boboye", "avatar": "./images/user-placeholder.svg" },
+        "duration": "6 hours",
+        "level": "Intermediate",
+        "track": "intermediate",
+        "price": 45,
+        "publishedAt": "2026-02-15",
+        "topics": [],
+        "overview": "Candlestick charts are the language of trading. This course teaches you to read price action, identify patterns, and make informed decisions based on chart data.",
+        "learningObjectives": [
+            "Read and interpret candlestick patterns",
+            "Identify support and resistance levels",
+            "Combine chart analysis with trading strategy"
+        ]
+    },
+    {
+        "id": "course-005",
+        "title": "Spot vs Futures Trading",
+        "slug": "spot-vs-futures",
+        "description": "Understand the key differences between spot and futures trading and when to use each.",
+        "image": "",
+        "author": { "name": "LoopBridge Team", "avatar": "./images/user-placeholder.svg" },
+        "duration": "5 hours",
+        "level": "Intermediate",
+        "track": "intermediate",
+        "price": 20,
+        "publishedAt": "2026-02-20",
+        "topics": [],
+        "overview": "This course breaks down the differences between buying crypto on the spot market versus trading futures contracts, including leverage, margin, and risk management.",
+        "learningObjectives": [
+            "Differentiate between spot and futures markets",
+            "Understand leverage and margin requirements",
+            "Apply risk management techniques to each trading style"
+        ]
+    },
+    {
+        "id": "course-006",
+        "title": "Identifying Promising Projects Early",
+        "slug": "early-project-identification",
+        "description": "Explore deeper participation, analysis, and onchain opportunities in the Web3 ecosystem.",
+        "image": "",
+        "author": { "name": "Olopade Ipaye", "avatar": "./images/user-placeholder.svg" },
+        "duration": "10 hours",
+        "level": "Advanced",
+        "track": "advanced",
+        "price": 60,
+        "publishedAt": "2026-03-01",
+        "topics": [],
+        "overview": "Learn the frameworks and tools experienced crypto analysts use to evaluate early-stage projects, assess tokenomics, and identify investment opportunities before the crowd.",
+        "learningObjectives": [
+            "Evaluate project fundamentals: team, tokenomics, roadmap",
+            "Use on-chain data to spot emerging trends",
+            "Assess risk-reward for early-stage investments"
+        ]
+    }
+]

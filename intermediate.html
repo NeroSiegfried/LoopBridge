@@ -15,31 +15,7 @@
     <script src="https://kit.fontawesome.com/20310b9de2.js" crossorigin="anonymous"></script>
 </head>
 <body>
-    <nav class="navbar">
-        <div class="nav-container">
-            <div class="logo">
-                <a href="./index.html">
-                    <img src="./images/logos/LB text no symbol black 2.png" alt="LoopBridge Logo" class="logo">
-                </a>
-            </div>
-            <button class="menu-toggle" id="mobile-menu-btn">
-                <i class="fa-solid fa-bars"></i>
-            </button>
-            <div class="nav-menu" id="nav-menu">
-                <div class="nav-links">
-                    <a href="./academy.html">Academy</a>
-                    <a href="./exchange.html">Exchange</a>
-                    <a href="./community.html">Community</a>
-                    <a href="./about.html">About</a>
-                    <a href="./blog.html">Blog</a>
-                    <a href="./faqs.html">FAQs</a>
-                </div>
-                <div class="nav-join">
-                    <a href="#">Join the Community</a>
-                </div>
-            </div>
-        </div>
-    </nav>
+    <div data-component="navbar" data-props='{"basePath":"./","activePage":"academy"}'></div>
 
 
     <header class="track-hero">
@@ -75,7 +51,7 @@
                 </div>
             </div>
 
-            <div class="courses">
+            <div class="courses" id="courses-grid">
                 <a href="./course_overview.html">
                     <div class="course-container">
                         <div class="course-card">
@@ -178,180 +154,82 @@
                         </div>
                     </div>
                 </a>
-                <a href="">
-                    <div class="course-container">
-                        <div class="course-card">
-                            <div class="course-image">
-                                <div class="course-price">Free</div>
-                                <img src="" alt=""/>
-                            </div>
-                            <div class="course-body">
-                                <div class="main-text">
-                                    <h3 class="course-title">Course Title</h3>
-                                    <p class="course-description">Build a strong foundation in Web3, crypto, and security.</p>
-                                </div>
-                                <p class="course-author">By LoopBridge Team</p>
-                            </div>
-                        </div>
-                    </div>
-                </a>
-                <a href="">
-                    <div class="course-container">
-                        <div class="course-card">
-                            <div class="course-image">
-                                <div class="course-price paid">$28</div>
-                                <img src="" alt=""/>
-                            </div>
-                            <div class="course-body">
-                                <div class="main-text">
-                                    <h3 class="course-title">Course Title</h3>
-                                    <p class="course-description">Build a strong foundation in Web3, crypto, and security.</p>
-                                </div>
-                                <p class="course-author">By LoopBridge Team</p>
-                            </div>
-                        </div>
-                    </div>
-                </a>
-                <a href="">
-                    <div class="course-container">
-                        <div class="course-card">
-                            <div class="course-image">
-                                <div class="course-price">Free</div>
-                                <img src="" alt=""/>
-                            </div>
-                            <div class="course-body">
-                                <div class="main-text">
-                                    <h3 class="course-title">Course Title</h3>
-                                    <p class="course-description">Build a strong foundation in Web3, crypto, and security.</p>
-                                </div>
-                                <p class="course-author">By LoopBridge Team</p>
-                            </div>
-                        </div>
-                    </div>
-                </a>
-                <a href="">
-                    <div class="course-container">
-                        <div class="course-card">
-                            <div class="course-image">
-                                <div class="course-price">Free</div>
-                                <img src="" alt=""/>
-                            </div>
-                            <div class="course-body">
-                                <div class="main-text">
-                                    <h3 class="course-title">Course Title</h3>
-                                    <p class="course-description">Build a strong foundation in Web3, crypto, and security.</p>
-                                </div>
-                                <p class="course-author">By LoopBridge Team</p>
-                            </div>
-                        </div>
-                    </div>
-                </a>
-                <a href="">
-                    <div class="course-container">
-                        <div class="course-card">
-                            <div class="course-image">
-                                <div class="course-price">Free</div>
-                                <img src="" alt=""/>
-                            </div>
-                            <div class="course-body">
-                                <div class="main-text">
-                                    <h3 class="course-title">Course Title</h3>
-                                    <p class="course-description">Build a strong foundation in Web3, crypto, and security.</p>
-                                </div>
-                                <p class="course-author">By LoopBridge Team</p>
-                            </div>
-                        </div>
-                    </div>
-                </a>
-                <a href="">
-                    <div class="course-container">
-                        <div class="course-card">
-                            <div class="course-image">
-                                <div class="course-price paid">$60</div>
-                                <img src="" alt=""/>
-                            </div>
-                            <div class="course-body">
-                                <div class="main-text">
-                                    <h3 class="course-title">Course Title</h3>
-                                    <p class="course-description">Build a strong foundation in Web3, crypto, and security.</p>
-                                </div>
-                                <p class="course-author">By LoopBridge Team</p>
-                            </div>
-                        </div>
-                    </div>
-                </a>
             </div>
 
 
         </div>
     </div>
 
-    <footer>
-        <div class="footer-container">
-            <div class="footer-content">
-                <div class="first">
-                    <div class="logo">
-                        <img src="./images/logos/LB text no symbol black 2.png" alt="LoopBridge Logo" class="logo">
-                    </div>
-                    <div class="motto">Your Companion Through Every Stage 
-    of Post-Modern Finance</div>
-                </div>
-                <div class="middle">
-                    <div class="part">
-                        <h3>Product</h3>
-                        <a href="#">Academy</a>
-                        <a href="#">WhatsApp Exchange</a>
-                        <a href="#">Community</a>
-                    </div>
-                    <div class="part">
-                        <h3>Company</h3>
-                        <a href="#">About Us</a>
-                        <a href="#">Blog</a>
-                        <a href="#">Contact</a>
-                    </div>
-                    <div class="part">
-                        <h3>Legal</h3>
-                        <a href="#">Privacy Policy</a>
-                        <a href="#">Terms of Service</a>
-                        <a href="#">Risk Disclaimer</a>
-                    </div>
-                </div>
-                <div class="rest">
-                    <div class="socials">
-                        <a href="#"><i class="fa-brands fa-telegram"></i></a>
-                        <a href="#"><i class="fa-brands fa-discord"></i></a>
-                        <a href="#"><i class="fa-brands fa-youtube"></i></a>
-                        <a href="#"><i class="fa-brands fa-x-twitter"></i></a>
-                        <a href="#"><i class="fa-brands fa-tiktok"></i></a>
-                        <a href="#"><i class="fa-brands fa-whatsapp"></i></a>
-                    </div>
-                    <div class="contacts">
-                        <div class="contact-item">
-                            <span class="title">General Enquiries</span>
-                            <a href="mailto:hello@loopbridge.network" class="email">hello@loopbridge.network</a>
-                        </div>
-                        <div class="contact-item">
-                            <span class="title">Media Enquiries</span>
-                            <a href="mailto:press@loopbridge.network" class="email">press@loopbridge.network</a>
-                        </div>
-                        <div class="contact-item">
-                            <span class="title">Open a ticket</span>
-                            <a href="mailto:support@loopbridge.network" class="email">support@loopbridge.network</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="disclaimer">
-                We respect your privacy. LoopBridge does not sell your data. Read our <a href="#">Privacy Policy</a> to understand how we collect and protect your information.<br/>
-                By using LoopBridge tools — the Academy, Exchange, and Community — you agree to our <a href="#">Terms of Service</a>. Please review them before trading or joining.<br/>
-                Crypto assets are volatile and involve risk. LoopBridge provides education, community, and  tools, but financial decisions are your responsibility. Learn before you trade.<br/>
-                © <span class="year">2026</span> Loopbridge. All rights reserved.
-            </div>
-        </div>
-        
-    </footer>
+    <div data-component="footer" data-props='{"basePath":"./"}'></div>
 
+    <script src="./lib/utils.js"></script>
+    <script src="./lib/data-service.js"></script>
+    <script src="./lib/auth.js"></script>
+    <script src="./lib/component-loader.js"></script>
     <script src="./scripts/index.js"></script>
     <script src="./scripts/learning_track.js"></script>
+    <script>
+    document.addEventListener('components-loaded', async () => {
+        const allCourses = await DataService.getCourses();
+        const courses = allCourses.filter(c => c.track === 'intermediate');
+        const grid = document.getElementById('courses-grid');
+        const countEl = document.querySelector('.count');
+
+        const user = (typeof Auth !== 'undefined') ? Auth.getCurrentUser() : null;
+        const userId = user ? user.id : null;
+
+        if (countEl) countEl.textContent = courses.length + ' course' + (courses.length !== 1 ? 's' : '');
+
+        function getProgressHTML(course) {
+            if (!userId) return '';
+            const prog = DataService.getCourseProgress(userId, course.id);
+            if (!prog) return '';
+            let totalSubs = 0;
+            (course.topics || []).forEach(t => { totalSubs += (t.subsections || []).length; });
+            if (totalSubs === 0) return '';
+            const pct = Math.round((prog.completedSubs.length / totalSubs) * 100);
+            return `<div class="course-progress-bar">
+                <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
+                <span class="progress-label">${pct}%</span>
+            </div>`;
+        }
+
+        function renderCourses(list) {
+            if (!grid) return;
+            grid.innerHTML = list.map(c => `
+                <a href="./course_overview.html?id=${c.id}">
+                    <div class="course-container">
+                        <div class="course-card">
+                            <div class="course-image">
+                                <div class="course-price${c.price ? ' paid' : ''}">${c.price ? '$' + c.price : 'Free'}</div>
+                                <img src="${c.image || ''}" alt="${Utils.escapeHTML(c.title)}"/>
+                            </div>
+                            <div class="course-body">
+                                <div class="main-text">
+                                    <h3 class="course-title">${Utils.escapeHTML(c.title)}</h3>
+                                    <p class="course-description">${Utils.escapeHTML(c.description || '')}</p>
+                                </div>
+                                ${getProgressHTML(c)}
+                                <p class="course-author">By ${c.author ? (typeof c.author === 'string' ? c.author : c.author.name || 'LoopBridge Team') : 'LoopBridge Team'}</p>
+                            </div>
+                        </div>
+                    </div>
+                </a>
+            `).join('');
+        }
+
+        renderCourses(courses);
+
+        // Search
+        const searchInput = document.querySelector('.search input');
+        if (searchInput) {
+            searchInput.addEventListener('input', Utils.debounce(() => {
+                const q = searchInput.value.toLowerCase().trim();
+                const filtered = q ? courses.filter(c => c.title.toLowerCase().includes(q) || (c.description || '').toLowerCase().includes(q)) : courses;
+                renderCourses(filtered);
+            }, 250));
+        }
+    });
+    </script>
 </body>
 </html>

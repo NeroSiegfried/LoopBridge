@@ -1,0 +1,159 @@
+.courses-hero {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 18.75rem 5rem 9.375rem; /* 300px 80px 150px */
+    background-color: var(--lb-blue-dark);
+}
+
+.courses-hero h1 {
+    font-family: CabinetGrotesk-Bold, sans-serif;
+    font-size: 3.75rem; /* 60px */
+    font-weight: bold;
+    color: white;
+}
+
+
+.hero-body {
+    flex: 1;
+    display: block;
+    font-family: 'schibsted-grotesk', sans-serif;
+    font-size: 1.25rem; /* 20px */
+    
+}
+
+.hero-body p {
+    margin: 1.875rem 0 2.5rem; /* 30px 0 40px */
+    color: var(--gray-mid);
+}
+
+.courses-hero-img {
+    flex: 1;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.image-background {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    background-color: white;
+    padding: 40px 60px;
+    border-radius: 12px;
+}
+
+.pathways {
+    background-color: white;
+}
+
+.pathways h2 {
+    font-family: CabinetGrotesk-Variable, sans-serif;
+    font-weight: 500;
+}
+
+.path-cards {
+    margin-top: 3rem;
+}
+
+
+.path-cards .box-image{
+    height: 160px;
+    background-color: var(--gray-light);
+}
+
+.path-cards .box-button {
+    display: flex;
+    gap: 20px;
+    align-items: center;
+    justify-content: center;
+}
+
+.box-body a {
+    text-decoration: none;
+}
+
+a i {
+    font-size: 1.25rem; /* 20px */
+}
+
+
+
+
+
+
+@media (max-width: 1300px) {
+    .courses-hero .section-container {
+        flex-direction: column;
+        align-items: center;
+        justify-content: center;
+        gap: 2.5rem; /* 40px */
+        
+    }
+
+    .courses-hero-img {
+        flex: 1 1 auto;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        width: 100%;
+        padding: 0 15rem;
+
+    }
+
+    .image-background{
+        padding: 40px
+    }
+
+    .courses-hero-img img {
+        width: calc(100vw - 40px - 3.5rem);
+        height: auto;
+    }
+    
+}
+
+@media (max-width: 1100px){
+    .courses-hero-img {
+        padding: 0 5rem;
+    }
+
+}
+
+@media (max-width: 900px) {
+    .courses-hero-img {
+        padding: 0;
+    }
+}
+
+
+@media (max-width: 760px) {
+    .courses-hero {
+        padding: 12rem 1.75rem 2rem; /* 160px 20px 60px */
+        text-align: left;
+    }
+
+    .courses-hero .section-container {
+        flex-direction: column;
+    }
+
+    .courses-hero h1 {
+        font-size: 3rem; /* 48px */
+    }
+
+    .hero-body {
+        margin-bottom: 2.5rem; /* 40px */
+        width: 100%;
+    }
+
+
+    .courses-hero-img {
+        justify-content: center;
+        width: 100%;
+    }
+}
+
+@media (max-width: 640px) {
+    .path-cards {
+        grid-template-columns: 1fr;
+    }
+}

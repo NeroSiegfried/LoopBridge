@@ -14,31 +14,7 @@
     <script src="https://kit.fontawesome.com/20310b9de2.js" crossorigin="anonymous"></script>
 </head>
 <body>
-    <nav class="navbar">
-        <div class="nav-container">
-            <div class="logo">
-                <a href="./index.html">
-                    <img src="./images/logos/LB text no symbol black 2.png" alt="LoopBridge Logo" class="logo">
-                </a>
-            </div>
-            <button class="menu-toggle" id="mobile-menu-btn">
-                <i class="fa-solid fa-bars"></i>
-            </button>
-            <div class="nav-menu" id="nav-menu">
-                <div class="nav-links">
-                    <a href="./academy.html">Academy</a>
-                    <a href="./exchange.html">Exchange</a>
-                    <a href="./community.html">Community</a>
-                    <a href="./about.html">About</a>
-                    <a href="./blog.html">Blog</a>
-                    <a href="./faqs.html">FAQs</a>
-                </div>
-                <div class="nav-join">
-                    <a href="#">Join the Community</a>
-                </div>
-            </div>
-        </div>
-    </nav>
+    <div data-component="navbar" data-props='{"basePath":"./"}'></div>
     <section class="legal-hero">
         <div class="section-container">
             <div class="banner">
@@ -66,7 +42,7 @@
                     Eligibility
                 </li></h2>
                 <p>
-                    You must be at least 18 years old and comply with your country’s local crypto  regulations.
+                    You must be at least 18 years old and comply with your country's local crypto  regulations.
                 </p>
                 <h2><li>
                     Services Covered
@@ -116,71 +92,10 @@
             </ol>
         </div>
     </section>
-    <footer>
-        <div class="footer-container">
-            <div class="footer-content">
-                <div class="first">
-                    <div class="logo">
-                        <img src="./images/logos/LB text no symbol black 2.png" alt="LoopBridge Logo" class="logo">
-                    </div>
-                    <div class="motto">Your Companion Through Every Stage 
-    of Post-Modern Finance</div>
-                </div>
-                <div class="middle">
-                    <div class="part">
-                        <h3>Product</h3>
-                        <a href="#">Academy</a>
-                        <a href="#">WhatsApp Exchange</a>
-                        <a href="#">Community</a>
-                    </div>
-                    <div class="part">
-                        <h3>Company</h3>
-                        <a href="#">About Us</a>
-                        <a href="#">Blog</a>
-                        <a href="#">Contact</a>
-                    </div>
-                    <div class="part">
-                        <h3>Legal</h3>
-                        <a href="#">Privacy Policy</a>
-                        <a href="#">Terms of Service</a>
-                        <a href="#">Risk Disclaimer</a>
-                    </div>
-                </div>
-                <div class="rest">
-                    <div class="socials">
-                        <a href="#"><i class="fa-brands fa-telegram"></i></a>
-                        <a href="#"><i class="fa-brands fa-discord"></i></a>
-                        <a href="#"><i class="fa-brands fa-youtube"></i></a>
-                        <a href="#"><i class="fa-brands fa-x-twitter"></i></a>
-                        <a href="#"><i class="fa-brands fa-tiktok"></i></a>
-                        <a href="#"><i class="fa-brands fa-whatsapp"></i></a>
-                    </div>
-                    <div class="contacts">
-                        <div class="contact-item">
-                            <span class="title">General Enquiries</span>
-                            <a href="mailto:hello@loopbridge.network" class="email">hello@loopbridge.network</a>
-                        </div>
-                        <div class="contact-item">
-                            <span class="title">Media Enquiries</span>
-                            <a href="mailto:press@loopbridge.network" class="email">press@loopbridge.network</a>
-                        </div>
-                        <div class="contact-item">
-                            <span class="title">Open a ticket</span>
-                            <a href="mailto:support@loopbridge.network" class="email">support@loopbridge.network</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="disclaimer">
-                We respect your privacy. LoopBridge does not sell your data. Read our <a href="#">Privacy Policy</a> to understand how we collect and protect your information.<br/>
-                By using LoopBridge tools — the Academy, Exchange, and Community — you agree to our <a href="#">Terms of Service</a>. Please review them before trading or joining.<br/>
-                Crypto assets are volatile and involve risk. LoopBridge provides education, community, and  tools, but financial decisions are your responsibility. Learn before you trade.<br/>
-                © <span class="year">2026</span> Loopbridge. All rights reserved.
-            </div>
-        </div>
-        
-    </footer>
+    <div data-component="footer" data-props='{"basePath":"./"}'></div>
 
+    <script src="./lib/auth.js"></script>
+    <script src="./lib/component-loader.js"></script>
     <script src="./scripts/index.js"></script>
 </body>
 </html>

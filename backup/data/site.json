@@ -1,0 +1,69 @@
+{
+    "nav": {
+        "logo": {
+            "src": "./images/logos/LB text no symbol black 2.png",
+            "alt": "LoopBridge Logo",
+            "href": "./index.html"
+        },
+        "links": [
+            { "label": "Academy", "href": "./academy.html" },
+            { "label": "Exchange", "href": "./exchange.html" },
+            { "label": "Community", "href": "./community.html" },
+            { "label": "About", "href": "./about.html" },
+            { "label": "Blog", "href": "./blog.html" },
+            { "label": "FAQs", "href": "./faqs.html" }
+        ],
+        "cta": {
+            "label": "Join the Community",
+            "href": "#"
+        }
+    },
+    "footer": {
+        "logo": {
+            "src": "./images/logos/LB text no symbol black 2.png",
+            "alt": "LoopBridge Logo"
+        },
+        "motto": "Your Companion Through Every Stage of Post-Modern Finance",
+        "sections": [
+            {
+                "title": "Product",
+                "links": [
+                    { "label": "Academy", "href": "./academy.html" },
+                    { "label": "WhatsApp Exchange", "href": "./exchange.html" },
+                    { "label": "Community", "href": "./community.html" }
+                ]
+            },
+            {
+                "title": "Company",
+                "links": [
+                    { "label": "About Us", "href": "./about.html" },
+                    { "label": "Blog", "href": "./blog.html" },
+                    { "label": "Contact", "href": "mailto:hello@loopbridge.network" }
+                ]
+            },
+            {
+                "title": "Legal",
+                "links": [
+                    { "label": "Privacy Policy", "href": "./privacy.html" },
+                    { "label": "Terms of Service", "href": "./terms.html" },
+                    { "label": "Risk Disclaimer", "href": "./disclaimer.html" }
+                ]
+            }
+        ],
+        "socials": [
+            { "icon": "fa-brands fa-telegram", "href": "#" },
+            { "icon": "fa-brands fa-discord", "href": "#" },
+            { "icon": "fa-brands fa-youtube", "href": "#" },
+            { "icon": "fa-brands fa-x-twitter", "href": "#" },
+            { "icon": "fa-brands fa-tiktok", "href": "#" },
+            { "icon": "fa-brands fa-whatsapp", "href": "#" }
+        ],
+        "contacts": [
+            { "title": "General Enquiries", "email": "hello@loopbridge.network" },
+            { "title": "Media Enquiries", "email": "press@loopbridge.network" },
+            { "title": "Open a ticket", "email": "support@loopbridge.network" }
+        ],
+        "disclaimer": "We respect your privacy. LoopBridge does not sell your data. Read our <a href=\"./privacy.html\">Privacy Policy</a> to understand how we collect and protect your information.<br/>By using LoopBridge tools — the Academy, Exchange, and Community — you agree to our <a href=\"./terms.html\">Terms of Service</a>. Please review them before trading or joining.<br/>Crypto assets are volatile and involve risk. LoopBridge provides education, community, and tools, but financial decisions are your responsibility. Learn before you trade.",
+        "copyright": "© 2026 Loopbridge. All rights reserved."
+    }
+}

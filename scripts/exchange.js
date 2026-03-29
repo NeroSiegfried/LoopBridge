@@ -1,21 +1,81 @@
-document.addEventListener("DOMContentLoaded", () => {
-    const marqueeContent = document.querySelector(".marquee-content");
+document.addEventListener("DOMContentLoaded", async () => {
+    const marqueeContent = document.getElementById("marquee-content");
     const marquee = document.querySelector(".marquee");
 
-    // Clone the marquee content
+    // ─── Fetch live prices from CoinGecko ───────────────────
+    const COINS = 'bitcoin,ethereum,solana,binancecoin,ripple,cardano,dogecoin,tron';
+    const SYMBOL_MAP = {
+        bitcoin: 'BTC', ethereum: 'ETH', solana: 'SOL', binancecoin: 'BNB',
+        ripple: 'XRP', cardano: 'ADA', dogecoin: 'DOGE', tron: 'TRX'
+    };
+
+    let coins = [];
+    try {
+        const res = await fetch(
+            `https://api.coingecko.com/api/v3/coins/markets?vs_currency=usd&ids=${COINS}&order=market_cap_desc&sparkline=false&price_change_percentage=24h`
+        );
+        if (res.ok) coins = await res.json();
+    } catch (err) {
+        console.warn('[Exchange] CoinGecko API unavailable, using fallback data.', err);
+    }
+
+    // Fallback data in case API fails
+    if (!coins.length) {
+        coins = [
+            { id: 'bitcoin', name: 'Bitcoin', image: '', current_price: 87432.10, price_change_percentage_24h: 1.24 },
+            { id: 'ethereum', name: 'Ethereum', image: '', current_price: 2015.50, price_change_percentage_24h: -0.85 },
+            { id: 'solana', name: 'Solana', image: '', current_price: 138.20, price_change_percentage_24h: 3.42 },
+            { id: 'binancecoin', name: 'BNB', image: '', current_price: 612.30, price_change_percentage_24h: 0.52 },
+            { id: 'ripple', name: 'XRP', image: '', current_price: 2.41, price_change_percentage_24h: -1.10 },
+            { id: 'cardano', name: 'Cardano', image: '', current_price: 0.72, price_change_percentage_24h: 2.30 },
+            { id: 'dogecoin', name: 'Dogecoin', image: '', current_price: 0.17, price_change_percentage_24h: -0.33 },
+            { id: 'tron', name: 'TRON', image: '', current_price: 0.23, price_change_percentage_24h: 0.92 }
+        ];
+    }
+
+    function formatPrice(price) {
+        if (price >= 1) return '$' + price.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        return '$' + price.toFixed(4);
+    }
+
+    function renderCurrency(coin) {
+        const change = coin.price_change_percentage_24h || 0;
+        const sign = change >= 0 ? '+' : '';
+        const colorClass = change >= 0 ? 'positive' : 'negative';
+        const symbol = SYMBOL_MAP[coin.id] || coin.symbol?.toUpperCase() || '';
+        const icon = coin.image
+            ? `<img src="${coin.image}" alt="${coin.name}" style="width:40px;height:40px;border-radius:50%;">`
+            : `<span style="width:40px;height:40px;display:flex;align-items:center;justify-content:center;background:#e9fded;border-radius:50%;font-weight:600;font-size:14px;">${symbol.slice(0,2)}</span>`;
+
+        return `<div class="currency">
+            <div class="left">
+                <div class="icon">${icon}</div>
+                <div class="name">
+                    <div class="full">${coin.name}</div>
+                    <div class="short">${symbol}</div>
+                </div>
+            </div>
+            <div class="numbers">
+                <div class="value">${formatPrice(coin.current_price)}</div>
+                <div class="change ${colorClass}">${sign}${change.toFixed(2)}%</div>
+            </div>
+        </div>`;
+    }
+
+    // Build marquee content
+    marqueeContent.innerHTML = coins.map(renderCurrency).join('');
+
+    // Clone for seamless loop
     const clone = marqueeContent.cloneNode(true);
     marquee.appendChild(clone);
 
-    // Set the width of the marquee content to ensure proper alignment
+    // Set animation speed
     const contentWidth = marqueeContent.scrollWidth;
     marqueeContent.style.width = `${contentWidth}px`;
     clone.style.width = `${contentWidth}px`;
 
-    // Set the animation duration based on the content width and a constant speed
-    const scrollSpeed = 100; // pixels per second
+    const scrollSpeed = 100;
     const duration = contentWidth / scrollSpeed;
-
-    // Apply the animation duration to both the original and cloned content
     marqueeContent.style.animationDuration = `${duration}s`;
     clone.style.animationDuration = `${duration}s`;
 });

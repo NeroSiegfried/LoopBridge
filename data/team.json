@@ -1,0 +1,70 @@
+{
+    "members": [
+        {
+            "id": "team-001",
+            "name": "Adewale Okonkwo",
+            "role": "Founder & CEO",
+            "avatar": "images/team/adewale.jpg",
+            "bio": "Adewale is the visionary behind LoopBridge, coining the term 'PostModern Finance' and building a bridge between traditional and decentralized financial systems. With over 8 years in crypto and fintech, he leads the strategic direction of the platform.",
+            "socials": {
+                "x": "https://x.com/adewale",
+                "linkedin": "https://linkedin.com/in/adewale"
+            }
+        },
+        {
+            "id": "team-002",
+            "name": "Chioma Nwosu",
+            "role": "Head of Academy",
+            "avatar": "images/team/chioma.jpg",
+            "bio": "Chioma designs and curates the learning tracks at LoopBridge Academy. A former university lecturer with a passion for making complex topics accessible, she ensures every course meets the highest educational standards.",
+            "socials": {
+                "x": "https://x.com/chioma",
+                "linkedin": "https://linkedin.com/in/chioma"
+            }
+        },
+        {
+            "id": "team-003",
+            "name": "Emeka Ibe",
+            "role": "Lead Developer",
+            "avatar": "images/team/emeka.jpg",
+            "bio": "Emeka is the technical backbone of LoopBridge, responsible for building and maintaining the platform. A full-stack developer with deep expertise in Web3 technologies, he ensures every feature is robust, secure, and user-friendly.",
+            "socials": {
+                "x": "https://x.com/emeka",
+                "linkedin": "https://linkedin.com/in/emeka"
+            }
+        },
+        {
+            "id": "team-004",
+            "name": "Fatima Bello",
+            "role": "Community Manager",
+            "avatar": "images/team/fatima.jpg",
+            "bio": "Fatima keeps the LoopBridge community vibrant and engaged across all platforms. From moderating discussions to organizing events, she's the friendly face that connects our members to each other and to the team.",
+            "socials": {
+                "x": "https://x.com/fatima",
+                "linkedin": "https://linkedin.com/in/fatima"
+            }
+        },
+        {
+            "id": "team-005",
+            "name": "Tunde Adeyemi",
+            "role": "Exchange Operations Lead",
+            "avatar": "images/team/tunde.jpg",
+            "bio": "Tunde oversees the WhatsApp Exchange, ensuring every trade is processed quickly and securely. With a background in traditional finance and crypto trading, he brings a unique blend of expertise to the exchange desk.",
+            "socials": {
+                "x": "https://x.com/tunde",
+                "linkedin": "https://linkedin.com/in/tunde"
+            }
+        },
+        {
+            "id": "team-006",
+            "name": "Ngozi Okafor",
+            "role": "Content & Research Lead",
+            "avatar": "images/team/ngozi.jpg",
+            "bio": "Ngozi drives the editorial direction of LoopBridge's blog and articles. A former journalist turned crypto researcher, she distills complex market trends and blockchain concepts into actionable insights.",
+            "socials": {
+                "x": "https://x.com/ngozi",
+                "linkedin": "https://linkedin.com/in/ngozi"
+            }
+        }
+    ]
+}

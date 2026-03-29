@@ -15,40 +15,16 @@
     <script src="https://kit.fontawesome.com/20310b9de2.js" crossorigin="anonymous"></script>
 </head>
 <body>
-    <nav class="navbar">
-        <div class="nav-container">
-            <div class="logo">
-                <a href="./index.html">
-                    <img src="./images/logos/LB text no symbol black 2.png" alt="LoopBridge Logo" class="logo">
-                </a>
-            </div>
-            <button class="menu-toggle" id="mobile-menu-btn">
-                <i class="fa-solid fa-bars"></i>
-            </button>
-            <div class="nav-menu" id="nav-menu">
-                <div class="nav-links">
-                    <a href="./academy.html">Academy</a>
-                    <a href="./exchange.html">Exchange</a>
-                    <a href="./community.html">Community</a>
-                    <a href="./about.html">About</a>
-                    <a href="./blog.html">Blog</a>
-                    <a href="#" class="active">FAQs</a>
-                </div>
-                <div class="nav-join">
-                    <a href="#">Join the Community</a>
-                </div>
-            </div>
-        </div>
-    </nav>
+    <div data-component="navbar" data-props='{"basePath":"./","activePage":"faqs"}'></div>
 
 
     <header class="faq-hero">
         <div class="section-container">
             <div class="faqs-inner-section">
                 <h1>
-                    Got Questions? You’re in the Right Loop.
+                    Got Questions? You're in the Right Loop.
                 </h1>
-                <p> Here’s everything you need to know about learning, trading, and growing inside LoopBridge.
+                <p> Here's everything you need to know about learning, trading, and growing inside LoopBridge.
 move confidently through the new landscape of Web3.</p>
             </div>
         </div>
@@ -66,7 +42,7 @@ move confidently through the new landscape of Web3.</p>
                     <button class="category-button">Support & Contact</button>
                     <button class="category-button">Risk & Responsibility</button>
                 </div>
-                <div class="QnA">
+                <div class="QnA" id="faq-list">
                     <div class="QnA-item">
                         <h3 class="question"><span class="text">What is LoopBridge?</span><span class="button"><i class="fa-solid fa-plus"></i></span></h3>
                         <p class="answer">LoopBridge is a learning and trading ecosystem built for New Finance — a space where people can understand Web3 in practice, trade crypto directly on WhatsApp or Telegram, and grow with a community that moves in sync.</p>
@@ -91,72 +67,63 @@ move confidently through the new landscape of Web3.</p>
 
 
 
-    <footer>
-        <div class="footer-container">
-            <div class="footer-content">
-                <div class="first">
-                    <div class="logo">
-                        <img src="./images/logos/LB text no symbol black 2.png" alt="LoopBridge Logo" class="logo">
-                    </div>
-                    <div class="motto">Your Companion Through Every Stage 
-    of Post-Modern Finance</div>
-                </div>
-                <div class="middle">
-                    <div class="part">
-                        <h3>Product</h3>
-                        <a href="#">Academy</a>
-                        <a href="#">WhatsApp Exchange</a>
-                        <a href="#">Community</a>
-                    </div>
-                    <div class="part">
-                        <h3>Company</h3>
-                        <a href="#">About Us</a>
-                        <a href="#">Blog</a>
-                        <a href="#">Contact</a>
-                    </div>
-                    <div class="part">
-                        <h3>Legal</h3>
-                        <a href="#">Privacy Policy</a>
-                        <a href="#">Terms of Service</a>
-                        <a href="#">Risk Disclaimer</a>
-                    </div>
-                </div>
-                <div class="rest">
-                    <div class="socials">
-                        <a href="#"><i class="fa-brands fa-telegram"></i></a>
-                        <a href="#"><i class="fa-brands fa-discord"></i></a>
-                        <a href="#"><i class="fa-brands fa-youtube"></i></a>
-                        <a href="#"><i class="fa-brands fa-x-twitter"></i></a>
-                        <a href="#"><i class="fa-brands fa-tiktok"></i></a>
-                        <a href="#"><i class="fa-brands fa-whatsapp"></i></a>
-                    </div>
-                    <div class="contacts">
-                        <div class="contact-item">
-                            <span class="title">General Enquiries</span>
-                            <a href="mailto:hello@loopbridge.network" class="email">hello@loopbridge.network</a>
-                        </div>
-                        <div class="contact-item">
-                            <span class="title">Media Enquiries</span>
-                            <a href="mailto:press@loopbridge.network" class="email">press@loopbridge.network</a>
-                        </div>
-                        <div class="contact-item">
-                            <span class="title">Open a ticket</span>
-                            <a href="mailto:support@loopbridge.network" class="email">support@loopbridge.network</a>
-                        </div>
-                    </div>
-                </div>
-            </div>
-            <div class="disclaimer">
-                We respect your privacy. LoopBridge does not sell your data. Read our <a href="#">Privacy Policy</a> to understand how we collect and protect your information.<br/>
-                By using LoopBridge tools — the Academy, Exchange, and Community — you agree to our <a href="#">Terms of Service</a>. Please review them before trading or joining.<br/>
-                Crypto assets are volatile and involve risk. LoopBridge provides education, community, and  tools, but financial decisions are your responsibility. Learn before you trade.<br/>
-                © <span class="year">2026</span> Loopbridge. All rights reserved.
-            </div>
-        </div>
-        
-    </footer>
+    <div data-component="footer" data-props='{"basePath":"./"}'></div>
 
+    <script src="./lib/utils.js"></script>
+    <script src="./lib/data-service.js"></script>
+    <script src="./lib/auth.js"></script>
+    <script src="./lib/component-loader.js"></script>
     <script src="./scripts/index.js"></script>
-    <script src="./scripts/faqs.js"></script>
+    <script>
+    document.addEventListener('components-loaded', async () => {
+        const res = await fetch('./data/faqs.json');
+        const faqData = await res.json();
+        const faqList = document.getElementById('faq-list');
+        const buttons = document.querySelectorAll('.category-button');
+
+        function renderFaqs(category) {
+            const items = faqData[category] || [];
+            if (!faqList) return;
+            faqList.innerHTML = items.map(faq => `
+                <div class="QnA-item">
+                    <h3 class="question"><span class="text">${Utils.escapeHTML(faq.question)}</span><span class="button"><i class="fa-solid fa-plus"></i></span></h3>
+                    <p class="answer">${Utils.escapeHTML(faq.answer)}</p>
+                </div>
+            `).join('');
+
+            // Re-bind accordion behavior
+            faqList.querySelectorAll('.QnA-item').forEach(item => {
+                const question = item.querySelector('.question');
+                const icon = question.querySelector('.button i');
+                question.addEventListener('click', () => {
+                    const isActive = item.classList.contains('active');
+                    faqList.querySelectorAll('.QnA-item').forEach(i => {
+                        i.classList.remove('active');
+                        const otherIcon = i.querySelector('.button i');
+                        otherIcon.classList.remove('fa-minus');
+                        otherIcon.classList.add('fa-plus');
+                    });
+                    if (!isActive) {
+                        item.classList.add('active');
+                        icon.classList.remove('fa-plus');
+                        icon.classList.add('fa-minus');
+                    }
+                });
+            });
+        }
+
+        // Initial render
+        renderFaqs('General');
+
+        // Category switching
+        buttons.forEach(btn => {
+            btn.addEventListener('click', () => {
+                buttons.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                renderFaqs(btn.textContent.trim());
+            });
+        });
+    });
+    </script>
 </body>
 </html>

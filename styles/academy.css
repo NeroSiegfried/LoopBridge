@@ -41,6 +41,31 @@
     border-radius: 2.1875rem; /* 35px */
     background-color: var(--lb-green);
     color: white;
+    cursor: pointer;
+    transition: background-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.primary-btn:hover {
+    background-color: #28a85f;
+    box-shadow: 0 2px 8px rgba(48, 192, 112, 0.25);
+}
+
+.primary-btn:active {
+    transform: scale(0.97);
+    background-color: #209050;
+}
+
+/* MOBILE — enforce 20px horizontal padding */
+@media (max-width: 48rem) {
+    .academy-hero {
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+
+    .pathways {
+        padding-left: 20px;
+        padding-right: 20px;
+    }
 }
 
 .pathways {

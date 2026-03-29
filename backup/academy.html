@@ -15,120 +15,120 @@
 </head>
 <body>
     <nav class="navbar">
-        <div class="logo">
-            <a href="./index.html">
-                <img src="./images/logos/LB text no symbol black 2.png" alt="LoopBridge Logo" class="logo">
-            </a>
-        </div>
-        <div class="nav-links">
-            <a href="#" class="active">Academy</a>
-            <a href="#">Exchange</a>
-            <a href="./community.html">Community</a>
-            <a href="#">About</a>
-            <a href="#">Blog</a>
-            <a href="#">FAQs</a>
-        </div>
-        <div class="nav-join">
-            <a href="#">Join the Community</a>
+        <div class="nav-container">
+            <div class="logo">
+                <a href="./index.html">
+                    <img src="./images/logos/LB text no symbol black 2.png" alt="LoopBridge Logo" class="logo">
+                </a>
+            </div>
+            <button class="menu-toggle" id="mobile-menu-btn">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+            <div class="nav-menu" id="nav-menu">
+                <div class="nav-links">
+                    <a href="#" class="active">Academy</a>
+                    <a href="./exchange.html">Exchange</a>
+                    <a href="./community.html">Community</a>
+                    <a href="./about.html">About</a>
+                    <a href="./blog.html">Blog</a>
+                    <a href="./faqs.html">FAQs</a>
+                </div>
+                <div class="nav-join">
+                    <a href="#">Join the Community</a>
+                </div>
+            </div>
         </div>
     </nav>
     <header class="academy-hero">
-        <div class="hero-body">
-            <h1>Learn <span class="accent-two">Web3</span> in Practice, <br/>
-                Not Just in Theory
-            </h1>
-            <p>LoopBridge Academy turns curiosity into confidence through hands-on lessons, visual explainers, and real-world application.
-            </p>
-            <button class="primary-btn">Start Learning</button>
+        <div class="section-container">
+            <div class="hero-body">
+                <h1>Learn <span class="accent-two">Web3</span> in Practice, <br/>
+                    Not Just in Theory
+                </h1>
+                <p>LoopBridge Academy turns curiosity into confidence through hands-on lessons, visual explainers, and real-world application.
+                </p>
+                <button class="primary-btn">Start Learning</button>
 
-        </div>
-        <div class="academy-hero-img">
-            <img src="./images/distance-education.svg" alt="Hero Picture">
+            </div>
+            <div class="academy-hero-img">
+                <img src="./images/Academy (Top Banner).png" alt="Hero Picture">
+            </div>
         </div>
     </header>
     <section class="pathways">
-        <h2>Learning Pathways</h2>
-        <p>
-            Select a suitable learning track to get started
-        </p>
-        <div class="track-cards">
-            <div class="card-item beginner">
-                <div class="card-head">
-                    <div class="card-highlight">Getting Started in New Finance</div>
-                    <div class="card-title">Beginner Track</div>
-                    <div class="card-subheading">Build a solid foundation in crypto, wallets, security, and blockchain basics.</div>
+        <div class="section-container">
+            <h2>Learning Pathways</h2>
+            <p>
+                Clear paths designed to help you learn, apply, and grow in New Finance at your own pace.
+            </p>
+            <div class="path-cards">
+                <div class="box articles">
+                    <div class="box-content">
+                        <div class="box-head">
+                            <div class="card-highlight">Getting Started in New Finance</div>
+                            <div class="icon">
+                                <i class="fa-solid fa-newspaper"></i>
+                            </div>
+                            <h3 class="box-title">Articles</h3>
+                        </div>
+                        <div class="box-body">
+                            <p>
+                                Short, practical reads that break down Web3, markets, and emerging trends without the noise. Designed to help you understand everything. 
+                            </p> 
+                            <a href="./articles.html"><button class="box-button">Read Articles</button></a>   
+                        </div>
+                    </div>
                 </div>
-                <div class="card-body">
-                    <ul class="card-list">
-                        <li>What is Cryptocurrency?</li>
-                        <li>How to Set Up and Secure Your Wallet</li>
-                        <li>Understanding Naira ↔ Crypto Trading</li>
-                        <li>The Basics of Airdrops and Tokens</li>
-                    </ul>
-                    <button class="card-btn">Start the Beginner Path</button>
+                <div class="box courses">
+                    <div class="box-content">
+                        <div class="box-head">
+                            <div class="card-highlight">Building and Earning in Web3</div>
+                            <div class="icon">
+                                <i class="fa-solid fa-book-open"></i>
+                            </div>
+                            <h3 class="box-title">Courses</h3>
+                        </div>
+                        <div class="box-body">
+                            <p>
+                                Structured learning paths that guide you from fundamentals to confident application. Every course focuses on real-world use. 
+                            </p> 
+                            <a href="./courses.html"><button class="box-button">Start Learning</button> </a>  
+                        </div>
+                    </div>
+                </div>
+                <div class="box glossary">
+                    <div class="box-content">
+                        <div class="box-head">
+                            <div class="card-highlight">Trading and Application</div>
+                            <div class="icon">
+                                <i class="fa-solid fa-book"></i>
+                            </div>
+                            <h3 class="box-title">Glossary</h3>
+                        </div>
+                        <div class="box-body">
+                            <p>
+                                Clear, simple explanations of crypto and Web3 terms in plain language. Built to remove confusion so you can make informed decisions.
+                            </p>
+                            <button class="box-button">Browse Glossary</button>   
+                        </div>
+                    </div>
                 </div>
             </div>
-            <div class="card-item intermediate">
-                <div class="card-head">
-                    <div class="card-highlight">Trading & Application</div>
-                    <div class="card-title">Intermediate Track</div>
-                    <div class="card-subheading">Go beyond holding tokens. Learn to trade safely, read markets, and use real strategies.</div>
-                </div>
-                <div class="card-body">
-                    <ul class="card-list">
-                        <li>How to Read a Candlestick Chart</li>
-                        <li>Spot vs Futures Trading</li>
-                        <li>Managing Risk Like a Pro</li>
-                        <li>How to Trade on WhatsApp with LoopBridge</li>
-                    </ul>
-                    <button class="card-btn">Explore Trading Lessons</button>
-                </div>
-            </div>
-            <div class="card-item advanced">
-                <div class="card-head">
-                    <div class="card-highlight">Building and Earning in Web3</div>
-                    <div class="card-title">Advanced Track</div>
-                    <div class="card-subheading">Discover how to participate, build, or contribute to the PostModern Finance economy.</div>
-                </div>
-                <div class="card-body">
-                    <ul class="card-list">
-                        <li>How to Identify Promising Projects Early</li>
-                        <li>Participating in DAOs</li>
-                        <li>Understanding Onchain Income Streams</li>
-                        <li>Contributing to Web3 Communities</li>
-                    </ul>
-                    <button class="card-btn">Go Advanced</button>
-                </div>
             </div>
         </div>
     </section>
-    <section class="intro">
-        <blockquote>
-        We design LoopBridge Academy 
-        <span class="icon grad-hat">
-            <i class="fa-solid fa-graduation-cap"></i>
-        </span> 
-        for people who want to understand New Finance 
-        <span class="icon wallet">
-            <i class="fa-solid fa-wallet"></i>
-        </span> 
-        by doing, not memorizing. Every course and guide is designed to show you real-life applications of web3 
-        <span class="icon ether">
-            <i class="fab fa-ethereum"></i>
-        </span> 
-        — how to use the tools, read the markets, and make decisions that grow your finances with clarity and confidence.
-    </blockquote>
-    </section>
     <section class="philosophy">
-        <h2 class="tagline">Why <span class="accent-two">We Teach</span> the Way We Do</h2>
-        <div class="philosophy-body">
-            <p>
-                We believe learning New Finance should be practical, falsifiable, and community-driven. That’s why LoopBridge Academy is designed around real use cases, visual lessons, and  peer collaboration.
-            </p>
-            <p>
-                We call this approach PostModern Learning — because just like PostModern Finance, it’s  open, interactive, and shaped by participation.
-            </p>
-            
+        <div class="section-container">
+            <h2 class="tagline">Why <span class="accent-two">We Teach</span> the Way We Do</h2>
+            <div class="philosophy-body">
+                <p>
+                    We believe learning New Finance should be practical, falsifiable, and community-driven. That’s why LoopBridge Academy is designed around real use cases, visual lessons, and  peer collaboration.
+                </p>
+                <p>
+                    We call this approach PostModern Learning — because just like PostModern Finance, it’s  open, interactive, and shaped by participation.
+                </p>
+                
+            </div>
         </div>
     </section>
     <section class="newsletter">
@@ -147,67 +147,70 @@
         </div>
     </section>
     <footer>
-        <div class="footer-content">
-            <div class="first">
-                <div class="logo">
-                    <img src="./images/logos/LB text no symbol black 2.png" alt="LoopBridge Logo" class="logo">
+        <div class="footer-container">
+            <div class="footer-content">
+                <div class="first">
+                    <div class="logo">
+                        <img src="./images/logos/LB text no symbol black 2.png" alt="LoopBridge Logo" class="logo">
+                    </div>
+                    <div class="motto">Your Companion Through Every Stage 
+    of Post-Modern Finance</div>
                 </div>
-                <div class="motto">Your Companion Through Every Stage 
-of Post-Modern Finance</div>
+                <div class="middle">
+                    <div class="part">
+                        <h3>Product</h3>
+                        <a href="#">Academy</a>
+                        <a href="#">WhatsApp Exchange</a>
+                        <a href="#">Community</a>
+                    </div>
+                    <div class="part">
+                        <h3>Company</h3>
+                        <a href="#">About Us</a>
+                        <a href="#">Blog</a>
+                        <a href="#">Contact</a>
+                    </div>
+                    <div class="part">
+                        <h3>Legal</h3>
+                        <a href="#">Privacy Policy</a>
+                        <a href="#">Terms of Service</a>
+                        <a href="#">Risk Disclaimer</a>
+                    </div>
+                </div>
+                <div class="rest">
+                    <div class="socials">
+                        <a href="#"><i class="fa-brands fa-telegram"></i></a>
+                        <a href="#"><i class="fa-brands fa-discord"></i></a>
+                        <a href="#"><i class="fa-brands fa-youtube"></i></a>
+                        <a href="#"><i class="fa-brands fa-x-twitter"></i></a>
+                        <a href="#"><i class="fa-brands fa-tiktok"></i></a>
+                        <a href="#"><i class="fa-brands fa-whatsapp"></i></a>
+                    </div>
+                    <div class="contacts">
+                        <div class="contact-item">
+                            <span class="title">General Enquiries</span>
+                            <a href="mailto:hello@loopbridge.network" class="email">hello@loopbridge.network</a>
+                        </div>
+                        <div class="contact-item">
+                            <span class="title">Media Enquiries</span>
+                            <a href="mailto:press@loopbridge.network" class="email">press@loopbridge.network</a>
+                        </div>
+                        <div class="contact-item">
+                            <span class="title">Open a ticket</span>
+                            <a href="mailto:support@loopbridge.network" class="email">support@loopbridge.network</a>
+                        </div>
+                    </div>
+                </div>
             </div>
-            <div class="middle">
-                <div class="part">
-                    <h3>Product</h3>
-                    <a href="#">Academy</a>
-                    <a href="#">WhatsApp Exchange</a>
-                    <a href="#">Community</a>
-                </div>
-                <div class="part">
-                    <h3>Company</h3>
-                    <a href="#">About Us</a>
-                    <a href="#">Blog</a>
-                    <a href="#">Contact</a>
-                </div>
-                <div class="part">
-                    <h3>Legal</h3>
-                    <a href="#">Privacy Policy</a>
-                    <a href="#">Terms of Service</a>
-                    <a href="#">Risk Disclaimer</a>
-                </div>
-            </div>
-            <div class="rest">
-                <div class="socials">
-                    <a href="#"><i class="fa-brands fa-telegram"></i></a>
-                    <a href="#"><i class="fa-brands fa-discord"></i></a>
-                    <a href="#"><i class="fa-brands fa-youtube"></i></a>
-                    <a href="#"><i class="fa-brands fa-x-twitter"></i></a>
-                    <a href="#"><i class="fa-brands fa-tiktok"></i></a>
-                    <a href="#"><i class="fa-brands fa-whatsapp"></i></a>
-                </div>
-                <div class="contacts">
-                    <div class="contact-item">
-                        <span class="title">General Enquiries</span>
-                        <a href="mailto:hello@loopbridge.network" class="email">hello@loopbridge.network</a>
-                    </div>
-                    <div class="contact-item">
-                        <span class="title">Media Enquiries</span>
-                        <a href="mailto:press@loopbridge.network" class="email">press@loopbridge.network</a>
-                    </div>
-                    <div class="contact-item">
-                        <span class="title">Open a ticket</span>
-                        <a href="mailto:support@loopbridge.network" class="email">support@loopbridge.network</a>
-                    </div>
-                </div>
+            <div class="disclaimer">
+                We respect your privacy. LoopBridge does not sell your data. Read our <a href="#">Privacy Policy</a> to understand how we collect and protect your information.<br/>
+                By using LoopBridge tools — the Academy, Exchange, and Community — you agree to our <a href="#">Terms of Service</a>. Please review them before trading or joining.<br/>
+                Crypto assets are volatile and involve risk. LoopBridge provides education, community, and  tools, but financial decisions are your responsibility. Learn before you trade.<br/>
+                © <span class="year">2026</span> Loopbridge. All rights reserved.
             </div>
         </div>
-        <div class="disclaimer">
-            We respect your privacy. LoopBridge does not sell your data. Read our <a href="#">Privacy Policy</a> to understand how we collect and protect your information.<br/>
-            By using LoopBridge tools — the Academy, Exchange, and Community — you agree to our <a href="#">Terms of Service</a>. Please review them before trading or joining.<br/>
-            Crypto assets are volatile and involve risk. LoopBridge provides education, community, and  tools, but financial decisions are your responsibility. Learn before you trade.<br/>
-            © <span class="year">2026</span> Loopbridge. All rights reserved.
-        </div>
-
+        
     </footer>
-    
+
+    <script src="./scripts/index.js"></script>
 </body>
 </html>

@@ -1,0 +1,20 @@
+<!-- Course Card Template (rendered by JS, structure doc only) -->
+<a href="{{courseUrl}}" class="course-card-link">
+    <div class="course-card card">
+        <div class="card-image course-card-image">
+            <img src="{{thumbnail}}" alt="{{title}}">
+            <span class="course-card-badge badge badge-{{track}}">{{track}}</span>
+        </div>
+        <div class="card-body course-card-body">
+            <h3 class="course-card-title">{{title}}</h3>
+            <p class="course-card-description">{{description}}</p>
+            <div class="course-card-meta">
+                <span class="course-card-topics"><i class="fa-solid fa-list"></i> {{topicCount}} topics</span>
+                <span class="course-card-duration"><i class="fa-regular fa-clock"></i> {{duration}}</span>
+            </div>
+            <div class="course-card-author">
+                <span>By {{author}}</span>
+            </div>
+        </div>
+    </div>
+</a>

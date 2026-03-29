@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard — LoopBridge Admin</title>
+    <link rel="stylesheet" href="../styles/global.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
+    <link href="https://cdn.lineicons.com/5.1/line/lineicons.css" rel="stylesheet"/>
+    <script src="https://kit.fontawesome.com/20310b9de2.js" crossorigin="anonymous"></script>
+    <style>
+        .admin-header {
+            background-color: var(--lb-blue-dark);
+            padding: 1rem 2.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .admin-header .logo img {
+            height: 24px;
+            filter: brightness(0) invert(1);
+        }
+
+        .admin-header-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            color: white;
+            font-family: var(--font-body);
+            font-size: 0.875rem;
+        }
+
+        .admin-header-right .user-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 1rem;
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: capitalize;
+        }
+
+        .admin-header-right .user-badge.admin { background-color: var(--lb-green); }
+        .admin-header-right .user-badge.author { background-color: #ff6e2a; }
+
+        .admin-body {
+            padding: 2rem 2.5rem;
+            max-width: var(--max-width);
+            margin: auto;
+        }
+
+        .admin-welcome {
+            margin-bottom: 2rem;
+        }
+
+        .admin-welcome h1 {
+            font-family: var(--font-heading-variable);
+            font-size: 1.75rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+
+        .admin-welcome p {
+            font-family: var(--font-body);
+            color: var(--black-mid);
+            font-weight: 300;
+        }
+
+        .admin-actions {
+            display: flex;
+            gap: 1rem;
+            margin-bottom: 3rem;
+        }
+
+        /* Tabs */
+        .admin-tabs {
+            display: flex;
+            gap: 0;
+            border-bottom: 2px solid var(--gray-mid);
+            margin-bottom: 2rem;
+        }
+
+        .admin-tab {
+            font-family: var(--font-body);
+            font-weight: 600;
+            font-size: 0.9375rem;
+            padding: 0.75rem 1.5rem;
+            background: none;
+            border: none;
+            color: var(--black-mid);
+            cursor: pointer;
+            border-bottom: 2px solid transparent;
+            margin-bottom: -2px;
+            transition: color var(--transition-fast), border-color var(--transition-fast);
+        }
+
+        .admin-tab:hover {
+            color: var(--lb-green);
+        }
+
+        .admin-tab.active {
+            color: var(--lb-green);
+            border-bottom-color: var(--lb-green);
+        }
+
+        /* Table */
+        .admin-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: var(--font-body);
+        }
+
+        .admin-table th {
+            text-align: left;
+            padding: 0.75rem 1rem;
+            font-weight: 600;
+            font-size: 0.8125rem;
+            color: var(--black-mid);
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            border-bottom: 2px solid var(--gray-mid);
+        }
+
+        .admin-table td {
+            padding: 1rem;
+            border-bottom: 1px solid var(--gray-mid);
+            font-size: 0.9375rem;
+            vertical-align: middle;
+        }
+
+        .admin-table tr {
+            transition: background-color var(--transition-fast);
+        }
+
+        .admin-table tbody tr:hover {
+            background-color: var(--gray-light);
+        }
+
+        .admin-table .title-cell {
+            font-weight: 600;
+            color: var(--lb-blue-text);
+            max-width: 300px;
+        }
+
+        .admin-table .meta-cell {
+            color: var(--black-mid);
+            font-size: 0.8125rem;
+            font-weight: 300;
+        }
+
+        .admin-table .actions-cell {
+            display: flex;
+            gap: 0.5rem;
+            justify-content: flex-end;
+        }
+
+        .admin-empty {
+            text-align: center;
+            padding: 3rem;
+            color: var(--black-mid);
+        }
+
+        /* Stats strip */
+        .stats-strip {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(160px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+
+        .stat-card {
+            background: white;
+            border: 1px solid var(--gray-mid);
+            border-radius: var(--radius-card);
+            padding: 1.25rem;
+        }
+
+        .stat-card .stat-number {
+            font-family: var(--font-heading);
+            font-size: 2rem;
+            color: var(--lb-blue-text);
+        }
+
+        .stat-card .stat-label {
+            font-family: var(--font-body);
+            font-size: 0.8125rem;
+            color: var(--black-mid);
+            font-weight: 300;
+        }
+
+        @media (max-width: 62rem) {
+            .admin-header {
+                padding: 1rem 1.25rem;
+            }
+            .admin-body {
+                padding: 1.5rem 1.25rem;
+            }
+            .admin-table th:nth-child(3),
+            .admin-table td:nth-child(3) {
+                display: none;
+            }
+        }
+
+        @media (max-width: 48rem) {
+            .admin-table th:nth-child(2),
+            .admin-table td:nth-child(2) {
+                display: none;
+            }
+            .admin-actions {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Admin Header -->
+    <header class="admin-header">
+        <div class="logo">
+            <a href="../index.html"><img src="../images/logos/LB text no symbol black 2.png" alt="LoopBridge"></a>
+        </div>
+        <div class="admin-header-right">
+            <span id="user-name"></span>
+            <span class="user-badge" id="user-badge"></span>
+            <a href="../pages/articles.html" class="btn btn-sm btn-ghost" style="color:white;border-color:rgba(255,255,255,0.3);">
+                <i class="fa-solid fa-arrow-left"></i> Back to Site
+            </a>
+            <button class="btn btn-sm btn-ghost" style="color:white;border-color:rgba(255,255,255,0.3);" id="logout-btn">
+                <i class="fa-solid fa-right-from-bracket"></i> Logout
+            </button>
+        </div>
+    </header>
+
+    <!-- Body -->
+    <div class="admin-body">
+        <div class="admin-welcome">
+            <h1 id="welcome-title">Dashboard</h1>
+            <p id="welcome-sub">Manage your articles and courses</p>
+        </div>
+
+        <!-- Stats -->
+        <div class="stats-strip" id="stats-strip"></div>
+
+        <!-- Actions -->
+        <div class="admin-actions">
+            <a href="edit-article.html" class="btn btn-primary">
+                <i class="fa-solid fa-plus"></i> New Article
+            </a>
+            <a href="edit-course.html" class="btn btn-secondary">
+                <i class="fa-solid fa-plus"></i> New Course
+            </a>
+            <button class="btn btn-ghost" id="reset-data-btn">
+                <i class="fa-solid fa-rotate-left"></i> Reset Data
+            </button>
+        </div>
+
+        <!-- Tabs -->
+        <div class="admin-tabs">
+            <button class="admin-tab active" data-tab="articles">Articles</button>
+            <button class="admin-tab" data-tab="courses">Courses</button>
+        </div>
+
+        <!-- Articles Table -->
+        <div id="articles-panel">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Category</th>
+                        <th>Author</th>
+                        <th style="text-align:right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="articles-tbody"></tbody>
+            </table>
+        </div>
+
+        <!-- Courses Table (hidden by default) -->
+        <div id="courses-panel" style="display:none">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>Title</th>
+                        <th>Track</th>
+                        <th>Duration</th>
+                        <th style="text-align:right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="courses-tbody"></tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Core Libraries -->
+    <script src="../lib/utils.js"></script>
+    <script src="../lib/data-service.js"></script>
+    <script src="../lib/auth.js"></script>
+
+    <script>
+        (async () => {
+            // Auth check
+            const user = Auth.getCurrentUser();
+            if (!user) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            if (user.role !== 'admin' && user.role !== 'author') {
+                alert('Access denied. Author or admin privileges required.');
+                window.location.href = '../index.html';
+                return;
+            }
+
+            // Populate header
+            document.getElementById('user-name').textContent = user.displayName;
+            const badge = document.getElementById('user-badge');
+            badge.textContent = user.role;
+            badge.classList.add(user.role);
+
+            document.getElementById('welcome-title').textContent = `Welcome, ${user.displayName}`;
+
+            // Logout
+            document.getElementById('logout-btn').addEventListener('click', () => {
+                Auth.logout();
+                window.location.href = 'login.html';
+            });
+
+            // Reset data
+            document.getElementById('reset-data-btn').addEventListener('click', async () => {
+                const confirmed = await Utils.confirm(
+                    'This will reset all articles and courses to their original state. Any changes you made will be lost.',
+                    'Reset All Data'
+                );
+                if (confirmed) {
+                    DataService.resetAll();
+                    Utils.showToast('Data reset successfully.', 'success');
+                    setTimeout(() => window.location.reload(), 1000);
+                }
+            });
+
+            // Load data
+            const articles = await DataService.getArticles();
+            const courses = await DataService.getCourses();
+
+            // Stats
+            document.getElementById('stats-strip').innerHTML = `
+                <div class="stat-card">
+                    <div class="stat-number">${articles.length}</div>
+                    <div class="stat-label">Articles</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${courses.length}</div>
+                    <div class="stat-label">Courses</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${new Set(articles.map(a => a.category)).size}</div>
+                    <div class="stat-label">Categories</div>
+                </div>
+                <div class="stat-card">
+                    <div class="stat-number">${new Set(courses.map(c => c.track)).size}</div>
+                    <div class="stat-label">Learning Tracks</div>
+                </div>
+            `;
+
+            // Tabs
+            const tabs = document.querySelectorAll('.admin-tab');
+            const articlesPanel = document.getElementById('articles-panel');
+            const coursesPanel = document.getElementById('courses-panel');
+
+            tabs.forEach(tab => {
+                tab.addEventListener('click', () => {
+                    tabs.forEach(t => t.classList.remove('active'));
+                    tab.classList.add('active');
+
+                    if (tab.dataset.tab === 'articles') {
+                        articlesPanel.style.display = '';
+                        coursesPanel.style.display = 'none';
+                    } else {
+                        articlesPanel.style.display = 'none';
+                        coursesPanel.style.display = '';
+                    }
+                });
+            });
+
+            // Render articles table
+            renderArticlesTable(articles);
+            renderCoursesTable(courses);
+
+            function renderArticlesTable(items) {
+                const tbody = document.getElementById('articles-tbody');
+
+                if (items.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" class="admin-empty">No articles yet.</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = items.map(article => {
+                    const canEdit = Auth.canEdit(article.id);
+                    return `
+                        <tr>
+                            <td class="title-cell">${Utils.escapeHTML(article.title)}</td>
+                            <td class="meta-cell">${article.category || '—'}</td>
+                            <td class="meta-cell">${article.author || '—'}</td>
+                            <td>
+                                <div class="actions-cell">
+                                    <a href="../pages/article.html?id=${article.id}" class="btn btn-sm btn-ghost" title="View">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </a>
+                                    ${canEdit ? `
+                                        <a href="edit-article.html?id=${article.id}" class="btn btn-sm btn-ghost" title="Edit">
+                                            <i class="fa-solid fa-pen"></i>
+                                        </a>
+                                        <button class="btn btn-sm btn-danger delete-article-btn" data-id="${article.id}" title="Delete">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </button>
+                                    ` : ''}
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+
+                // Delete handlers
+                tbody.querySelectorAll('.delete-article-btn').forEach(btn => {
+                    btn.addEventListener('click', async () => {
+                        const confirmed = await Utils.confirm('Delete this article?', 'Delete Article');
+                        if (confirmed) {
+                            try {
+                                await DataService.deleteArticle(btn.dataset.id);
+                                Utils.showToast('Article deleted.', 'success');
+                                const updated = await DataService.getArticles();
+                                renderArticlesTable(updated);
+                                document.querySelector('.stat-card .stat-number').textContent = updated.length;
+                            } catch (err) {
+                                Utils.showToast('Failed to delete.', 'error');
+                            }
+                        }
+                    });
+                });
+            }
+
+            function renderCoursesTable(items) {
+                const tbody = document.getElementById('courses-tbody');
+
+                if (items.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="4" class="admin-empty">No courses yet.</td></tr>';
+                    return;
+                }
+
+                tbody.innerHTML = items.map(course => {
+                    const canEdit = Auth.isAdmin(); // Only admin can edit courses
+                    return `
+                        <tr>
+                            <td class="title-cell">${Utils.escapeHTML(course.title)}</td>
+                            <td><span class="badge badge-${course.track}">${course.track}</span></td>
+                            <td class="meta-cell">${course.duration || '—'}</td>
+                            <td>
+                                <div class="actions-cell">
+                                    <a href="../pages/course.html?id=${course.id}" class="btn btn-sm btn-ghost" title="View">
+                                        <i class="fa-solid fa-eye"></i>
+                                    </a>
+                                    ${canEdit ? `
+                                        <a href="edit-course.html?id=${course.id}" class="btn btn-sm btn-ghost" title="Edit">
+                                            <i class="fa-solid fa-pen"></i>
+                                        </a>
+                                        <button class="btn btn-sm btn-danger delete-course-btn" data-id="${course.id}" title="Delete">
+                                            <i class="fa-solid fa-trash"></i>
+                                        </button>
+                                    ` : ''}
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }).join('');
+
+                // Delete handlers
+                tbody.querySelectorAll('.delete-course-btn').forEach(btn => {
+                    btn.addEventListener('click', async () => {
+                        const confirmed = await Utils.confirm('Delete this course?', 'Delete Course');
+                        if (confirmed) {
+                            try {
+                                await DataService.deleteCourse(btn.dataset.id);
+                                Utils.showToast('Course deleted.', 'success');
+                                const updated = await DataService.getCourses();
+                                renderCoursesTable(updated);
+                            } catch (err) {
+                                Utils.showToast('Failed to delete.', 'error');
+                            }
+                        }
+                    });
+                });
+            }
+        })();
+    </script>
+</body>
+</html>

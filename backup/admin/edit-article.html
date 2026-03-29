@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Article — LoopBridge Admin</title>
+    <link rel="stylesheet" href="../styles/global.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
+    <script src="https://kit.fontawesome.com/20310b9de2.js" crossorigin="anonymous"></script>
+    <style>
+        .admin-header {
+            background-color: var(--lb-blue-dark);
+            padding: 1rem 2.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .admin-header .logo img {
+            height: 24px;
+            filter: brightness(0) invert(1);
+        }
+
+        .admin-header-right {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .editor-body {
+            padding: 2rem 2.5rem 6rem;
+            max-width: 820px;
+            margin: auto;
+        }
+
+        .editor-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 2rem;
+        }
+
+        .editor-header h1 {
+            font-family: var(--font-heading-variable);
+            font-size: 1.5rem;
+            font-weight: 600;
+        }
+
+        .editor-form .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 1.5rem;
+        }
+
+        /* Content editor */
+        .content-blocks {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+        }
+
+        .content-block {
+            display: flex;
+            gap: 0.75rem;
+            align-items: flex-start;
+            padding: 1rem;
+            background: var(--gray-light);
+            border: 1px solid var(--gray-mid);
+            border-radius: var(--radius-sm, 0.5rem);
+        }
+
+        .content-block .block-body {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 0.5rem;
+        }
+
+        .content-block .block-type {
+            font-size: 0.8125rem;
+            font-weight: 600;
+            color: var(--black-mid);
+            text-transform: capitalize;
+        }
+
+        .content-block .block-actions {
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .content-block .block-actions button {
+            background: none;
+            border: none;
+            color: var(--black-mid);
+            font-size: 0.875rem;
+            padding: 0.25rem;
+            cursor: pointer;
+            transition: color var(--transition-fast);
+        }
+
+        .content-block .block-actions button:hover {
+            color: var(--color-danger, #e53e3e);
+        }
+
+        .add-block-bar {
+            display: flex;
+            gap: 0.5rem;
+            margin-top: 0.75rem;
+        }
+
+        .editor-actions {
+            display: flex;
+            gap: 1rem;
+            margin-top: 2rem;
+            padding-top: 2rem;
+            border-top: 1px solid var(--gray-mid);
+        }
+
+        @media (max-width: 48rem) {
+            .editor-body {
+                padding: 1.5rem 1.25rem 4rem;
+            }
+            .form-row {
+                grid-template-columns: 1fr;
+            }
+            .admin-header {
+                padding: 1rem 1.25rem;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Admin Header -->
+    <header class="admin-header">
+        <div class="logo">
+            <a href="dashboard.html"><img src="../images/logos/LB text no symbol black 2.png" alt="LoopBridge"></a>
+        </div>
+        <div class="admin-header-right">
+            <a href="dashboard.html" class="btn btn-sm btn-ghost" style="color:white;border-color:rgba(255,255,255,0.3);">
+                <i class="fa-solid fa-arrow-left"></i> Dashboard
+            </a>
+        </div>
+    </header>
+
+    <!-- Editor -->
+    <div class="editor-body">
+        <div class="editor-header">
+            <h1 id="editor-title">New Article</h1>
+        </div>
+
+        <form class="editor-form" id="article-form">
+            <div class="form-group">
+                <label class="form-label" for="title">Title *</label>
+                <input class="input" type="text" id="title" name="title" placeholder="Enter article title" required>
+            </div>
+
+            <div class="form-row">
+                <div class="form-group">
+                    <label class="form-label" for="category">Category *</label>
+                    <select class="input" id="category" name="category" required>
+                        <option value="">Select a category</option>
+                        <option value="Defi">DeFi</option>
+                        <option value="Bitcoin">Bitcoin</option>
+                        <option value="Security">Security</option>
+                        <option value="Basics">Basics</option>
+                        <option value="Stablecoin">Stablecoin</option>
+                        <option value="Ethereum">Ethereum</option>
+                        <option value="Blockchain">Blockchain</option>
+                        <option value="NFT">NFT</option>
+                        <option value="Web3">Web3</option>
+                        <option value="Altcoins">Altcoins</option>
+                        <option value="Guide">Guide</option>
+                        <option value="Ventures">Ventures</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label class="form-label" for="author">Author</label>
+                    <input class="input" type="text" id="author" name="author" placeholder="Author name">
+                </div>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label" for="excerpt">Excerpt / Description</label>
+                <textarea class="input textarea" id="excerpt" name="excerpt" rows="3" placeholder="Brief summary of the article"></textarea>
+            </div>
+
+            <div class="form-group">
+                <label class="form-label">
+                    <input type="checkbox" id="featured" name="featured"> Featured article
+                </label>
+            </div>
+
+            <!-- Content Blocks -->
+            <div class="form-group">
+                <label class="form-label">Content</label>
+                <div class="content-blocks" id="content-blocks"></div>
+                <div class="add-block-bar">
+                    <button type="button" class="btn btn-sm btn-ghost" data-add="heading">
+                        <i class="fa-solid fa-heading"></i> Heading
+                    </button>
+                    <button type="button" class="btn btn-sm btn-ghost" data-add="paragraph">
+                        <i class="fa-solid fa-paragraph"></i> Paragraph
+                    </button>
+                    <button type="button" class="btn btn-sm btn-ghost" data-add="list">
+                        <i class="fa-solid fa-list"></i> List
+                    </button>
+                    <button type="button" class="btn btn-sm btn-ghost" data-add="blockquote">
+                        <i class="fa-solid fa-quote-left"></i> Quote
+                    </button>
+                </div>
+            </div>
+
+            <!-- Actions -->
+            <div class="editor-actions">
+                <button type="submit" class="btn btn-primary" id="save-btn">
+                    <i class="fa-solid fa-floppy-disk"></i> Save Article
+                </button>
+                <a href="dashboard.html" class="btn btn-ghost">Cancel</a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Core Libraries -->
+    <script src="../lib/utils.js"></script>
+    <script src="../lib/data-service.js"></script>
+    <script src="../lib/auth.js"></script>
+
+    <script>
+        (async () => {
+            // Auth check
+            const user = Auth.getCurrentUser();
+            if (!user || (user.role !== 'admin' && user.role !== 'author')) {
+                window.location.href = 'login.html';
+                return;
+            }
+
+            const articleId = Utils.getParam('id');
+            const isEditing = !!articleId;
+            let existingArticle = null;
+
+            if (isEditing) {
+                existingArticle = await DataService.getArticle(articleId);
+                if (!existingArticle) {
+                    Utils.showToast('Article not found.', 'error');
+                    setTimeout(() => window.location.href = 'dashboard.html', 1000);
+                    return;
+                }
+
+                // Permission check
+                if (!Auth.canEdit(articleId)) {
+                    Utils.showToast('You don\'t have permission to edit this article.', 'error');
+                    setTimeout(() => window.location.href = 'dashboard.html', 1000);
+                    return;
+                }
+
+                document.getElementById('editor-title').textContent = 'Edit Article';
+                document.title = 'Edit: ' + existingArticle.title + ' — LoopBridge Admin';
+
+                // Populate form
+                document.getElementById('title').value = existingArticle.title || '';
+                document.getElementById('category').value = existingArticle.category || '';
+                document.getElementById('author').value = existingArticle.author || '';
+                document.getElementById('excerpt').value = existingArticle.excerpt || existingArticle.description || '';
+                document.getElementById('featured').checked = !!existingArticle.featured;
+
+                // Populate content blocks
+                if (existingArticle.content && Array.isArray(existingArticle.content)) {
+                    existingArticle.content.forEach(block => addBlock(block));
+                }
+            } else {
+                // Set default author
+                document.getElementById('author').value = user.displayName;
+            }
+
+            // Content blocks management
+            const blocksContainer = document.getElementById('content-blocks');
+            let blockIdCounter = 0;
+
+            function addBlock(data = null) {
+                const type = data ? data.type : 'paragraph';
+                const id = 'block-' + (blockIdCounter++);
+
+                const blockEl = document.createElement('div');
+                blockEl.className = 'content-block';
+                blockEl.dataset.blockId = id;
+                blockEl.dataset.blockType = type;
+
+                let fieldHTML = '';
+                if (type === 'heading') {
+                    fieldHTML = `
+                        <select class="input" data-field="level" style="width:auto;margin-bottom:0.5rem;">
+                            <option value="2" ${data && data.level === 2 ? 'selected' : ''}>H2</option>
+                            <option value="3" ${data && data.level === 3 ? 'selected' : ''}>H3</option>
+                        </select>
+                        <input class="input" type="text" data-field="text" placeholder="Heading text" value="${data ? Utils.escapeHTML(data.text || '') : ''}">
+                    `;
+                } else if (type === 'paragraph') {
+                    fieldHTML = `
+                        <textarea class="input textarea" data-field="text" rows="3" placeholder="Paragraph text">${data ? Utils.escapeHTML(data.text || '') : ''}</textarea>
+                    `;
+                } else if (type === 'list') {
+                    const items = data && data.items ? data.items.join('\n') : '';
+                    fieldHTML = `
+                        <label style="font-size:0.8125rem;color:var(--black-mid)">
+                            <input type="checkbox" data-field="ordered" ${data && data.ordered ? 'checked' : ''}> Ordered list
+                        </label>
+                        <textarea class="input textarea" data-field="items" rows="4" placeholder="One item per line">${Utils.escapeHTML(items)}</textarea>
+                    `;
+                } else if (type === 'blockquote') {
+                    fieldHTML = `
+                        <textarea class="input textarea" data-field="text" rows="2" placeholder="Quote text">${data ? Utils.escapeHTML(data.text || '') : ''}</textarea>
+                    `;
+                }
+
+                blockEl.innerHTML = `
+                    <div class="block-body">
+                        <span class="block-type">${type}</span>
+                        ${fieldHTML}
+                    </div>
+                    <div class="block-actions">
+                        <button type="button" title="Remove" data-remove="${id}">
+                            <i class="fa-solid fa-xmark"></i>
+                        </button>
+                    </div>
+                `;
+
+                blocksContainer.appendChild(blockEl);
+
+                // Remove handler
+                blockEl.querySelector(`[data-remove="${id}"]`).addEventListener('click', () => {
+                    blockEl.remove();
+                });
+            }
+
+            // Add block buttons
+            document.querySelectorAll('[data-add]').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    addBlock({ type: btn.dataset.add });
+                });
+            });
+
+            // Build content array from blocks
+            function getContentBlocks() {
+                const blocks = [];
+                blocksContainer.querySelectorAll('.content-block').forEach(blockEl => {
+                    const type = blockEl.dataset.blockType;
+                    const block = { type };
+
+                    if (type === 'heading') {
+                        block.text = blockEl.querySelector('[data-field="text"]').value;
+                        block.level = parseInt(blockEl.querySelector('[data-field="level"]').value);
+                    } else if (type === 'paragraph' || type === 'blockquote') {
+                        block.text = blockEl.querySelector('[data-field="text"]').value;
+                    } else if (type === 'list') {
+                        block.items = blockEl.querySelector('[data-field="items"]').value
+                            .split('\n')
+                            .map(s => s.trim())
+                            .filter(Boolean);
+                        block.ordered = blockEl.querySelector('[data-field="ordered"]').checked;
+                    }
+
+                    blocks.push(block);
+                });
+                return blocks;
+            }
+
+            // Form submit
+            document.getElementById('article-form').addEventListener('submit', async (e) => {
+                e.preventDefault();
+
+                const saveBtn = document.getElementById('save-btn');
+                saveBtn.textContent = 'Saving...';
+                saveBtn.disabled = true;
+
+                const articleData = {
+                    title: document.getElementById('title').value.trim(),
+                    category: document.getElementById('category').value,
+                    author: document.getElementById('author').value.trim() || user.displayName,
+                    excerpt: document.getElementById('excerpt').value.trim(),
+                    featured: document.getElementById('featured').checked,
+                    content: getContentBlocks()
+                };
+
+                try {
+                    if (isEditing) {
+                        await DataService.updateArticle(articleId, articleData);
+                        Utils.showToast('Article updated successfully!', 'success');
+                    } else {
+                        const newArticle = await DataService.createArticle(articleData);
+                        Utils.showToast('Article created successfully!', 'success');
+                        // Redirect to edit mode
+                        setTimeout(() => {
+                            window.location.href = 'edit-article.html?id=' + newArticle.id;
+                        }, 1000);
+                        return;
+                    }
+                } catch (err) {
+                    Utils.showToast('Failed to save: ' + err.message, 'error');
+                }
+
+                saveBtn.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Save Article';
+                saveBtn.disabled = false;
+            });
+        })();
+    </script>
+</body>
+</html>

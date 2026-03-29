@@ -93,6 +93,11 @@ img {
     text-decoration: none;
     color: #333;
     font-weight: 600;
+    transition: color 0.15s ease;
+}
+
+.nav-links a:hover {
+    color: var(--lb-green);
 }
 
 .nav-links a.active {
@@ -106,6 +111,17 @@ img {
     color: white;
     text-align: center;
     flex: 0 1 auto;
+    transition: background-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.nav-join:hover {
+    background-color: #28a85f;
+    box-shadow: 0 2px 8px rgba(48, 192, 112, 0.25);
+}
+
+.nav-join:active {
+    transform: scale(0.97);
+    background-color: #209050;
 }
 
 .nav-join a {
@@ -162,12 +178,32 @@ img {
     padding: 0.6875rem 1.375rem;
     border-radius: 2.1875rem;
     cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.hero-btn:hover {
+    background-color: #f0fdf5;
+    box-shadow: 0 2px 8px rgba(48, 192, 112, 0.15);
+}
+
+.hero-btn:active {
+    transform: scale(0.97);
+    background-color: #e6f9ed;
 }
 
 .btn-primary {
     background-color: var(--lb-green);
     color: white;
     border: none;
+}
+
+.btn-primary:hover {
+    background-color: #28a85f;
+    box-shadow: 0 2px 8px rgba(48, 192, 112, 0.3);
+}
+
+.btn-primary:active {
+    background-color: #209050;
 }
 
 /* WHY */
@@ -424,6 +460,17 @@ section.newsletter {
     margin: 3.125rem 0 2.5rem;
     border-radius: 2.1875rem;
     cursor: pointer;
+    transition: background-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.newsletter-button:hover {
+    background-color: var(--lb-green-hover, #28a85f);
+    box-shadow: 0 2px 8px rgba(48, 192, 112, 0.3);
+}
+
+.newsletter-button:active {
+    transform: scale(0.97);
+    background-color: var(--lb-green-active, #209050);
 }
 
 .accent { color: #56ffa1; }
@@ -754,5 +801,31 @@ footer {
     
     .circle-effect {
         bottom: 0; left: 0; width: 100%; height: 100%;
+    }
+}
+
+/* MOBILE — enforce 20px horizontal padding */
+@media (max-width: 48rem) {
+    .section-container {
+        padding-left: 20px !important;
+        padding-right: 20px !important;
+    }
+
+    .hero {
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+
+    .cta {
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+}
+
+@media (max-width: 30rem) {
+    .nav-container {
+        width: calc(100% - 40px);
+        margin-left: 20px;
+        margin-right: 20px;
     }
 }

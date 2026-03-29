@@ -67,7 +67,21 @@
     text-align: center;
     gap: 50px;
     margin-bottom: 10px;
+    width: 100%;
+}
 
+.categories *:focus {
+    outline: none;
+}
+
+.category-button:focus {
+    outline: none;
+    box-shadow: none;
+}
+
+.QnA-item:focus,
+.QnA-item .question:focus {
+    outline: none;
 }
 
 .category-buttons {
@@ -86,12 +100,30 @@
     display: inline-block;
     padding: 11px 18px;
     border: 1px solid var(--gray-dark);
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.category-button:hover, .load-btn:hover {
+    background-color: var(--gray-light);
+    border-color: var(--gray-mid);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+}
+
+.category-button:active, .load-btn:active {
+    transform: scale(0.97);
+    background-color: var(--gray-mid);
 }
 
 .category-button.active {
     background-color: var(--lb-green);
     color: white;
-    border: none;
+    border: 1px solid transparent;
+}
+
+.category-button.active:hover {
+    background-color: #28a85f;
+    box-shadow: 0 2px 8px rgba(48, 192, 112, 0.25);
 }
 
 .QnA {
@@ -145,4 +177,16 @@
 .QnA-item.active .answer {
     max-height: 20rem; /* Large enough for any answer */
     margin-top: 0.75rem;
+}
+
+@media (max-width: 48rem) {
+    .faq-hero {
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+
+    .faq-section {
+        padding-left: 20px;
+        padding-right: 20px;
+    }
 }

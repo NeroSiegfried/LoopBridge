@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Article — LoopBridge</title>
+    <link rel="stylesheet" href="../styles/global.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
+    <link href="https://cdn.lineicons.com/5.1/line/lineicons.css" rel="stylesheet"/>
+    <script src="https://kit.fontawesome.com/20310b9de2.js" crossorigin="anonymous"></script>
+    <style>
+        .article-page-hero {
+            padding: 14rem 2.5rem 0;
+        }
+
+        .article-page-hero .section-container {
+            display: flex;
+            flex-direction: column;
+            max-width: 820px;
+            margin: auto;
+        }
+
+        .article-page-title {
+            font-family: var(--font-heading);
+            font-size: clamp(2rem, 4vw, 3rem);
+            color: var(--lb-blue-text);
+            margin-bottom: 1rem;
+            line-height: 1.2;
+        }
+
+        .article-page-meta {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            flex-wrap: wrap;
+            margin-bottom: 2rem;
+        }
+
+        .article-page-meta .author-info {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .article-page-meta .author-avatar {
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            overflow: hidden;
+            background-color: var(--gray-mid);
+        }
+
+        .article-page-meta .author-avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .article-page-meta .author-name {
+            font-family: var(--font-body);
+            font-weight: 500;
+            color: var(--black-dark);
+        }
+
+        .meta-pill {
+            font-family: var(--font-body);
+            font-weight: 300;
+            color: var(--black-mid);
+            font-size: 0.875rem;
+            padding: 0.375rem 0.875rem;
+            background-color: white;
+            border: 1px solid var(--gray-dark);
+            border-radius: 1.25rem;
+        }
+
+        .article-page-cover {
+            width: 100%;
+            aspect-ratio: 3.1/1;
+            border-radius: 12px;
+            overflow: hidden;
+            margin-bottom: 2rem;
+            background-color: var(--gray-light);
+        }
+
+        .article-page-cover img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            object-position: center;
+        }
+
+        /* Content */
+        .article-page-content {
+            padding: 2rem 2.5rem 4rem;
+        }
+
+        .article-page-content .section-container {
+            max-width: 820px;
+            margin: auto;
+        }
+
+        .article-body {
+            font-family: var(--font-body);
+            font-weight: 300;
+            color: var(--black-two);
+            font-size: 1.125rem;
+            line-height: 2rem;
+        }
+
+        .article-body h2 {
+            font-family: var(--font-heading-variable);
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: var(--lb-blue-text);
+            margin: 2.5rem 0 1rem;
+            text-align: left;
+        }
+
+        .article-body h3 {
+            font-family: var(--font-heading-variable);
+            font-size: 1.25rem;
+            font-weight: 500;
+            color: var(--lb-blue-text);
+            margin: 1.5rem 0 0.75rem;
+            text-align: left;
+        }
+
+        .article-body p {
+            margin: 1rem 0;
+        }
+
+        .article-body ul, .article-body ol {
+            margin: 1rem 0;
+            padding-left: 1.5rem;
+        }
+
+        .article-body li {
+            margin: 0.5rem 0;
+            line-height: 1.8;
+        }
+
+        .article-body blockquote {
+            margin: 1.5rem 0;
+            padding: 1rem 1.5rem;
+            border-left: 4px solid var(--lb-green);
+            background-color: var(--gray-light);
+            font-style: italic;
+            color: var(--black-mid);
+            border-radius: 0 0.5rem 0.5rem 0;
+        }
+
+        /* Admin bar */
+        .article-admin-bar {
+            display: flex;
+            gap: 0.75rem;
+            padding: 1rem 0;
+            margin-bottom: 1.5rem;
+            border-bottom: 1px solid var(--gray-mid);
+        }
+
+        /* Related articles */
+        .related-section {
+            padding: 4rem 2.5rem;
+            background-color: var(--gray-light);
+        }
+
+        .related-section .section-container {
+            display: block;
+            max-width: var(--max-width);
+            margin: auto;
+        }
+
+        .related-section h2 {
+            font-family: var(--font-heading-variable);
+            font-weight: 600;
+            font-size: clamp(1.5rem, 3vw, 2rem);
+            color: var(--lb-blue-text);
+            margin-bottom: 2rem;
+            text-align: left;
+        }
+
+        .related-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 1.5rem;
+        }
+
+        @media (max-width: 62rem) {
+            .article-page-hero {
+                padding: 12rem 1.25rem 0;
+            }
+            .article-page-content {
+                padding: 2rem 1.25rem 4rem;
+            }
+            .related-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media (max-width: 48rem) {
+            .related-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navbar -->
+    <div data-component="navbar" data-props='{"basePath":"../","activePage":"blog"}'></div>
+
+    <!-- Article Hero -->
+    <header class="article-page-hero" id="article-hero">
+        <div class="section-container">
+            <h1 class="article-page-title" id="article-title">Loading...</h1>
+            <div class="article-page-meta" id="article-meta"></div>
+            <div class="article-page-cover" id="article-cover"></div>
+        </div>
+    </header>
+
+    <!-- Article Content -->
+    <section class="article-page-content">
+        <div class="section-container">
+            <div id="article-admin-bar"></div>
+            <div class="article-body" id="article-body">
+                <!-- Rendered by JS -->
+            </div>
+        </div>
+    </section>
+
+    <!-- Related Articles -->
+    <section class="related-section">
+        <div class="section-container">
+            <h2>Related Articles</h2>
+            <div class="related-grid" id="related-grid"></div>
+        </div>
+    </section>
+
+    <!-- Newsletter -->
+    <div data-component="newsletter" data-props='{"basePath":"../"}'></div>
+
+    <!-- Footer -->
+    <div data-component="footer" data-props='{"basePath":"../"}'></div>
+
+    <!-- Core Libraries -->
+    <script src="../lib/utils.js"></script>
+    <script src="../lib/data-service.js"></script>
+    <script src="../lib/auth.js"></script>
+    <script src="../lib/component-loader.js"></script>
+
+    <script>
+        document.addEventListener('components-loaded', async () => {
+            const articleId = Utils.getParam('id');
+            if (!articleId) {
+                document.getElementById('article-title').textContent = 'Article Not Found';
+                return;
+            }
+
+            const article = await DataService.getArticle(articleId);
+            if (!article) {
+                document.getElementById('article-title').textContent = 'Article Not Found';
+                document.getElementById('article-body').innerHTML = '<p>The article you\'re looking for doesn\'t exist or has been removed.</p>';
+                return;
+            }
+
+            // Set page title
+            document.title = article.title + ' — LoopBridge';
+
+            // Title
+            document.getElementById('article-title').textContent = article.title;
+
+            // Meta
+            const metaEl = document.getElementById('article-meta');
+            metaEl.innerHTML = `
+                <div class="author-info">
+                    <div class="author-avatar">
+                        ${article.authorImage ? `<img src="../${article.authorImage}" alt="${article.author}">` : ''}
+                    </div>
+                    <span class="author-name">${Utils.escapeHTML(article.author || 'LoopBridge')}</span>
+                </div>
+                <span class="meta-pill">${article.category || 'General'}</span>
+                <span class="meta-pill">${Utils.formatDate(article.publishedAt || article.createdAt)}</span>
+                <span class="meta-pill">${article.content ? Utils.readingTime(article.content) : '5 min read'}</span>
+            `;
+
+            // Cover image
+            const coverEl = document.getElementById('article-cover');
+            if (article.coverImage) {
+                coverEl.innerHTML = `<img src="../${article.coverImage}" alt="${Utils.escapeHTML(article.title)}">`;
+            } else if (article.thumbnail) {
+                coverEl.innerHTML = `<img src="../${article.thumbnail}" alt="${Utils.escapeHTML(article.title)}">`;
+            }
+
+            // Admin bar
+            if (Auth.canEdit(articleId)) {
+                const adminBar = document.getElementById('article-admin-bar');
+                adminBar.innerHTML = `
+                    <div class="article-admin-bar">
+                        <a href="../admin/edit-article.html?id=${articleId}" class="btn btn-sm btn-ghost">
+                            <i class="fa-solid fa-pen"></i> Edit Article
+                        </a>
+                        <button class="btn btn-sm btn-danger" id="delete-article-btn">
+                            <i class="fa-solid fa-trash"></i> Delete Article
+                        </button>
+                    </div>
+                `;
+
+                document.getElementById('delete-article-btn').addEventListener('click', async () => {
+                    const confirmed = await Utils.confirm('Are you sure you want to delete this article?', 'Delete Article');
+                    if (confirmed) {
+                        try {
+                            await DataService.deleteArticle(articleId);
+                            Utils.showToast('Article deleted.', 'success');
+                            setTimeout(() => window.location.href = 'articles.html', 1000);
+                        } catch (err) {
+                            Utils.showToast('Failed to delete.', 'error');
+                        }
+                    }
+                });
+            }
+
+            // Render content body
+            const bodyEl = document.getElementById('article-body');
+            if (article.content && Array.isArray(article.content)) {
+                bodyEl.innerHTML = renderContent(article.content);
+            } else {
+                bodyEl.innerHTML = '<p>No content available.</p>';
+            }
+
+            // Related articles (same category, excluding current)
+            const allArticles = await DataService.getArticles();
+            const related = allArticles
+                .filter(a => a.id !== articleId && a.category === article.category)
+                .slice(0, 3);
+
+            const relatedGrid = document.getElementById('related-grid');
+            if (related.length > 0) {
+                ArticleCard.renderGrid(relatedGrid, related, { basePath: '../' });
+            } else {
+                // Show other articles instead
+                const others = allArticles.filter(a => a.id !== articleId).slice(0, 3);
+                ArticleCard.renderGrid(relatedGrid, others, { basePath: '../' });
+            }
+        });
+
+        /**
+         * Render content blocks to HTML.
+         */
+        function renderContent(blocks) {
+            return blocks.map(block => {
+                switch (block.type) {
+                    case 'heading':
+                        const tag = block.level === 3 ? 'h3' : 'h2';
+                        return `<${tag}>${Utils.escapeHTML(block.text)}</${tag}>`;
+                    case 'paragraph':
+                        return `<p>${Utils.escapeHTML(block.text)}</p>`;
+                    case 'list':
+                        const items = block.items.map(i => `<li>${Utils.escapeHTML(i)}</li>`).join('');
+                        return block.ordered
+                            ? `<ol>${items}</ol>`
+                            : `<ul>${items}</ul>`;
+                    case 'blockquote':
+                        return `<blockquote>${Utils.escapeHTML(block.text)}</blockquote>`;
+                    default:
+                        return '';
+                }
+            }).join('\n');
+        }
+    </script>
+</body>
+</html>
