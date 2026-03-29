@@ -9,29 +9,30 @@ document.addEventListener("DOMContentLoaded", () => {
     const navbar = document.querySelector(".navbar");
     const firstBelowNav = navbar.nextElementSibling;
 
-    // Store the element's original padding-top once, before we ever touch it.
-    const originalPaddingTop = parseFloat(getComputedStyle(firstBelowNav).paddingTop);
-
     function updatePageOffset() {
         const isMobile = window.matchMedia("(max-width: 62rem)").matches;
         firstBelowNav.style.transition = "padding-top 0.35s ease";
 
         if (!isMobile || !navMenu.classList.contains("active")) {
-            // Desktop, or menu just closed — restore original padding-top.
-            firstBelowNav.style.paddingTop = originalPaddingTop + "px";
+            // Desktop, or menu just closed — clear inline padding to restore CSS value.
+            firstBelowNav.style.paddingTop = "";
             return;
         }
 
-        // The total space needed is:
-        //   bottom of the nav pill + full height of the open menu
-        //   minus where the element currently starts in the viewport
-        // This accounts for the nav-container's top margin and the pill's
-        // own height, both of which sit above the menu and would otherwise
-        // cause an overlap.
-        const navBottom = navContainer.getBoundingClientRect().bottom;
-        const elementTop = firstBelowNav.getBoundingClientRect().top;
-        const extraSpace = navBottom + navMenu.scrollHeight - elementTop;
-        firstBelowNav.style.paddingTop = (originalPaddingTop + extraSpace) + "px";
+        // Read the original CSS padding by temporarily clearing inline override
+        firstBelowNav.style.paddingTop = "";
+        const originalPaddingTop = parseFloat(getComputedStyle(firstBelowNav).paddingTop);
+
+        // a. Full rendered height of the open nav-menu: content + padding + border
+        const menuStyle = getComputedStyle(navMenu);
+        const menuHeight = navMenu.scrollHeight
+            + 48
+            + parseFloat(menuStyle.borderTopWidth)
+            + parseFloat(menuStyle.borderBottomWidth);
+            console.log(navMenu.scrollHeight, menuStyle.paddingTop, menuStyle.paddingBottom, menuStyle.borderTopWidth, menuStyle.borderBottomWidth);
+
+        // b+c. Add that height on top of firstBelowNav's original CSS padding
+        firstBelowNav.style.paddingTop = (originalPaddingTop + menuHeight) + "px";
     }
 
     mobileMenuBtn.addEventListener("click", () => {
@@ -42,6 +43,7 @@ document.addEventListener("DOMContentLoaded", () => {
             navMenu.classList.remove("active");
             menuIcon.classList.remove("fa-xmark");
             menuIcon.classList.add("fa-bars");
+            updatePageOffset();
 
             // Restore border-radius immediately after menu finishes retracting (ease-out)
             setTimeout(() => {
@@ -57,13 +59,12 @@ document.addEventListener("DOMContentLoaded", () => {
 
             setTimeout(() => {
                 navMenu.classList.add("active");
+                updatePageOffset();
             }, 150);
 
             menuIcon.classList.remove("fa-bars");
             menuIcon.classList.add("fa-xmark");
         }
-
-        updatePageOffset();
     });
 
     // On resize back to desktop, restore original padding-top.

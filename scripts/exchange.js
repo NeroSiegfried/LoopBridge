@@ -45,8 +45,9 @@ document.addEventListener("DOMContentLoaded", () => {
         return 30000; // fallback: 30s
     }
 
+    const TOTAL_STEP_DURATION = STEP_DURATIONS.slice(0, -1).reduce((sum, d) => sum + d, 0);
     function getDuration(index) {
-        return STEP_DURATIONS[index] ?? getGifDuration();
+        return STEP_DURATIONS[index] ?? getGifDuration() - TOTAL_STEP_DURATION
     }
 
     function goToStep(index) {
