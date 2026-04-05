@@ -1,0 +1,225 @@
+.course-page-hero {
+    padding: 14rem 2.5rem 4rem;
+    background-color: var(--lb-blue-dark);
+}
+
+.course-page-hero .section-container {
+    display: flex;
+    gap: 3rem;
+    max-width: var(--max-width);
+    margin: auto;
+    align-items: flex-start;
+}
+
+.course-hero-body {
+    flex: 1.5;
+}
+
+.course-hero-body h1 {
+    font-family: var(--font-heading);
+    font-size: clamp(2rem, 4vw, 3rem);
+    color: white;
+    margin-bottom: 1rem;
+    line-height: 1.2;
+}
+
+.course-hero-body p {
+    font-family: var(--font-body);
+    font-size: 1.125rem;
+    color: var(--gray-mid);
+    font-weight: 300;
+    line-height: 1.8;
+}
+
+.course-hero-meta {
+    display: flex;
+    gap: 1rem;
+    flex-wrap: wrap;
+    margin-top: 1.5rem;
+}
+
+.course-hero-meta .meta-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    color: white;
+    font-family: var(--font-body);
+    font-size: 0.875rem;
+    font-weight: 300;
+}
+
+.course-hero-meta .meta-item i {
+    color: var(--lb-green);
+}
+
+.course-hero-sidebar {
+    flex: 1;
+    background: white;
+    border-radius: 1rem;
+    padding: 2rem;
+}
+
+.course-hero-sidebar h3 {
+    font-family: var(--font-heading-variable);
+    font-weight: 600;
+    font-size: 1.25rem;
+    color: var(--lb-blue-text);
+    margin-bottom: 1rem;
+}
+
+.course-objectives {
+    list-style: none;
+    padding: 0;
+    margin: 0;
+}
+
+.course-objectives li {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.625rem;
+    padding: 0.5rem 0;
+    font-family: var(--font-body);
+    font-size: 0.875rem;
+    color: var(--black-mid);
+    font-weight: 300;
+    line-height: 1.6;
+}
+
+.course-objectives li i {
+    color: var(--lb-green);
+    margin-top: 0.25rem;
+    flex-shrink: 0;
+}
+
+/* Topics Section */
+.course-topics {
+    padding: 4rem 2.5rem;
+}
+
+.course-topics .section-container {
+    display: block;
+    max-width: 820px;
+    margin: auto;
+}
+
+.course-topics h2 {
+    font-family: var(--font-heading-variable);
+    font-weight: 600;
+    font-size: clamp(1.5rem, 3vw, 2rem);
+    color: var(--lb-blue-text);
+    margin-bottom: 2rem;
+    text-align: left;
+}
+
+/* Topic accordion */
+.topic {
+    border: 1px solid var(--gray-mid);
+    border-radius: 0.75rem;
+    margin-bottom: 0.75rem;
+    overflow: hidden;
+    transition: border-color 0.2s ease;
+}
+
+.topic:hover {
+    border-color: var(--gray-dark);
+}
+
+.topic-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.25rem 1.5rem;
+    cursor: pointer;
+    background: white;
+    transition: background-color 0.2s ease;
+    user-select: none;
+}
+
+.topic-header:hover {
+    background-color: var(--gray-light);
+}
+
+.topic-header h3 {
+    font-family: var(--font-body);
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--lb-blue-text);
+    margin: 0;
+}
+
+.topic-header .topic-meta {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    font-family: var(--font-body);
+    font-size: 0.8125rem;
+    color: var(--black-mid);
+    font-weight: 300;
+}
+
+.topic-header .topic-toggle {
+    transition: transform 0.3s ease;
+    color: var(--black-mid);
+}
+
+.topic.active .topic-toggle {
+    transform: rotate(180deg);
+}
+
+.topic-body {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.35s ease;
+    background-color: var(--gray-light);
+}
+
+.topic.active .topic-body {
+    max-height: 50rem;
+}
+
+.topic-body-inner {
+    padding: 0 1.5rem 1.25rem;
+}
+
+.subsection {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0.75rem 0;
+    border-bottom: 1px solid var(--gray-mid);
+    font-family: var(--font-body);
+    font-size: 0.875rem;
+}
+
+.subsection:last-child {
+    border-bottom: none;
+}
+
+.subsection-title {
+    color: var(--black-dark);
+    font-weight: 400;
+}
+
+.subsection-duration {
+    color: var(--black-mid);
+    font-weight: 300;
+    font-size: 0.8125rem;
+}
+
+@media (max-width: 62rem) {
+    .course-page-hero {
+        padding: 12rem 1.25rem 3rem;
+    }
+
+    .course-page-hero .section-container {
+        flex-direction: column;
+    }
+
+    .course-hero-sidebar {
+        width: 100%;
+    }
+
+    .course-topics {
+        padding: 3rem 1.25rem;
+    }
+}

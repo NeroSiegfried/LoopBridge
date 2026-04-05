@@ -768,7 +768,7 @@ footer {
         grid-template-columns: 1fr;
     }
 
-    .newsletter {
+    section.newsletter {
         padding: 6.25rem 1.25rem;
     }
 
@@ -806,10 +806,6 @@ footer {
 
 /* MOBILE — enforce 20px horizontal padding */
 @media (max-width: 48rem) {
-    .section-container {
-        padding-left: 20px !important;
-        padding-right: 20px !important;
-    }
 
     .hero {
         padding-left: 20px;
@@ -820,6 +816,7 @@ footer {
         padding-left: 20px;
         padding-right: 20px;
     }
+    
 }
 
 @media (max-width: 30rem) {

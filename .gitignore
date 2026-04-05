@@ -1,0 +1,40 @@
+# Dependencies
+node_modules/
+server/node_modules/
+
+# SQLite database (generated — seed from JSON)
+server/loopbridge.db
+server/loopbridge.db-wal
+server/loopbridge.db-shm
+
+# Uploaded files (user-generated content)
+uploads/
+
+# Backup files
+*.bak
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+*.swp
+*.swo
+*~
+
+# Logs
+*.log
+npm-debug.log*
+
+# Environment
+.env
+.env.local
+.env.*.local
+
+# Build artifacts
+dist/
+build/
+
+# Backup folder (optional — remove this line if you want to track it)
+# backup/

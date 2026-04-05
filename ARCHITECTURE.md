@@ -2,7 +2,9 @@
 
 ## Overview
 
-LoopBridge is a static HTML/CSS/JS website for a crypto-education platform. It uses **no build tools or frameworks** — just vanilla HTML, CSS, and JavaScript with a lightweight component injection system, mock data layer, and mock authentication.
+LoopBridge is a crypto-education community platform with a **vanilla HTML/CSS/JS frontend** and a **Node.js/Express backend**. The frontend uses no build tools or frameworks — just HTML, CSS, and JavaScript with a lightweight component injection system. The backend provides a REST API with SQLite (local) and is designed for seamless migration to AWS (Lambda + DynamoDB + S3).
+
+> **See also**: [`AWS-DEPLOYMENT.md`](./AWS-DEPLOYMENT.md) — AWS architecture decisions, cost estimates, and security hardening guide.
 
 ---
 
@@ -404,4 +406,96 @@ npx serve .
 1. Create `components/mycomp/mycomp.html` (template with `{{prop}}` placeholders)
 2. Create `components/mycomp/mycomp.css` (scoped styles)
 3. Create `components/mycomp/mycomp.js` (optional behavior)
+
+---
+
+## Server Architecture
+
+The backend lives in `server/` and follows a layered architecture:
+
+```
+server/
+├── index.js              ← Express app entry point (security headers, rate limiting, routes)
+├── config/index.js       ← Centralised env-driven configuration
+├── db.js                 ← SQLite connection + table initialisation
+├── middleware/auth.js     ← Session middleware + auth guards (requireAuth, requireAuthor, requireAdmin)
+├── repositories/         ← Data-access layer (pure SQL, no HTTP concepts)
+│   ├── articleRepo.js    ← CRUD + listByAuthorIds, softDelete, restore
+│   ├── courseRepo.js     ← CRUD + listByAuthorName, softDelete, restore
+│   ├── userRepo.js       ← findByUsername, findById
+│   ├── sessionRepo.js    ← create, delete, findValidWithUser
+│   ├── progressRepo.js   ← course enrolment + completion tracking
+│   ├── uploadRepo.js     ← file metadata CRUD
+│   └── faqRepo.js        ← listGrouped, listCategories
+├── services/             ← Business logic (no HTTP concepts)
+│   ├── authService.js    ← login/logout/session management
+│   ├── articleService.js ← article CRUD + dashboard filtering
+│   ├── courseService.js  ← course CRUD + progress + dashboard filtering
+│   └── storageService.js ← disk/S3 driver abstraction for file uploads
+├── routes/               ← Thin Express controllers
+│   ├── auth.js           ← POST login/logout, GET /me
+│   ├── articles.js       ← CRUD for articles
+│   ├── courses.js        ← CRUD for courses + progress endpoints
+│   ├── uploads.js        ← File upload/download/delete
+│   ├── dashboard.js      ← Role-filtered dashboard data
+│   └── misc.js           ← FAQs, site, team, platforms, health
+├── lambda.js             ← AWS Lambda handler (wraps Express via serverless-express)
+├── lambda-media.js       ← S3-triggered Lambda for image compression
+├── seed.js               ← Populate DB from JSON data files
+└── package.json
+```
+
+### Key Design Decisions
+
+| Decision | Rationale |
+|----------|-----------|
+| **Layered architecture** (config → repos → services → routes) | Swap SQLite for DynamoDB by changing only the repository layer |
+| **No ORM** | better-sqlite3 is synchronous and fast; parameterised queries prevent SQL injection |
+| **Session-based auth** (httpOnly cookies) | Simpler than JWTs for a server-rendered site; no token management on the client |
+| **Multer for uploads** | Handles multipart/form-data; files validated by MIME allowlist |
+| **`app` exported separately from `listen()`** | Enables Lambda wrapping + integration testing without starting a port |
+| **Custom rate limiter** (no npm dependency) | Avoids extra packages; in-memory Map with auto-cleanup |
+| **Custom security headers** (no helmet) | Fewer dependencies; explicitly documents what each header does |
+
+### API Endpoints
+
+| Method | Path | Auth | Description |
+|--------|------|------|-------------|
+| GET | `/api/health` | — | Health check |
+| POST | `/api/auth/login` | — | Login |
+| POST | `/api/auth/logout` | User | Logout |
+| GET | `/api/auth/me` | User | Current user |
+| GET | `/api/articles` | — | List articles |
+| GET | `/api/articles/:id` | — | Single article |
+| POST | `/api/articles` | Author+ | Create article |
+| PUT | `/api/articles/:id` | Owner/Admin | Update article |
+| DELETE | `/api/articles/:id` | Owner/Admin | Soft-delete article |
+| POST | `/api/articles/:id/restore` | Admin | Restore deleted article |
+| GET | `/api/courses` | — | List courses |
+| GET | `/api/courses/:id` | — | Single course |
+| POST | `/api/courses` | Author+ | Create course |
+| PUT | `/api/courses/:id` | Owner/Admin | Update course |
+| DELETE | `/api/courses/:id` | Owner/Admin | Soft-delete course |
+| POST | `/api/courses/:id/restore` | Admin | Restore deleted course |
+| GET | `/api/courses/:id/progress` | User | Get progress |
+| POST | `/api/courses/:id/enroll` | User | Enrol in course |
+| POST | `/api/courses/:id/progress` | User | Toggle subsection completion |
+| GET | `/api/dashboard` | Author+ | Role-filtered articles + courses |
+| POST | `/api/uploads` | User | Upload files |
+| GET | `/api/uploads/:id` | — | Get file metadata |
+| DELETE | `/api/uploads/:id` | Owner/Admin | Delete upload |
+| GET | `/api/faqs` | — | FAQ list by category |
+| GET | `/api/site` | — | Site metadata |
+| GET | `/api/team` | — | Team members |
+| GET | `/api/platforms` | — | Exchange platform data |
+
+### Running the Server
+
+```bash
+cd server
+npm install           # Install dependencies
+npm run seed          # Populate DB from JSON files
+npm start             # Start server (port 3000)
+npm run dev           # Start with --watch (auto-restart on changes)
+```
 4. Use: `<div data-component="mycomp" data-props='{"prop":"value"}'></div>`

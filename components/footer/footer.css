@@ -140,11 +140,6 @@ footer {
     }
 }
 
-    .contact-item {
-        text-align: left;
-    }
-}
-
 @media (max-width: 48rem) {
     footer {
         padding: 4rem 1.25rem;

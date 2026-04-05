@@ -138,6 +138,27 @@
     position: relative;
 }
 
+/* --- Right controls wrapper (menu-toggle + mobile avatar) --- */
+.nav-right-controls {
+    display: none;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+/* Mobile auth avatar (only visible on mobile, inside .nav-right-controls) */
+.mobile-auth-avatar {
+    display: none;
+}
+
+/* Auth separator & mobile auth links (only visible on mobile, inside .nav-links) */
+.nav-auth-separator {
+    display: none;
+}
+
+.mobile-auth-link {
+    display: none;
+}
+
 /* --- Auth UI in navbar --- */
 .auth-user-info {
     display: flex;
@@ -169,8 +190,7 @@
 }
 
 .auth-display-name {
-    font-weight: 600;
-    color: var(--black-dark, #1a1a1a);
+    display: none;
 }
 
 /* User dropdown */
@@ -189,6 +209,16 @@
     pointer-events: none;
     transition: opacity 0.2s ease, transform 0.2s ease;
     overflow: hidden;
+}
+
+.auth-dropdown-name {
+    display: block;
+    padding: 0.75rem 1rem 0.5rem;
+    font-family: "Schibsted Grotesk", sans-serif;
+    font-size: 0.875rem;
+    font-weight: 600;
+    color: var(--black-dark, #1a1a1a);
+    border-bottom: 1px solid var(--gray-mid, #ddd);
 }
 
 .auth-dropdown.open {
@@ -239,7 +269,12 @@
         border-bottom-left-radius: 0;
         border-bottom-right-radius: 0;
     }
-    
+
+    /* Show the right-controls wrapper (avatar + hamburger) */
+    .nav-right-controls {
+        display: flex;
+    }
+
     .menu-toggle {
         display: block;
     }
@@ -317,40 +352,52 @@
         background-color: var(--gray-light);
     }
 
+    /* Auth separator inside .nav-links — 1px gray line */
+    .nav-auth-separator {
+        display: block;
+        width: 100%;
+        border: none;
+        border-top: 1px solid var(--gray-mid);
+        margin: 0.25rem 0;
+    }
+
+    /* Auth links inside .nav-links — same styling as regular nav links */
+    .mobile-auth-link {
+        display: block;
+        text-decoration: none;
+        border-radius: 0.5rem;
+        transition: background-color 0.2s ease;
+        margin: 0;
+        width: 100%;
+        padding: 1.5rem 1rem;
+        color: #333;
+        font-weight: 600;
+    }
+
+    .mobile-auth-link:hover {
+        background-color: var(--gray-light);
+    }
+
+    .mobile-auth-link.mobile-auth-logout {
+        color: #d9534f;
+    }
+
     .nav-join {
         display: block;
         width: 100%;
     }
 
+    /* Hide desktop auth UI on mobile */
     .nav-user {
-        width: 100%;
-        flex-direction: column;
-        align-items: flex-start;
-        padding: 0.75rem 0;
-        gap: 0;
+        display: none;
     }
 
-    .auth-user-info {
-        width: 100%;
-        padding: 0.75rem 0;
-    }
-
-    .auth-dropdown {
-        position: static;
-        box-shadow: none;
-        border: none;
-        border-top: 1px solid var(--gray-mid, #ddd);
-        border-radius: 0;
-        opacity: 1;
-        transform: none;
-        pointer-events: auto;
-        width: 100%;
-        min-width: unset;
-    }
-
-    .auth-dropdown a,
-    .auth-dropdown button {
-        padding: 0.75rem 1rem;
+    /* Mobile auth avatar in .nav-right-controls */
+    .mobile-auth-avatar {
+        display: flex;
+        width: 2.5rem;
+        height: 2.5rem;
+        font-size: 0.85rem;
     }
 }
 

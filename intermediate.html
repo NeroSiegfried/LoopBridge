@@ -3,7 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Home Page</title>
+    <title>Intermediate Track — LoopBridge Academy</title>
+    <meta name="description" content="Level up with intermediate crypto courses covering DeFi protocols, on-chain analysis, and trading strategies.">
+    <meta property="og:title" content="Intermediate Track — LoopBridge Academy">
+    <meta property="og:description" content="Level up with intermediate crypto courses covering DeFi protocols, on-chain analysis, and trading strategies.">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="/images/logos/loopbridge-og.png">
+    <meta property="og:site_name" content="LoopBridge">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Intermediate Track — LoopBridge Academy">
+    <meta name="twitter:description" content="Level up with intermediate crypto courses covering DeFi protocols, on-chain analysis, and trading strategies.">
+    <meta name="twitter:image" content="/images/logos/loopbridge-og.png">
     <link rel="stylesheet" href="./styles/index.css">
     <link rel="stylesheet" href="./styles/academy.css">
     <link rel="stylesheet" href="./styles/learning_track.css">
@@ -37,7 +47,7 @@
     <div class="courses-section">
         <div class="section-container">
             <div class="controls">
-                <div class="count">50 courses</div>
+                <div class="count">Loading…</div>
                 <div class="filter">
                     <div class="search">
                         <span class="search-icon"><i class="fa-solid fa-magnifying-glass"></i></span>
@@ -52,108 +62,7 @@
             </div>
 
             <div class="courses" id="courses-grid">
-                <a href="./course_overview.html">
-                    <div class="course-container">
-                        <div class="course-card">
-                            <div class="course-image">
-                                <div class="course-price">Free</div>
-                                <img src="" alt=""/>
-                            </div>
-                            <div class="course-body">
-                                <div class="main-text">
-                                    <h3 class="course-title">Course Title</h3>
-                                    <p class="course-description">Build a strong foundation in Web3, crypto, and security.</p>
-                                </div>
-                                <p class="course-author">By LoopBridge Team</p>
-                            </div>
-                        </div>
-                    </div>
-                </a>
-                <a href="">
-                    <div class="course-container">
-                        <div class="course-card">
-                            <div class="course-image">
-                                <div class="course-price paid">$45</div>
-                                <img src="" alt=""/>
-                            </div>
-                            <div class="course-body">
-                                <div class="main-text">
-                                    <h3 class="course-title">Course Title</h3>
-                                    <p class="course-description">Build a strong foundation in Web3, crypto, and security.</p>
-                                </div>
-                                <p class="course-author">By LoopBridge Team</p>
-                            </div>
-                        </div>
-                    </div>
-                </a>
-                <a href="">
-                    <div class="course-container">
-                        <div class="course-card">
-                            <div class="course-image">
-                                <div class="course-price">Free</div>
-                                <img src="" alt=""/>
-                            </div>
-                            <div class="course-body">
-                                <div class="main-text">
-                                    <h3 class="course-title">Course Title</h3>
-                                    <p class="course-description">Build a strong foundation in Web3, crypto, and security.</p>
-                                </div>
-                                <p class="course-author">By LoopBridge Team</p>
-                            </div>
-                        </div>
-                    </div>
-                </a>
-                <a href="">
-                    <div class="course-container">
-                        <div class="course-card">
-                            <div class="course-image">
-                                <div class="course-price paid">$20</div>
-                                <img src="" alt=""/>
-                            </div>
-                            <div class="course-body">
-                                <div class="main-text">
-                                    <h3 class="course-title">Course Title</h3>
-                                    <p class="course-description">Build a strong foundation in Web3, crypto, and security.</p>
-                                </div>
-                                <p class="course-author">By LoopBridge Team</p>
-                            </div>
-                        </div>
-                    </div>
-                </a>
-                <a href="">
-                    <div class="course-container">
-                        <div class="course-card">
-                            <div class="course-image">
-                                <div class="course-price">Free</div>
-                                <img src="" alt=""/>
-                            </div>
-                            <div class="course-body">
-                                <div class="main-text">
-                                    <h3 class="course-title">Course Title</h3>
-                                    <p class="course-description">Build a strong foundation in Web3, crypto, and security.</p>
-                                </div>
-                                <p class="course-author">By LoopBridge Team</p>
-                            </div>
-                        </div>
-                    </div>
-                </a>
-                <a href="">
-                    <div class="course-container">
-                        <div class="course-card">
-                            <div class="course-image">
-                                <div class="course-price">Free</div>
-                                <img src="" alt=""/>
-                            </div>
-                            <div class="course-body">
-                                <div class="main-text">
-                                    <h3 class="course-title">Course Title</h3>
-                                    <p class="course-description">Build a strong foundation in Web3, crypto, and security.</p>
-                                </div>
-                                <p class="course-author">By LoopBridge Team</p>
-                            </div>
-                        </div>
-                    </div>
-                </a>
+                <!-- Populated dynamically by intermediate.js -->
             </div>
 
 
@@ -168,68 +77,6 @@
     <script src="./lib/component-loader.js"></script>
     <script src="./scripts/index.js"></script>
     <script src="./scripts/learning_track.js"></script>
-    <script>
-    document.addEventListener('components-loaded', async () => {
-        const allCourses = await DataService.getCourses();
-        const courses = allCourses.filter(c => c.track === 'intermediate');
-        const grid = document.getElementById('courses-grid');
-        const countEl = document.querySelector('.count');
-
-        const user = (typeof Auth !== 'undefined') ? Auth.getCurrentUser() : null;
-        const userId = user ? user.id : null;
-
-        if (countEl) countEl.textContent = courses.length + ' course' + (courses.length !== 1 ? 's' : '');
-
-        function getProgressHTML(course) {
-            if (!userId) return '';
-            const prog = DataService.getCourseProgress(userId, course.id);
-            if (!prog) return '';
-            let totalSubs = 0;
-            (course.topics || []).forEach(t => { totalSubs += (t.subsections || []).length; });
-            if (totalSubs === 0) return '';
-            const pct = Math.round((prog.completedSubs.length / totalSubs) * 100);
-            return `<div class="course-progress-bar">
-                <div class="progress-track"><div class="progress-fill" style="width:${pct}%"></div></div>
-                <span class="progress-label">${pct}%</span>
-            </div>`;
-        }
-
-        function renderCourses(list) {
-            if (!grid) return;
-            grid.innerHTML = list.map(c => `
-                <a href="./course_overview.html?id=${c.id}">
-                    <div class="course-container">
-                        <div class="course-card">
-                            <div class="course-image">
-                                <div class="course-price${c.price ? ' paid' : ''}">${c.price ? '$' + c.price : 'Free'}</div>
-                                <img src="${c.image || ''}" alt="${Utils.escapeHTML(c.title)}"/>
-                            </div>
-                            <div class="course-body">
-                                <div class="main-text">
-                                    <h3 class="course-title">${Utils.escapeHTML(c.title)}</h3>
-                                    <p class="course-description">${Utils.escapeHTML(c.description || '')}</p>
-                                </div>
-                                ${getProgressHTML(c)}
-                                <p class="course-author">By ${c.author ? (typeof c.author === 'string' ? c.author : c.author.name || 'LoopBridge Team') : 'LoopBridge Team'}</p>
-                            </div>
-                        </div>
-                    </div>
-                </a>
-            `).join('');
-        }
-
-        renderCourses(courses);
-
-        // Search
-        const searchInput = document.querySelector('.search input');
-        if (searchInput) {
-            searchInput.addEventListener('input', Utils.debounce(() => {
-                const q = searchInput.value.toLowerCase().trim();
-                const filtered = q ? courses.filter(c => c.title.toLowerCase().includes(q) || (c.description || '').toLowerCase().includes(q)) : courses;
-                renderCourses(filtered);
-            }, 250));
-        }
-    });
-    </script>
+    <script src="./scripts/intermediate.js"></script>
 </body>
 </html>

@@ -9,83 +9,7 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
     <script src="https://kit.fontawesome.com/20310b9de2.js" crossorigin="anonymous"></script>
-    <style>
-        .login-page {
-            min-height: 100vh;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            background-color: var(--gray-light);
-            padding: 2rem;
-        }
-
-        .login-card {
-            background: white;
-            border-radius: var(--radius-card);
-            padding: 3rem;
-            width: 100%;
-            max-width: 420px;
-            box-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
-        }
-
-        .login-card .logo {
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-
-        .login-card .logo img {
-            height: 32px;
-        }
-
-        .login-card h1 {
-            font-family: var(--font-heading-variable);
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: var(--lb-blue-text);
-            margin-bottom: 0.5rem;
-            text-align: center;
-        }
-
-        .login-card .subtitle {
-            font-family: var(--font-body);
-            font-size: 0.875rem;
-            color: var(--black-mid);
-            text-align: center;
-            margin-bottom: 2rem;
-        }
-
-        .login-error {
-            background-color: #fef2f2;
-            color: #991b1b;
-            padding: 0.75rem 1rem;
-            border-radius: var(--radius-sm, 0.5rem);
-            font-size: 0.875rem;
-            margin-bottom: 1rem;
-            display: none;
-        }
-
-        .login-error.visible {
-            display: block;
-        }
-
-        .login-card .form-group {
-            margin-bottom: 1.25rem;
-        }
-
-        .login-hint {
-            margin-top: 2rem;
-            padding: 1rem;
-            background-color: var(--gray-light);
-            border-radius: var(--radius-sm, 0.5rem);
-            font-size: 0.8125rem;
-            color: var(--black-mid);
-            line-height: 1.8;
-        }
-
-        .login-hint strong {
-            color: var(--black-dark);
-        }
-    </style>
+    <link rel="stylesheet" href="./styles/login.css">
 </head>
 <body>
     <div class="login-page">
@@ -122,38 +46,6 @@
     <script src="../lib/utils.js"></script>
     <script src="../lib/auth.js"></script>
 
-    <script>
-        // If already logged in, redirect
-        if (Auth.isLoggedIn()) {
-            window.location.href = 'dashboard.html';
-        }
-
-        const form = document.getElementById('login-form');
-        const errorEl = document.getElementById('login-error');
-        const loginBtn = document.getElementById('login-btn');
-
-        form.addEventListener('submit', async (e) => {
-            e.preventDefault();
-            errorEl.classList.remove('visible');
-            loginBtn.textContent = 'Signing in...';
-            loginBtn.disabled = true;
-
-            const username = document.getElementById('username').value.trim();
-            const password = document.getElementById('password').value;
-
-            const user = await Auth.login(username, password);
-
-            if (user) {
-                // Redirect to return URL or dashboard
-                const params = new URLSearchParams(window.location.search);
-                const returnUrl = params.get('return') || 'dashboard.html';
-                window.location.href = returnUrl;
-            } else {
-                errorEl.classList.add('visible');
-                loginBtn.textContent = 'Sign In';
-                loginBtn.disabled = false;
-            }
-        });
-    </script>
+    <script src="./scripts/login.js"></script>
 </body>
 </html>

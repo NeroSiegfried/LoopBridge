@@ -1,0 +1,116 @@
+/* Page-specific styles */
+.articles-page-hero {
+    padding: 14rem 2.5rem 4rem;
+    background-color: var(--gray-light);
+}
+
+.articles-page-hero .section-container {
+    display: block;
+    max-width: var(--max-width);
+    margin: auto;
+}
+
+.articles-page-hero h1 {
+    font-family: var(--font-heading);
+    font-size: clamp(2rem, 4vw, 3rem);
+    color: var(--lb-blue-text);
+    margin-bottom: 1rem;
+}
+
+.articles-page-hero p {
+    font-family: var(--font-body);
+    font-size: clamp(1rem, 2vw, 1.25rem);
+    font-weight: 300;
+    color: var(--black-mid);
+    max-width: 600px;
+}
+
+.articles-content {
+    padding: 3rem 2.5rem 6rem;
+}
+
+.articles-content .section-container {
+    display: block;
+    max-width: var(--max-width);
+    margin: auto;
+}
+
+.articles-controls {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.articles-filter {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.articles-search {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border: 1px solid var(--gray-dark);
+    border-radius: 2rem;
+    background: white;
+    min-width: 220px;
+}
+
+.articles-search i {
+    color: var(--black-mid);
+    font-size: 0.875rem;
+}
+
+.articles-search input {
+    border: none;
+    outline: none;
+    font-family: var(--font-body);
+    font-size: 0.875rem;
+    width: 100%;
+    background: transparent;
+}
+
+.articles-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+}
+
+.articles-load-more {
+    text-align: center;
+    margin-top: 3rem;
+}
+
+@media (max-width: 62rem) {
+    .articles-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .articles-page-hero {
+        padding: 12rem 1.25rem 3rem;
+    }
+
+    .articles-content {
+        padding: 2rem 1.25rem 4rem;
+    }
+}
+
+@media (max-width: 48rem) {
+    .articles-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .articles-controls {
+        flex-direction: column;
+        align-items: flex-start;
+    }
+
+    .articles-search {
+        width: 100%;
+    }
+}
