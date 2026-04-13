@@ -88,11 +88,14 @@ export default function EditArticle() {
     if (!file) return;
     setCoverFilename(file.name);
     const fd = new FormData();
-    fd.append('file', file);
+    fd.append('files', file);
     try {
       const data = await uploadsApi.upload(fd);
       setForm((f) => ({ ...f, image: data.url || data.path }));
-    } catch { setError('Image upload failed'); }
+    } catch (err) {
+      console.error('[EditArticle] Image upload failed:', err);
+      setError('Image upload failed');
+    }
   };
 
   /* ── Block helpers ── */
@@ -111,11 +114,12 @@ export default function EditArticle() {
   const handleBlockMediaUpload = async (idx, file) => {
     updateBlock(idx, 'Uploading…');
     const fd = new FormData();
-    fd.append('file', file);
+    fd.append('files', file);
     try {
       const data = await uploadsApi.upload(fd);
       updateBlock(idx, data.url || data.path);
-    } catch {
+    } catch (err) {
+      console.error('[EditArticle] Block media upload failed:', err);
       updateBlock(idx, 'Upload failed');
     }
   };

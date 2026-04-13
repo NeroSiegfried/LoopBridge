@@ -53,7 +53,7 @@ export default function EditCourse() {
             overview: data.overview || '',
             image: data.image || '',
           });
-          setObjectives(data.learningOutcomes || data.objectives || []);
+          setObjectives(data.learningObjectives || data.learningOutcomes || data.objectives || []);
           // Hydrate topics — give each subsection an id
           const hydrated = (data.topics || data.sections || []).map(t => ({
             ...t,
@@ -113,9 +113,9 @@ export default function EditCourse() {
 
   /* ── video upload ── */
   const handleVideoUpload = async (tIdx, sIdx, file) => {
-    updateSub(tIdx, sIdx, { videoFile: file.name });
+    updateSub(tIdx, sIdx, { videoFile: `Uploading ${file.name}…` });
     const fd = new FormData();
-    fd.append('file', file);
+    fd.append('files', file);
     try {
       const data = await uploadsApi.upload(fd);
       updateSub(tIdx, sIdx, {
@@ -124,7 +124,9 @@ export default function EditCourse() {
         thumbnailUrl: data.thumbnailUrl || '',
         videoFile: file.name,
       });
-    } catch {
+    } catch (err) {
+      console.error('[EditCourse] Video upload failed:', err);
+      setError(`Video upload failed: ${err.message}`);
       updateSub(tIdx, sIdx, { videoFile: `Upload failed — ${file.name}` });
     }
   };
@@ -201,7 +203,9 @@ export default function EditCourse() {
     try {
       const payload = {
         ...form,
-        learningOutcomes: objectives,
+        track: form.level,
+        slug: form.title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, ''),
+        learningObjectives: objectives,
         topics: topics.map(t => ({
           title: t.title,
           subsections: t.subsections.map(s => {

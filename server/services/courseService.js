@@ -26,11 +26,12 @@ const courseService = {
         const id = generateId();
         const authorName = data.author?.name || user.displayName || 'LoopBridge Team';
         const authorAvatar = data.author?.avatar || user.avatar || null;
+        const slug = data.slug || (data.title || 'untitled').toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '');
 
         return courseRepo.create({
             id,
             title: data.title,
-            slug: data.slug,
+            slug,
             description: data.description,
             image: data.image,
             authorName,
@@ -126,7 +127,12 @@ const courseService = {
 
     _canModify(user, item) {
         if (user.role === 'admin') return true;
-        if (user.role === 'author' && user.authorOf.includes(item.id)) return true;
+        if (user.role === 'author') {
+            // Check authorOf array
+            if (Array.isArray(user.authorOf) && user.authorOf.includes(item.id)) return true;
+            // Also allow if author_name matches the user's displayName
+            if (item.author_name && item.author_name === (user.displayName || user.username)) return true;
+        }
         return false;
     }
 };
