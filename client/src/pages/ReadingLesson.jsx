@@ -45,7 +45,8 @@ export default function ReadingLesson() {
 
   const topic = course?.topics?.[Number(topicIdx)];
   const sub = topic?.subsections?.[Number(subIdx)];
-  const quiz = sub?.quiz;
+  // Support both old { quiz: { questions: [...] } } and new { endQuiz: [...] } shapes
+  const quizQuestions = sub?.endQuiz?.length ? sub.endQuiz : sub?.quiz?.questions || [];
   const content = sub?.content || [];
 
   // Track lesson start
@@ -64,16 +65,16 @@ export default function ReadingLesson() {
   };
 
   const handleSubmitQuiz = () => {
-    if (!quiz) return;
-    const { questions } = quiz;
+    if (!quizQuestions.length) return;
     let correct = 0;
-    questions.forEach((q, i) => {
-      if (answers[i] === q.correctIndex) correct++;
+    quizQuestions.forEach((q, i) => {
+      const rightIdx = q.correctIndex ?? q.correct;
+      if (answers[i] === rightIdx) correct++;
     });
-    const score = Math.round((correct / questions.length) * 100);
+    const score = Math.round((correct / quizQuestions.length) * 100);
     const passed = score >= 70;
 
-    setQuizResult({ score, passed, correct, total: questions.length });
+    setQuizResult({ score, passed, correct, total: quizQuestions.length });
     trackEvent('quiz_submit', {
       courseId,
       quizId: `${courseId}-${topicIdx}-${subIdx}-endquiz`,
@@ -262,7 +263,7 @@ export default function ReadingLesson() {
           </article>
 
           {/* End-of-lesson quiz */}
-          {quiz && quiz.questions?.length > 0 && (
+          {quizQuestions.length > 0 && (
             <div className="end-quiz-section">
               {!showQuiz && !lessonComplete && (
                 <button className="start-quiz-btn" onClick={() => {
@@ -287,7 +288,7 @@ export default function ReadingLesson() {
 
                   {!quizResult ? (
                     <div className="quiz-body">
-                      {quiz.questions.map((q, qIdx) => (
+                      {quizQuestions.map((q, qIdx) => (
                         <div className="quiz-question" key={qIdx}>
                           <p className="question-text">{qIdx + 1}. {q.question}</p>
                           <div className="question-options">
@@ -307,7 +308,7 @@ export default function ReadingLesson() {
                       <button
                         className="quiz-submit-btn"
                         onClick={handleSubmitQuiz}
-                        disabled={Object.keys(answers).length < quiz.questions.length}
+                        disabled={Object.keys(answers).length < quizQuestions.length}
                       >
                         Submit Answers
                       </button>
@@ -343,7 +344,7 @@ export default function ReadingLesson() {
           )}
 
           {/* No quiz: show mark-complete button */}
-          {(!quiz || quiz.questions?.length === 0) && !lessonComplete && (
+          {quizQuestions.length === 0 && !lessonComplete && (
             <div className="end-quiz-section">
               <button className="start-quiz-btn complete-btn" onClick={handleMarkComplete}>
                 <i className="fa-solid fa-circle-check" /> Mark as Complete
@@ -351,7 +352,7 @@ export default function ReadingLesson() {
             </div>
           )}
 
-          {(!quiz || quiz.questions?.length === 0) && lessonComplete && (
+          {quizQuestions.length === 0 && lessonComplete && (
             <div className="end-quiz-section">
               <div className="lesson-complete-badge">
                 <i className="fa-solid fa-circle-check" />

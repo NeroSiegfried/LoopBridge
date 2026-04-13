@@ -35,6 +35,10 @@ export default function VideoLesson() {
   const [answers, setAnswers] = useState({});
   const [quizResult, setQuizResult] = useState(null); // { score, passed }
   const [completedQuizPoints, setCompletedQuizPoints] = useState(new Set());
+  const [showEndQuiz, setShowEndQuiz] = useState(false);
+  const [endQuizAnswers, setEndQuizAnswers] = useState({});
+  const [endQuizResult, setEndQuizResult] = useState(null);
+  const [lessonComplete, setLessonComplete] = useState(false);
 
   const videoRef = useRef(null);
 
@@ -72,7 +76,7 @@ export default function VideoLesson() {
     const { questions, pointIdx } = activeQuiz;
     let correct = 0;
     questions.forEach((q, i) => {
-      if (answers[i] === q.correctIndex) correct++;
+      if (answers[i] === (q.correctIndex ?? q.correct)) correct++;
     });
     const score = Math.round((correct / questions.length) * 100);
     const passed = score >= 70;
@@ -108,14 +112,59 @@ export default function VideoLesson() {
     videoRef.current?.play();
   };
 
+  /* ── end-of-lesson quiz handlers ── */
+  const handleEndQuizAnswer = (qIdx, optionIdx) => {
+    setEndQuizAnswers(prev => ({ ...prev, [qIdx]: optionIdx }));
+  };
+
+  const handleSubmitEndQuiz = () => {
+    const questions = sub?.endQuiz || [];
+    let correct = 0;
+    questions.forEach((q, i) => {
+      if (endQuizAnswers[i] === (q.correctIndex ?? q.correct)) correct++;
+    });
+    const score = Math.round((correct / questions.length) * 100);
+    const passed = score >= 70;
+
+    setEndQuizResult({ score, passed, correct, total: questions.length });
+    trackEvent('quiz_submit', {
+      courseId,
+      quizId: `${courseId}-${topicIdx}-${subIdx}-endquiz`,
+      score,
+      userId: user?.id,
+      metadata: { passed, correct, total: questions.length },
+    });
+
+    if (passed) {
+      setLessonComplete(true);
+      if (user) {
+        coursesApi.updateProgress(courseId, `${topicIdx}-${subIdx}`, true).catch(() => {});
+      }
+    }
+  };
+
+  const handleRetryEndQuiz = () => {
+    setEndQuizAnswers({});
+    setEndQuizResult(null);
+  };
+
   const handleVideoEnd = () => {
     trackEvent('lesson_complete', {
       courseId,
       metadata: { topicIdx, subIdx, title: sub?.title, type: 'video' },
       userId: user?.id,
     });
-    // Mark progress
-    if (user && sub) {
+
+    // If there's an end-of-lesson quiz, show it instead of auto-completing
+    const endQuiz = sub?.endQuiz || [];
+    if (endQuiz.length > 0 && !lessonComplete) {
+      setShowEndQuiz(true);
+      return;
+    }
+
+    // No quiz — mark progress
+    if (user && sub && !lessonComplete) {
+      setLessonComplete(true);
       coursesApi.updateProgress(courseId, `${topicIdx}-${subIdx}`, true).catch(() => {});
     }
   };
@@ -323,10 +372,84 @@ export default function VideoLesson() {
                         <p>{block.value}</p>
                       </div>
                     );
+                  case 'list':
+                    return (
+                      <ul key={i} className="lesson-list">
+                        {block.value.split('\n').filter(Boolean).map((item, li) => (
+                          <li key={li}>{item}</li>
+                        ))}
+                      </ul>
+                    );
                   default:
                     return <p key={i}>{block.value}</p>;
                 }
               })}
+            </div>
+          )}
+
+          {/* ── End-of-lesson quiz ── */}
+          {showEndQuiz && (sub.endQuiz || []).length > 0 && (
+            <div className="end-quiz-section">
+              <div className="quiz-card inline-quiz">
+                <div className="quiz-header">
+                  <i className="fa-solid fa-clipboard-list" />
+                  <h3>Lesson Quiz</h3>
+                  <p>Score at least 70% to mark this lesson complete</p>
+                </div>
+
+                {!endQuizResult ? (
+                  <div className="quiz-body">
+                    {sub.endQuiz.map((q, qIdx) => (
+                      <div className="quiz-question" key={qIdx}>
+                        <p className="question-text">{qIdx + 1}. {q.question}</p>
+                        <div className="question-options">
+                          {q.options.map((opt, oIdx) => (
+                            <button
+                              key={oIdx}
+                              className={`option-btn${endQuizAnswers[qIdx] === oIdx ? ' selected' : ''}`}
+                              onClick={() => handleEndQuizAnswer(qIdx, oIdx)}
+                            >
+                              <span className="option-letter">{String.fromCharCode(65 + oIdx)}</span>
+                              {opt}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    ))}
+                    <button
+                      className="quiz-submit-btn"
+                      onClick={handleSubmitEndQuiz}
+                      disabled={Object.keys(endQuizAnswers).length < sub.endQuiz.length}
+                    >
+                      Submit Answers
+                    </button>
+                  </div>
+                ) : (
+                  <div className="quiz-result">
+                    <div className={`result-badge ${endQuizResult.passed ? 'passed' : 'failed'}`}>
+                      <i className={`fa-solid ${endQuizResult.passed ? 'fa-circle-check' : 'fa-circle-xmark'}`} />
+                      <span>{endQuizResult.score}%</span>
+                    </div>
+                    <p className="result-text">
+                      {endQuizResult.passed
+                        ? `Great job! You got ${endQuizResult.correct}/${endQuizResult.total} correct.`
+                        : `You got ${endQuizResult.correct}/${endQuizResult.total}. You need 70% to continue.`}
+                    </p>
+                    {!endQuizResult.passed && (
+                      <button className="quiz-retry-btn" onClick={handleRetryEndQuiz}>
+                        <i className="fa-solid fa-rotate-left" /> Try Again
+                      </button>
+                    )}
+                  </div>
+                )}
+              </div>
+            </div>
+          )}
+
+          {/* Lesson complete badge */}
+          {lessonComplete && (
+            <div className="lesson-complete-badge">
+              <i className="fa-solid fa-circle-check" /> Lesson complete!
             </div>
           )}
 

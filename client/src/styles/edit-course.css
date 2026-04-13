@@ -208,6 +208,156 @@
     border-top: 1px dashed var(--gray-mid, #e8ebef);
 }
 
+/* ─── Upload Progress ─── */
+.upload-progress-area {
+    margin-top: 0.75rem;
+}
+.upload-progress-bar {
+    width: 100%;
+    height: 8px;
+    border-radius: 4px;
+    background: var(--gray-light, #f0f0f0);
+    overflow: hidden;
+    margin-bottom: 0.35rem;
+}
+.upload-progress-fill {
+    height: 100%;
+    background: var(--accent, #6c3ce9);
+    border-radius: 4px;
+    transition: width 0.2s ease;
+}
+.upload-progress-area small {
+    font-size: 0.75rem;
+    color: var(--text-secondary, #666);
+}
+.upload-progress-text {
+    display: block;
+    font-size: 0.75rem;
+    color: var(--text-secondary, #666);
+    margin-top: 0.2rem;
+}
+.upload-processing {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    background: #fef9e7;
+    border: 1px solid #f5d020;
+    font-size: 0.8rem;
+    color: #8a6d0f;
+}
+.upload-processing i {
+    animation: spin 1.2s linear infinite;
+}
+@keyframes spin { to { transform: rotate(360deg); } }
+.upload-done {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    background: #edf9ee;
+    border: 1px solid #4caf50;
+    font-size: 0.8rem;
+    color: #2e7d32;
+}
+.upload-done .btn-link {
+    margin-left: auto;
+    background: none;
+    border: none;
+    color: var(--accent, #6c3ce9);
+    cursor: pointer;
+    text-decoration: underline;
+    font-size: 0.8rem;
+}
+.upload-error {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 6px;
+    background: #fdecea;
+    border: 1px solid #ef5350;
+    font-size: 0.8rem;
+    color: #c62828;
+}
+
+/* ─── Content Blocks (subsection editor) ─── */
+.content-blocks { margin-top: 0.75rem; }
+.content-blocks h4 {
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 0.35rem;
+}
+.content-block {
+    display: flex;
+    gap: 0.5rem;
+    align-items: flex-start;
+    margin-bottom: 0.5rem;
+}
+.content-block select {
+    width: 100px;
+    flex-shrink: 0;
+}
+.content-block textarea {
+    flex: 1;
+    min-height: 2.5rem;
+    resize: vertical;
+}
+
+/* ─── Inline Quiz Checkpoints (subsection editor) ─── */
+.quiz-checkpoints, .end-quiz-builder { margin-top: 0.75rem; }
+.quiz-checkpoints h4, .end-quiz-builder h4 {
+    font-size: 0.85rem;
+    font-weight: 600;
+    margin-bottom: 0.35rem;
+}
+.quiz-checkpoint-item, .end-quiz-item {
+    border: 1px solid var(--gray-mid, #e8ebef);
+    border-radius: 6px;
+    padding: 0.6rem;
+    margin-bottom: 0.5rem;
+    background: var(--gray-light, #fafafa);
+}
+.quiz-checkpoint-item label, .end-quiz-item label {
+    font-size: 0.75rem;
+    font-weight: 500;
+}
+.quiz-checkpoint-item input,
+.quiz-checkpoint-item textarea,
+.end-quiz-item input,
+.end-quiz-item textarea {
+    width: 100%;
+    margin-top: 0.15rem;
+    margin-bottom: 0.35rem;
+}
+.checkpoint-question, .end-quiz-question {
+    padding: 0.4rem;
+    margin-bottom: 0.35rem;
+    border-left: 3px solid var(--accent, #6c3ce9);
+    padding-left: 0.6rem;
+}
+.checkpoint-question .options-row,
+.end-quiz-question .options-row {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0.35rem;
+    margin: 0.25rem 0;
+}
+.correct-index-row {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-size: 0.75rem;
+}
+.correct-index-row input[type="number"] {
+    width: 60px;
+}
+
 /* ─── Actions ─── */
 .editor-actions {
     display: flex; gap: 1rem;

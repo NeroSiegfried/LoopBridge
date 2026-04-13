@@ -7,20 +7,21 @@ import '../../styles/edit-course.css';
 
 /* ── tiny helpers ── */
 const uid = () => Math.random().toString(36).slice(2, 9);
-const emptyQuestion = () => ({ id: uid(), question: '', options: ['', '', '', ''], correct: 0 });
+const emptyQuestion = () => ({ id: uid(), question: '', options: ['', '', '', ''], correctIndex: 0 });
 const emptySubsection = () => ({
   id: uid(),
   title: '',
   duration: '',
   type: 'video',
   videoUrl: '',
-  videoFile: null,       // uploading indicator
+  uploadState: null,     // null | 'uploading' | 'processing' | 'done' | 'error'
+  uploadProgress: 0,     // 0-100
+  uploadError: '',
   hlsUrl: '',
   thumbnailUrl: '',
-  content: [],           // reading blocks
-  quiz: [],              // quiz questions
-  quizTiming: 'end',     // 'end' | 'inline'
-  quizTimestamp: '',      // e.g. "1:30"
+  content: [],           // content blocks — available for ALL lesson types
+  quizPoints: [],        // inline quiz pause-points: [{ atSeconds, questions }]
+  endQuiz: [],           // end-of-lesson quiz questions
 });
 const emptyTopic = () => ({ id: uid(), title: '', subsections: [] });
 
@@ -39,6 +40,7 @@ export default function EditCourse() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [expandedSub, setExpandedSub] = useState(null); // "tIdx-sIdx"
+  const [uploadingCount, setUploadingCount] = useState(0); // number of active uploads
 
   useEffect(() => {
     if (!user) { navigate('/login'); return; }
@@ -54,7 +56,7 @@ export default function EditCourse() {
             image: data.image || '',
           });
           setObjectives(data.learningObjectives || data.learningOutcomes || data.objectives || []);
-          // Hydrate topics — give each subsection an id
+          // Hydrate topics — give each subsection an id and normalize quiz format
           const hydrated = (data.topics || data.sections || []).map(t => ({
             ...t,
             id: t.id || uid(),
@@ -62,7 +64,13 @@ export default function EditCourse() {
               ...emptySubsection(),
               ...s,
               id: s.id || uid(),
-              quiz: (s.quiz || []).map(q => ({ ...emptyQuestion(), ...q, id: q.id || uid() })),
+              uploadState: s.videoUrl ? 'done' : null,
+              // Normalize quiz: support both old format (quiz/quizTiming) and new (quizPoints/endQuiz)
+              quizPoints: (s.quizPoints || []).map(qp => ({
+                ...qp,
+                questions: (qp.questions || []).map(q => ({ ...emptyQuestion(), ...q, id: q.id || uid() })),
+              })),
+              endQuiz: (s.endQuiz || s.quiz || []).map(q => ({ ...emptyQuestion(), ...q, id: q.id || uid() })),
             })),
           }));
           setTopics(hydrated);
@@ -111,24 +119,86 @@ export default function EditCourse() {
     if (expandedSub === `${tIdx}-${sIdx}`) setExpandedSub(null);
   };
 
-  /* ── video upload ── */
+  /* ── video upload with progress ── */
   const handleVideoUpload = async (tIdx, sIdx, file) => {
-    updateSub(tIdx, sIdx, { videoFile: `Uploading ${file.name}…` });
+    setUploadingCount(c => c + 1);
+    updateSub(tIdx, sIdx, { uploadState: 'uploading', uploadProgress: 0, uploadError: '' });
+
     const fd = new FormData();
     fd.append('files', file);
+
     try {
-      const data = await uploadsApi.upload(fd);
+      // Use XMLHttpRequest for upload progress
+      const data = await new Promise((resolve, reject) => {
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', '/api/uploads');
+        xhr.withCredentials = true;
+
+        xhr.upload.addEventListener('progress', (e) => {
+          if (e.lengthComputable) {
+            const pct = Math.round((e.loaded / e.total) * 100);
+            updateSub(tIdx, sIdx, { uploadProgress: pct });
+          }
+        });
+
+        xhr.onload = () => {
+          if (xhr.status >= 200 && xhr.status < 300) {
+            resolve(JSON.parse(xhr.responseText));
+          } else {
+            reject(new Error(`Upload failed (${xhr.status})`));
+          }
+        };
+        xhr.onerror = () => reject(new Error('Network error during upload'));
+        xhr.send(fd);
+      });
+
+      // Upload done — video is now on S3 / disk, transcoding may be in progress
       updateSub(tIdx, sIdx, {
         videoUrl: data.url || data.path,
         hlsUrl: data.hlsUrl || '',
         thumbnailUrl: data.thumbnailUrl || '',
-        videoFile: file.name,
+        uploadState: data.hlsUrl ? 'done' : 'processing',
+        uploadProgress: 100,
       });
+
+      // If no HLS URL yet, start polling for transcode completion
+      if (!data.hlsUrl && data.id) {
+        pollTranscodeStatus(tIdx, sIdx, data.id);
+      }
     } catch (err) {
       console.error('[EditCourse] Video upload failed:', err);
       setError(`Video upload failed: ${err.message}`);
-      updateSub(tIdx, sIdx, { videoFile: `Upload failed — ${file.name}` });
+      updateSub(tIdx, sIdx, { uploadState: 'error', uploadError: err.message });
+    } finally {
+      setUploadingCount(c => Math.max(0, c - 1));
     }
+  };
+
+  /* ── poll transcode status ── */
+  const pollTranscodeStatus = async (tIdx, sIdx, uploadId) => {
+    const maxAttempts = 120; // 10 minutes max
+    for (let i = 0; i < maxAttempts; i++) {
+      await new Promise(r => setTimeout(r, 5000)); // poll every 5s
+      try {
+        const resp = await fetch(`/api/transcode/${uploadId}/status`, { credentials: 'include' });
+        if (!resp.ok) continue;
+        const status = await resp.json();
+        if (status.status === 'COMPLETE' || status.status === 'complete') {
+          updateSub(tIdx, sIdx, {
+            hlsUrl: status.hlsUrl || '',
+            thumbnailUrl: status.thumbnailUrl || '',
+            uploadState: 'done',
+          });
+          return;
+        }
+        if (status.status === 'ERROR' || status.status === 'error') {
+          updateSub(tIdx, sIdx, { uploadState: 'done' }); // still usable as mp4
+          return;
+        }
+      } catch { /* keep polling */ }
+    }
+    // Timeout — just mark as done (mp4 is still usable)
+    updateSub(tIdx, sIdx, { uploadState: 'done' });
   };
 
   /* ── reading content blocks ── */
@@ -147,38 +217,99 @@ export default function EditCourse() {
     updateSub(tIdx, sIdx, { content: sub.content.filter((_, i) => i !== bIdx) });
   };
 
-  /* ── quiz CRUD ── */
-  const addQuizQuestion = (tIdx, sIdx) => {
+  /* ── quiz CRUD (end-of-lesson quiz) ── */
+  const addEndQuizQuestion = (tIdx, sIdx) => {
     const sub = topics[tIdx].subsections[sIdx];
-    updateSub(tIdx, sIdx, { quiz: [...(sub.quiz || []), emptyQuestion()] });
+    updateSub(tIdx, sIdx, { endQuiz: [...(sub.endQuiz || []), emptyQuestion()] });
   };
-  const updateQuizQuestion = (tIdx, sIdx, qIdx, patch) => {
+  const updateEndQuizQuestion = (tIdx, sIdx, qIdx, patch) => {
     const sub = topics[tIdx].subsections[sIdx];
     updateSub(tIdx, sIdx, {
-      quiz: sub.quiz.map((q, i) => i === qIdx ? { ...q, ...patch } : q),
+      endQuiz: sub.endQuiz.map((q, i) => i === qIdx ? { ...q, ...patch } : q),
     });
   };
-  const removeQuizQuestion = (tIdx, sIdx, qIdx) => {
+  const removeEndQuizQuestion = (tIdx, sIdx, qIdx) => {
     const sub = topics[tIdx].subsections[sIdx];
-    updateSub(tIdx, sIdx, { quiz: sub.quiz.filter((_, i) => i !== qIdx) });
+    updateSub(tIdx, sIdx, { endQuiz: sub.endQuiz.filter((_, i) => i !== qIdx) });
   };
-  const updateQuizOption = (tIdx, sIdx, qIdx, oIdx, value) => {
+  const updateEndQuizOption = (tIdx, sIdx, qIdx, oIdx, value) => {
     const sub = topics[tIdx].subsections[sIdx];
-    const q = sub.quiz[qIdx];
+    const q = sub.endQuiz[qIdx];
     const options = q.options.map((o, i) => i === oIdx ? value : o);
-    updateQuizQuestion(tIdx, sIdx, qIdx, { options });
+    updateEndQuizQuestion(tIdx, sIdx, qIdx, { options });
   };
-  const addQuizOption = (tIdx, sIdx, qIdx) => {
+  const addEndQuizOption = (tIdx, sIdx, qIdx) => {
     const sub = topics[tIdx].subsections[sIdx];
-    const q = sub.quiz[qIdx];
-    updateQuizQuestion(tIdx, sIdx, qIdx, { options: [...q.options, ''] });
+    const q = sub.endQuiz[qIdx];
+    updateEndQuizQuestion(tIdx, sIdx, qIdx, { options: [...q.options, ''] });
   };
-  const removeQuizOption = (tIdx, sIdx, qIdx, oIdx) => {
+  const removeEndQuizOption = (tIdx, sIdx, qIdx, oIdx) => {
     const sub = topics[tIdx].subsections[sIdx];
-    const q = sub.quiz[qIdx];
-    updateQuizQuestion(tIdx, sIdx, qIdx, {
+    const q = sub.endQuiz[qIdx];
+    updateEndQuizQuestion(tIdx, sIdx, qIdx, {
       options: q.options.filter((_, i) => i !== oIdx),
-      correct: q.correct >= oIdx && q.correct > 0 ? q.correct - 1 : q.correct,
+      correctIndex: q.correctIndex >= oIdx && q.correctIndex > 0 ? q.correctIndex - 1 : q.correctIndex,
+    });
+  };
+
+  /* ── inline quiz pause-points ── */
+  const addQuizPoint = (tIdx, sIdx) => {
+    const sub = topics[tIdx].subsections[sIdx];
+    updateSub(tIdx, sIdx, {
+      quizPoints: [...(sub.quizPoints || []), { atTimestamp: '', atSeconds: 0, questions: [emptyQuestion()] }],
+    });
+  };
+  const removeQuizPoint = (tIdx, sIdx, pIdx) => {
+    const sub = topics[tIdx].subsections[sIdx];
+    updateSub(tIdx, sIdx, { quizPoints: sub.quizPoints.filter((_, i) => i !== pIdx) });
+  };
+  const updateQuizPointTimestamp = (tIdx, sIdx, pIdx, ts) => {
+    const sub = topics[tIdx].subsections[sIdx];
+    // Parse "1:30" → 90 seconds
+    const parts = ts.split(':').map(Number);
+    const secs = parts.length === 2 ? (parts[0] || 0) * 60 + (parts[1] || 0) : (parts[0] || 0);
+    updateSub(tIdx, sIdx, {
+      quizPoints: sub.quizPoints.map((p, i) => i === pIdx ? { ...p, atTimestamp: ts, atSeconds: secs } : p),
+    });
+  };
+  const addQuizPointQuestion = (tIdx, sIdx, pIdx) => {
+    const sub = topics[tIdx].subsections[sIdx];
+    updateSub(tIdx, sIdx, {
+      quizPoints: sub.quizPoints.map((p, i) => i === pIdx ? { ...p, questions: [...p.questions, emptyQuestion()] } : p),
+    });
+  };
+  const updateQuizPointQuestion = (tIdx, sIdx, pIdx, qIdx, patch) => {
+    const sub = topics[tIdx].subsections[sIdx];
+    updateSub(tIdx, sIdx, {
+      quizPoints: sub.quizPoints.map((p, i) => i === pIdx ? {
+        ...p, questions: p.questions.map((q, j) => j === qIdx ? { ...q, ...patch } : q),
+      } : p),
+    });
+  };
+  const removeQuizPointQuestion = (tIdx, sIdx, pIdx, qIdx) => {
+    const sub = topics[tIdx].subsections[sIdx];
+    updateSub(tIdx, sIdx, {
+      quizPoints: sub.quizPoints.map((p, i) => i === pIdx ? {
+        ...p, questions: p.questions.filter((_, j) => j !== qIdx),
+      } : p),
+    });
+  };
+  const updateQPOption = (tIdx, sIdx, pIdx, qIdx, oIdx, value) => {
+    const sub = topics[tIdx].subsections[sIdx];
+    const q = sub.quizPoints[pIdx].questions[qIdx];
+    updateQuizPointQuestion(tIdx, sIdx, pIdx, qIdx, { options: q.options.map((o, i) => i === oIdx ? value : o) });
+  };
+  const addQPOption = (tIdx, sIdx, pIdx, qIdx) => {
+    const sub = topics[tIdx].subsections[sIdx];
+    const q = sub.quizPoints[pIdx].questions[qIdx];
+    updateQuizPointQuestion(tIdx, sIdx, pIdx, qIdx, { options: [...q.options, ''] });
+  };
+  const removeQPOption = (tIdx, sIdx, pIdx, qIdx, oIdx) => {
+    const sub = topics[tIdx].subsections[sIdx];
+    const q = sub.quizPoints[pIdx].questions[qIdx];
+    updateQuizPointQuestion(tIdx, sIdx, pIdx, qIdx, {
+      options: q.options.filter((_, i) => i !== oIdx),
+      correctIndex: q.correctIndex >= oIdx && q.correctIndex > 0 ? q.correctIndex - 1 : q.correctIndex,
     });
   };
 
@@ -188,16 +319,19 @@ export default function EditCourse() {
       (t.subsections || []).forEach((s) => {
         acc.lessons++;
         if (s.type === 'video') acc.videos++;
-        if (s.quiz?.length > 0) acc.quizzes++;
+        if ((s.endQuiz?.length > 0) || (s.quizPoints?.length > 0)) acc.quizzes++;
       });
       return acc;
     },
     { lessons: 0, videos: 0, quizzes: 0 },
   );
 
+  const canSave = uploadingCount === 0;
+
   /* ── save ── */
   const handleSubmit = async (e) => {
     if (e) e.preventDefault();
+    if (!canSave) return;
     setSaving(true);
     setError('');
     try {
@@ -213,23 +347,32 @@ export default function EditCourse() {
               title: s.title,
               type: s.type,
               duration: s.duration,
+              content: s.content || [],
             };
             if (s.type === 'video') {
               out.videoUrl = s.videoUrl;
               out.hlsUrl = s.hlsUrl;
               out.thumbnailUrl = s.thumbnailUrl;
             }
-            if (s.type === 'reading' || s.type === 'exercise') {
-              out.content = s.content;
+            // Inline quiz pause-points (video only)
+            if (s.quizPoints?.length > 0) {
+              out.quizPoints = s.quizPoints.map(qp => ({
+                atSeconds: qp.atSeconds,
+                atTimestamp: qp.atTimestamp,
+                questions: qp.questions.map(q => ({
+                  question: q.question,
+                  options: q.options,
+                  correctIndex: q.correctIndex,
+                })),
+              }));
             }
-            if (s.quiz?.length > 0) {
-              out.quiz = s.quiz.map(q => ({
+            // End-of-lesson quiz
+            if (s.endQuiz?.length > 0) {
+              out.endQuiz = s.endQuiz.map(q => ({
                 question: q.question,
                 options: q.options,
-                correct: q.correct,
+                correctIndex: q.correctIndex,
               }));
-              out.quizTiming = s.quizTiming;
-              if (s.quizTiming === 'inline') out.quizTimestamp = s.quizTimestamp;
             }
             return out;
           }),
@@ -259,8 +402,8 @@ export default function EditCourse() {
           <Link to="/admin/dashboard" className="btn btn-ghost btn-sm">
             <i className="fa-solid fa-arrow-left" /> Dashboard
           </Link>
-          <button className="btn btn-primary btn-sm" onClick={handleSubmit} disabled={saving}>
-            <i className="fa-solid fa-floppy-disk" /> {saving ? 'Saving…' : 'Save'}
+          <button className="btn btn-primary btn-sm" onClick={handleSubmit} disabled={saving || !canSave}>
+            <i className="fa-solid fa-floppy-disk" /> {saving ? 'Saving…' : !canSave ? `Uploading (${uploadingCount})…` : 'Save'}
           </button>
         </div>
       </div>
@@ -391,101 +534,161 @@ export default function EditCourse() {
                               {/* ── Video upload (type=video) ── */}
                               {sub.type === 'video' && (
                                 <div className="video-upload-area">
-                                  <label>
-                                    <i className="fa-solid fa-cloud-arrow-up" />
-                                    {' '}Choose video file…
-                                    <input
-                                      type="file"
-                                      accept="video/mp4,video/webm,video/ogg,.mp4,.webm,.ogg"
-                                      style={{ display: 'none' }}
-                                      onChange={(e) => {
-                                        if (e.target.files[0]) handleVideoUpload(tIdx, sIdx, e.target.files[0]);
-                                      }}
-                                    />
-                                  </label>
-                                  <div className="video-filename">
-                                    {sub.videoFile || (sub.videoUrl ? sub.videoUrl.split('/').pop() : 'No file selected')}
-                                  </div>
-                                  {sub.videoUrl && (
-                                    <div style={{ marginTop: '0.375rem', fontSize: '0.75rem', color: 'var(--lb-green)' }}>
-                                      <i className="fa-solid fa-check-circle" /> Video uploaded
-                                      {sub.hlsUrl && <span style={{ marginLeft: '0.5rem' }}><i className="fa-solid fa-film" /> HLS ready</span>}
+                                  {!sub.uploadState || sub.uploadState === 'error' ? (
+                                    <label>
+                                      <i className="fa-solid fa-cloud-arrow-up" />
+                                      {' '}Choose video file…
+                                      <input
+                                        type="file"
+                                        accept="video/mp4,video/webm,video/ogg,.mp4,.webm,.ogg"
+                                        style={{ display: 'none' }}
+                                        onChange={(e) => {
+                                          if (e.target.files[0]) handleVideoUpload(tIdx, sIdx, e.target.files[0]);
+                                        }}
+                                      />
+                                    </label>
+                                  ) : null}
+
+                                  {sub.uploadState === 'error' && (
+                                    <div className="upload-error">
+                                      <i className="fa-solid fa-triangle-exclamation" /> {sub.uploadError || 'Upload failed'}
+                                    </div>
+                                  )}
+
+                                  {sub.uploadState === 'uploading' && (
+                                    <div className="upload-progress-area">
+                                      <div className="upload-progress-bar">
+                                        <div className="upload-progress-fill" style={{ width: `${sub.uploadProgress}%` }} />
+                                      </div>
+                                      <span className="upload-progress-text">
+                                        <i className="fa-solid fa-spinner fa-spin" /> Uploading… {sub.uploadProgress}%
+                                      </span>
+                                    </div>
+                                  )}
+
+                                  {sub.uploadState === 'processing' && (
+                                    <div className="upload-processing">
+                                      <i className="fa-solid fa-film fa-beat-fade" />
+                                      <span>Processing video — creating multiple resolutions for adaptive streaming. You can save now; processing continues in the background.</span>
+                                    </div>
+                                  )}
+
+                                  {sub.uploadState === 'done' && sub.videoUrl && (
+                                    <div className="upload-done">
+                                      <i className="fa-solid fa-check-circle" style={{ color: 'var(--lb-green)' }} /> Video uploaded
+                                      {sub.hlsUrl && <span style={{ marginLeft: '0.5rem' }}><i className="fa-solid fa-film" /> Adaptive streaming ready</span>}
+                                      <button type="button" className="btn btn-sm btn-ghost" style={{ marginLeft: 'auto', fontSize: '0.7rem' }}
+                                        onClick={() => updateSub(tIdx, sIdx, { videoUrl: '', hlsUrl: '', thumbnailUrl: '', uploadState: null, uploadProgress: 0 })}>
+                                        <i className="fa-solid fa-rotate-left" /> Replace
+                                      </button>
                                     </div>
                                   )}
                                 </div>
                               )}
 
-                              {/* ── Reading / Exercise content blocks ── */}
-                              {(sub.type === 'reading' || sub.type === 'exercise') && (
-                                <div className="reading-content-editor" style={{ marginTop: '0.5rem' }}>
-                                  <div className="content-blocks-list">
-                                    {(sub.content || []).map((block, bIdx) => (
-                                      <div className="content-block-row" key={bIdx} style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem', alignItems: 'flex-start' }}>
-                                        <span className="block-type-badge" style={{ fontSize: '0.6875rem', padding: '0.15rem 0.4rem', borderRadius: '0.25rem', background: 'var(--gray-light)', border: '1px solid var(--gray-mid)', whiteSpace: 'nowrap', marginTop: '0.5rem' }}>
-                                          {block.type}
-                                        </span>
-                                        <textarea
-                                          className="input textarea"
-                                          rows={block.type === 'heading' ? 1 : 3}
-                                          value={block.value}
-                                          onChange={(e) => updateContentBlock(tIdx, sIdx, bIdx, e.target.value)}
-                                          placeholder={`${block.type} content…`}
-                                          style={{ flex: 1, fontSize: '0.8125rem' }}
-                                        />
-                                        <button type="button" onClick={() => removeContentBlock(tIdx, sIdx, bIdx)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--black-mid)', padding: '0.5rem 0.25rem' }}>
-                                          <i className="fa-solid fa-xmark" />
+                              {/* ── Content blocks (available for ALL lesson types) ── */}
+                              <div className="reading-content-editor" style={{ marginTop: '0.75rem' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.375rem' }}>
+                                  <span style={{ fontSize: '0.8125rem', fontWeight: 600, color: 'var(--black-mid)' }}>
+                                    <i className="fa-solid fa-align-left" /> {sub.type === 'video' ? 'Accompanying Notes' : 'Lesson Content'}
+                                  </span>
+                                </div>
+                                <div className="content-blocks-list">
+                                  {(sub.content || []).map((block, bIdx) => (
+                                    <div className="content-block-row" key={bIdx} style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem', alignItems: 'flex-start' }}>
+                                      <span className="block-type-badge" style={{ fontSize: '0.6875rem', padding: '0.15rem 0.4rem', borderRadius: '0.25rem', background: 'var(--gray-light)', border: '1px solid var(--gray-mid)', whiteSpace: 'nowrap', marginTop: '0.5rem' }}>
+                                        {block.type}
+                                      </span>
+                                      <textarea
+                                        className="input textarea"
+                                        rows={block.type === 'heading' ? 1 : 3}
+                                        value={block.value}
+                                        onChange={(e) => updateContentBlock(tIdx, sIdx, bIdx, e.target.value)}
+                                        placeholder={`${block.type} content…`}
+                                        style={{ flex: 1, fontSize: '0.8125rem' }}
+                                      />
+                                      <button type="button" onClick={() => removeContentBlock(tIdx, sIdx, bIdx)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--black-mid)', padding: '0.5rem 0.25rem' }}>
+                                        <i className="fa-solid fa-xmark" />
+                                      </button>
+                                    </div>
+                                  ))}
+                                </div>
+                                <div className="add-content-blocks" style={{ display: 'flex', gap: '0.375rem', flexWrap: 'wrap', marginTop: '0.25rem' }}>
+                                  {['heading', 'text', 'image', 'code', 'note', 'list'].map((bt) => (
+                                    <button key={bt} type="button" className="btn btn-sm btn-ghost" onClick={() => addContentBlock(tIdx, sIdx, bt)} style={{ fontSize: '0.7rem', padding: '0.15rem 0.4rem' }}>
+                                      <i className={`fa-solid fa-${bt === 'heading' ? 'heading' : bt === 'text' ? 'paragraph' : bt === 'image' ? 'image' : bt === 'code' ? 'code' : bt === 'note' ? 'sticky-note' : 'list'}`} /> {bt}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+
+                              {/* ── Inline quiz pause-points (video only) ── */}
+                              {sub.type === 'video' && (
+                                <div className="quiz-builder" style={{ marginTop: '0.75rem' }}>
+                                  <div className="quiz-builder-header">
+                                    <span><i className="fa-solid fa-pause-circle" /> In-Video Quiz Checkpoints</span>
+                                    <button type="button" className="btn btn-sm btn-ghost add-question-btn" style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }} onClick={() => addQuizPoint(tIdx, sIdx)}>
+                                      <i className="fa-solid fa-plus" /> Add Checkpoint
+                                    </button>
+                                  </div>
+                                  {(sub.quizPoints || []).length === 0 && (
+                                    <p style={{ fontSize: '0.75rem', color: 'var(--black-mid)', margin: '0.25rem 0', fontStyle: 'italic' }}>
+                                      Pause the video at a specific time and show a quiz the learner must pass to continue.
+                                    </p>
+                                  )}
+                                  {(sub.quizPoints || []).map((point, pIdx) => (
+                                    <div key={pIdx} className="quiz-point-block" style={{ background: 'white', border: '1px solid var(--gray-mid)', borderRadius: '0.375rem', padding: '0.625rem', marginBottom: '0.5rem' }}>
+                                      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', marginBottom: '0.5rem' }}>
+                                        <span style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--black-mid)' }}>Pause at:</span>
+                                        <input className="input" type="text" value={point.atTimestamp || ''} onChange={(e) => updateQuizPointTimestamp(tIdx, sIdx, pIdx, e.target.value)} placeholder="1:30" style={{ width: '5rem', fontSize: '0.8125rem' }} />
+                                        <span style={{ fontSize: '0.6875rem', color: 'var(--black-mid)' }}>({point.atSeconds}s)</span>
+                                        <button type="button" onClick={() => removeQuizPoint(tIdx, sIdx, pIdx)} style={{ marginLeft: 'auto', background: 'none', border: 'none', cursor: 'pointer', color: '#e53e3e', fontSize: '0.75rem' }}>
+                                          <i className="fa-solid fa-trash" /> Remove
                                         </button>
                                       </div>
-                                    ))}
-                                  </div>
-                                  <div className="add-content-blocks" style={{ display: 'flex', gap: '0.375rem', flexWrap: 'wrap', marginTop: '0.25rem' }}>
-                                    {['heading', 'text', 'image', 'code', 'note', 'list'].map((bt) => (
-                                      <button key={bt} type="button" className="btn btn-sm btn-ghost" onClick={() => addContentBlock(tIdx, sIdx, bt)} style={{ fontSize: '0.7rem', padding: '0.15rem 0.4rem' }}>
-                                        <i className={`fa-solid fa-${bt === 'heading' ? 'heading' : bt === 'text' ? 'paragraph' : bt === 'image' ? 'image' : bt === 'code' ? 'code' : bt === 'note' ? 'sticky-note' : 'list'}`} /> {bt}
+                                      {point.questions.map((q, qIdx) => (
+                                        <div key={q.id} className="quiz-question" style={{ marginBottom: '0.375rem' }}>
+                                          <input className="input question-input" type="text" value={q.question} onChange={(e) => updateQuizPointQuestion(tIdx, sIdx, pIdx, qIdx, { question: e.target.value })} placeholder="Question text" />
+                                          <div className="quiz-options">
+                                            {q.options.map((opt, oIdx) => (
+                                              <div className="quiz-option" key={oIdx}>
+                                                <input type="radio" name={`qp-${sub.id}-${pIdx}-${qIdx}`} checked={q.correctIndex === oIdx} onChange={() => updateQuizPointQuestion(tIdx, sIdx, pIdx, qIdx, { correctIndex: oIdx })} />
+                                                <input className="input" type="text" value={opt} onChange={(e) => updateQPOption(tIdx, sIdx, pIdx, qIdx, oIdx, e.target.value)} placeholder={`Option ${oIdx + 1}`} />
+                                                <button type="button" className="remove-option" onClick={() => removeQPOption(tIdx, sIdx, pIdx, qIdx, oIdx)}><i className="fa-solid fa-xmark" /></button>
+                                              </div>
+                                            ))}
+                                          </div>
+                                          <div className="quiz-question-actions">
+                                            <button type="button" className="btn btn-sm btn-ghost" onClick={() => addQPOption(tIdx, sIdx, pIdx, qIdx)} style={{ fontSize: '0.7rem', padding: '0.15rem 0.4rem' }}><i className="fa-solid fa-plus" /> Option</button>
+                                            <button type="button" className="btn btn-sm btn-ghost" onClick={() => removeQuizPointQuestion(tIdx, sIdx, pIdx, qIdx)} style={{ fontSize: '0.7rem', padding: '0.15rem 0.4rem', color: '#e53e3e' }}><i className="fa-solid fa-trash" /> Remove</button>
+                                          </div>
+                                        </div>
+                                      ))}
+                                      <button type="button" className="btn btn-sm btn-ghost" onClick={() => addQuizPointQuestion(tIdx, sIdx, pIdx)} style={{ fontSize: '0.7rem' }}>
+                                        <i className="fa-solid fa-plus" /> Add Question
                                       </button>
-                                    ))}
-                                  </div>
+                                    </div>
+                                  ))}
                                 </div>
                               )}
 
-                              {/* ── Quiz builder ── */}
-                              <div className="quiz-builder">
+                              {/* ── End-of-lesson quiz ── */}
+                              <div className="quiz-builder" style={{ marginTop: '0.75rem' }}>
                                 <div className="quiz-builder-header">
-                                  <span><i className="fa-solid fa-clipboard-question" /> Quiz (optional)</span>
-                                  <button type="button" className="btn btn-sm btn-ghost add-question-btn" style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }} onClick={() => addQuizQuestion(tIdx, sIdx)}>
+                                  <span><i className="fa-solid fa-clipboard-question" /> End-of-Lesson Quiz</span>
+                                  <button type="button" className="btn btn-sm btn-ghost add-question-btn" style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }} onClick={() => addEndQuizQuestion(tIdx, sIdx)}>
                                     <i className="fa-solid fa-plus" /> Question
                                   </button>
                                 </div>
 
-                                <div className="quiz-timing">
-                                  <label>Timing:</label>
-                                  <select value={sub.quizTiming || 'end'} onChange={(e) => updateSub(tIdx, sIdx, { quizTiming: e.target.value })}>
-                                    <option value="end">After lesson</option>
-                                    <option value="inline">In-video (pauses video)</option>
-                                  </select>
-                                  {sub.quizTiming === 'inline' && (
-                                    <>
-                                      <span className="inline-time-label">at</span>
-                                      <input
-                                        className="input"
-                                        type="text"
-                                        value={sub.quizTimestamp || ''}
-                                        onChange={(e) => updateSub(tIdx, sIdx, { quizTimestamp: e.target.value })}
-                                        placeholder="1:30"
-                                        style={{ width: '4rem' }}
-                                      />
-                                    </>
-                                  )}
-                                </div>
-
                                 <div className="quiz-questions">
-                                  {(sub.quiz || []).map((q, qIdx) => (
+                                  {(sub.endQuiz || []).map((q, qIdx) => (
                                     <div className="quiz-question" key={q.id}>
                                       <input
                                         className="input question-input"
                                         type="text"
                                         value={q.question}
-                                        onChange={(e) => updateQuizQuestion(tIdx, sIdx, qIdx, { question: e.target.value })}
+                                        onChange={(e) => updateEndQuizQuestion(tIdx, sIdx, qIdx, { question: e.target.value })}
                                         placeholder="Question text"
                                       />
                                       <div className="quiz-options">
@@ -493,28 +696,28 @@ export default function EditCourse() {
                                           <div className="quiz-option" key={oIdx}>
                                             <input
                                               type="radio"
-                                              name={`q-${sub.id}-${qIdx}`}
-                                              checked={q.correct === oIdx}
-                                              onChange={() => updateQuizQuestion(tIdx, sIdx, qIdx, { correct: oIdx })}
+                                              name={`eq-${sub.id}-${qIdx}`}
+                                              checked={q.correctIndex === oIdx}
+                                              onChange={() => updateEndQuizQuestion(tIdx, sIdx, qIdx, { correctIndex: oIdx })}
                                             />
                                             <input
                                               className="input"
                                               type="text"
                                               value={opt}
-                                              onChange={(e) => updateQuizOption(tIdx, sIdx, qIdx, oIdx, e.target.value)}
+                                              onChange={(e) => updateEndQuizOption(tIdx, sIdx, qIdx, oIdx, e.target.value)}
                                               placeholder={`Option ${oIdx + 1}`}
                                             />
-                                            <button type="button" className="remove-option" onClick={() => removeQuizOption(tIdx, sIdx, qIdx, oIdx)} title="Remove option">
+                                            <button type="button" className="remove-option" onClick={() => removeEndQuizOption(tIdx, sIdx, qIdx, oIdx)} title="Remove option">
                                               <i className="fa-solid fa-xmark" />
                                             </button>
                                           </div>
                                         ))}
                                       </div>
                                       <div className="quiz-question-actions">
-                                        <button type="button" className="btn btn-sm btn-ghost" onClick={() => addQuizOption(tIdx, sIdx, qIdx)} style={{ fontSize: '0.7rem', padding: '0.15rem 0.4rem' }}>
+                                        <button type="button" className="btn btn-sm btn-ghost" onClick={() => addEndQuizOption(tIdx, sIdx, qIdx)} style={{ fontSize: '0.7rem', padding: '0.15rem 0.4rem' }}>
                                           <i className="fa-solid fa-plus" /> Option
                                         </button>
-                                        <button type="button" className="btn btn-sm btn-ghost" onClick={() => removeQuizQuestion(tIdx, sIdx, qIdx)} style={{ fontSize: '0.7rem', padding: '0.15rem 0.4rem', color: '#e53e3e' }}>
+                                        <button type="button" className="btn btn-sm btn-ghost" onClick={() => removeEndQuizQuestion(tIdx, sIdx, qIdx)} style={{ fontSize: '0.7rem', padding: '0.15rem 0.4rem', color: '#e53e3e' }}>
                                           <i className="fa-solid fa-trash" /> Remove
                                         </button>
                                       </div>
@@ -541,8 +744,8 @@ export default function EditCourse() {
           </div>
 
           <div className="editor-actions">
-            <button type="submit" className="btn btn-primary" id="save-btn" disabled={saving}>
-              <i className="fa-solid fa-floppy-disk" /> {saving ? 'Saving…' : 'Save Course'}
+            <button type="submit" className="btn btn-primary" id="save-btn" disabled={saving || !canSave}>
+              <i className="fa-solid fa-floppy-disk" /> {saving ? 'Saving…' : !canSave ? `Uploading (${uploadingCount})…` : 'Save Course'}
             </button>
             <Link to="/admin/dashboard" className="btn btn-ghost">Cancel</Link>
           </div>

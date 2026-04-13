@@ -86,9 +86,19 @@ const AdaptiveVideoPlayer = forwardRef(function AdaptiveVideoPlayer(
 
       const hls = new Hls({
         startLevel: -1, // auto
-        capLevelToPlayerSize: true,
+        capLevelToPlayerSize: false,  // let ABR use bandwidth, not player size
+        abrEwmaDefaultEstimate: 500000, // start with 500kbps estimate
+        abrEwmaFastLive: 3.0,
+        abrEwmaSlowLive: 9.0,
+        abrEwmaFastVoD: 3.0,
+        abrEwmaSlowVoD: 9.0,
+        abrBandWidthFactor: 0.95,
+        abrBandWidthUpFactor: 0.7,
         maxBufferLength: 30,
         maxMaxBufferLength: 60,
+        maxBufferHole: 0.5,
+        lowLatencyMode: false,
+        testBandwidth: true,
       });
 
       hls.loadSource(src);
@@ -175,6 +185,9 @@ const AdaptiveVideoPlayer = forwardRef(function AdaptiveVideoPlayer(
       <video
         ref={videoRef}
         controls
+        controlsList="nodownload"
+        disablePictureInPicture
+        onContextMenu={(e) => e.preventDefault()}
         poster={poster || undefined}
         onEnded={onEnded}
         onTimeUpdate={onTimeUpdate ? (e) => onTimeUpdate(e.target.currentTime) : undefined}
