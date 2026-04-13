@@ -1,5 +1,12 @@
 # LoopBridge — CI/CD Pipeline
-# On push to main: build Docker image → push to ECR → SSH deploy to EC2
+# Flow: push to main → build & test → push image to ECR → SSM deploy to EC2
+#
+# No SSH required. Deployment goes through AWS SSM (port 443 only).
+# EC2 instance must have AmazonSSMManagedInstanceCore in its IAM role.
+#
+# Required GitHub Secrets:
+#   AWS_ACCESS_KEY_ID     — loopbridge-admin IAM user key
+#   AWS_SECRET_ACCESS_KEY — loopbridge-admin IAM user secret
 
 name: Deploy LoopBridge
 
@@ -11,17 +18,17 @@ on:
   workflow_dispatch:
 
 env:
-  AWS_REGION: us-east-1
-  ECR_REPOSITORY: loopbridge-api
-  EC2_HOST: 44.197.184.251
-  EC2_USER: ec2-user
-  S3_BUCKET: loopbridge-uploads-680128294518
+  AWS_REGION:       us-east-1
+  ECR_REPOSITORY:   loopbridge-api
+  ECR_REGISTRY:     680128294518.dkr.ecr.us-east-1.amazonaws.com
+  EC2_INSTANCE_ID:  i-035f5e2909653efa0
+  S3_BUCKET:        loopbridge-uploads-680128294518
 
 permissions:
   contents: read
 
 jobs:
-  # ─── Job 1: Build & Test ─────────────────────────────
+  # ─── Job 1: Build & Test ─────────────────────────────────────────────────
   build-and-test:
     name: Build & Test
     runs-on: ubuntu-latest
@@ -37,111 +44,176 @@ jobs:
             client/package-lock.json
             server/package-lock.json
 
-      - name: Install dependencies
-        run: |
-          cd client && npm ci --legacy-peer-deps
-          cd ../server && npm ci
+      - name: Install client dependencies
+        run: cd client && npm ci --legacy-peer-deps
 
-      - name: Lint & test (if scripts exist)
+      - name: Install server dependencies
+        run: cd server && npm ci
+
+      - name: Lint (if configured)
         run: |
           cd client && npm run lint --if-present
-          cd ../server && npm run lint --if-present && npm test --if-present
+          cd ../server && npm run lint --if-present
 
-      - name: Verify client builds
+      - name: Server tests (if configured)
+        run: cd server && npm test --if-present
+
+      - name: Verify client builds cleanly
         run: cd client && npm run build
 
-  # ─── Job 2: Deploy to EC2 ────────────────────────────
-  deploy:
-    name: Deploy to EC2
+  # ─── Job 2: Push Docker image to ECR ─────────────────────────────────────
+  push-image:
+    name: Push Image to ECR
     needs: build-and-test
     if: github.ref == 'refs/heads/main' && github.event_name != 'pull_request'
     runs-on: ubuntu-latest
+    outputs:
+      image_tag: ${{ github.sha }}
     steps:
       - uses: actions/checkout@v4
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
+          aws-region:            ${{ env.AWS_REGION }}
 
       - name: Login to Amazon ECR
-        id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
 
       - name: Build and push Docker image
-        env:
-          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
-          IMAGE_TAG: ${{ github.sha }}
         run: |
+          IMAGE=${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}
+          SHA=${{ github.sha }}
+
           docker build \
             --platform linux/amd64 \
-            -f server/Dockerfile \
-            -t $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG \
-            -t $ECR_REGISTRY/$ECR_REPOSITORY:latest \
+            --file server/Dockerfile \
+            --tag $IMAGE:$SHA \
+            --tag $IMAGE:latest \
             .
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:$IMAGE_TAG
-          docker push $ECR_REGISTRY/$ECR_REPOSITORY:latest
-          echo "ECR_REGISTRY=$ECR_REGISTRY" >> $GITHUB_ENV
 
-      - name: Deploy to EC2 via SSH
-        env:
-          EC2_SSH_KEY: ${{ secrets.EC2_SSH_KEY }}
-          ECR_REGISTRY: ${{ env.ECR_REGISTRY }}
-          IMAGE_TAG: ${{ github.sha }}
+          docker push $IMAGE:$SHA
+          docker push $IMAGE:latest
+
+          echo "Pushed $IMAGE:$SHA"
+
+  # ─── Job 3: Deploy via SSM (no SSH, no open port 22) ─────────────────────
+  deploy:
+    name: Deploy to EC2 via SSM
+    needs: push-image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region:            ${{ env.AWS_REGION }}
+
+      - name: Send deploy command via SSM
+        id: ssm
         run: |
-          echo "$EC2_SSH_KEY" > /tmp/deploy_key
-          chmod 600 /tmp/deploy_key
+          IMAGE=${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}
+          SHA=${{ github.sha }}
 
-          ssh -i /tmp/deploy_key \
-              -o StrictHostKeyChecking=no \
-              ${{ env.EC2_USER }}@${{ env.EC2_HOST }} << REMOTE
-            set -e
+          COMMAND_ID=$(aws ssm send-command \
+            --instance-ids "${{ env.EC2_INSTANCE_ID }}" \
+            --document-name AWS-RunShellScript \
+            --comment "Deploy $SHA" \
+            --timeout-seconds 300 \
+            --parameters "commands=[
+              \"set -euo pipefail\",
+              \"echo '--- Authenticating with ECR ---'\",
+              \"aws ecr get-login-password --region us-east-1 | sudo docker login --username AWS --password-stdin 680128294518.dkr.ecr.us-east-1.amazonaws.com\",
+              \"echo '--- Pulling image ---'\",
+              \"sudo docker pull ${IMAGE}:${SHA}\",
+              \"echo '--- Stopping old container ---'\",
+              \"sudo docker stop loopbridge 2>/dev/null || true\",
+              \"sudo docker rm loopbridge 2>/dev/null || true\",
+              \"echo '--- Starting new container ---'\",
+              \"sudo docker run -d --name loopbridge --restart unless-stopped -p 80:3000 -v /data:/data -e NODE_ENV=production -e DB_TYPE=sqlite -e DB_PATH=/data/loopbridge.db -e STORAGE_DRIVER=s3 -e S3_BUCKET=${{ env.S3_BUCKET }} -e S3_REGION=${{ env.AWS_REGION }} -e S3_PREFIX=uploads/ -e COOKIE_SECURE=false -e CORS_ORIGIN=true ${IMAGE}:${SHA}\",
+              \"echo '--- Container status ---'\",
+              \"sleep 5 && sudo docker ps --filter name=loopbridge --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'\",
+              \"echo '--- Last 10 log lines ---'\",
+              \"sudo docker logs loopbridge --tail 10\",
+              \"echo '--- Pruning old images ---'\",
+              \"sudo docker image prune -f\"
+            ]" \
+            --query 'Command.CommandId' \
+            --output text)
 
-            # Authenticate with ECR
-            aws ecr get-login-password --region ${{ env.AWS_REGION }} | \
-              sudo docker login --username AWS --password-stdin \
-              ${ECR_REGISTRY}
+          echo "command_id=$COMMAND_ID" >> $GITHUB_OUTPUT
+          echo "SSM command sent: $COMMAND_ID"
 
-            # Pull new image
-            sudo docker pull ${ECR_REGISTRY}/${{ env.ECR_REPOSITORY }}:${IMAGE_TAG}
+      - name: Wait for SSM command to complete
+        run: |
+          COMMAND_ID=${{ steps.ssm.outputs.command_id }}
+          INSTANCE=${{ env.EC2_INSTANCE_ID }}
 
-            # Stop and remove old container
-            sudo docker stop loopbridge 2>/dev/null || true
-            sudo docker rm loopbridge 2>/dev/null || true
+          echo "Waiting for command $COMMAND_ID ..."
 
-            # Start new container
-            sudo docker run -d \
-              --name loopbridge \
-              --restart unless-stopped \
-              -p 80:3000 \
-              -v /data:/data \
-              -e NODE_ENV=production \
-              -e DB_TYPE=sqlite \
-              -e DB_PATH=/data/loopbridge.db \
-              -e STORAGE_DRIVER=s3 \
-              -e S3_BUCKET=${{ env.S3_BUCKET }} \
-              -e S3_REGION=${{ env.AWS_REGION }} \
-              -e S3_PREFIX=uploads/ \
-              -e COOKIE_SECURE=false \
-              -e CORS_ORIGIN=true \
-              ${ECR_REGISTRY}/${{ env.ECR_REPOSITORY }}:${IMAGE_TAG}
+          for i in $(seq 1 30); do
+            STATUS=$(aws ssm get-command-invocation \
+              --command-id "$COMMAND_ID" \
+              --instance-id "$INSTANCE" \
+              --query 'StatusDetails' \
+              --output text 2>/dev/null || echo "Pending")
 
-            # Verify it started
-            sleep 5
-            sudo docker logs loopbridge --tail 5
-            sudo docker inspect loopbridge --format '{{.State.Status}}'
+            echo "  [$i/30] $STATUS"
 
-            # Clean up old images (keep last 3)
-            sudo docker image prune -f
-          REMOTE
+            if [[ "$STATUS" == "Success" ]]; then
+              echo "Deploy succeeded."
+              break
+            elif [[ "$STATUS" == "Failed" || "$STATUS" == "TimedOut" || "$STATUS" == "Cancelled" ]]; then
+              echo "Deploy command failed: $STATUS"
+              aws ssm get-command-invocation \
+                --command-id "$COMMAND_ID" \
+                --instance-id "$INSTANCE" \
+                --query 'StandardErrorContent' \
+                --output text || true
+              exit 1
+            fi
 
-          rm -f /tmp/deploy_key
+            sleep 10
+          done
+
+          if [[ "$STATUS" != "Success" ]]; then
+            echo "Timed out waiting for deploy."
+            exit 1
+          fi
+
+      - name: Show deploy output
+        if: always()
+        run: |
+          aws ssm get-command-invocation \
+            --command-id "${{ steps.ssm.outputs.command_id }}" \
+            --instance-id "${{ env.EC2_INSTANCE_ID }}" \
+            --query 'StandardOutputContent' \
+            --output text || true
 
       - name: Health check
         run: |
-          sleep 8
-          STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://${{ env.EC2_HOST }}/api/articles)
-          echo "Health check status: $STATUS"
-          [ "$STATUS" = "200" ] || (echo "Health check failed!" && exit 1)
+          echo "Waiting 10s for container to settle..."
+          sleep 10
+
+          EC2_IP=$(aws ec2 describe-instances \
+            --instance-ids "${{ env.EC2_INSTANCE_ID }}" \
+            --query 'Reservations[0].Instances[0].PublicIpAddress' \
+            --output text)
+
+          echo "Checking http://$EC2_IP/api/articles ..."
+
+          for i in 1 2 3; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 "http://$EC2_IP/api/articles" || echo "000")
+            echo "  Attempt $i: HTTP $STATUS"
+            if [[ "$STATUS" == "200" ]]; then
+              echo "Health check passed."
+              exit 0
+            fi
+            sleep 5
+          done
+
+          echo "Health check failed after 3 attempts!"
+          exit 1
