@@ -133,7 +133,7 @@ jobs:
               \"sudo docker stop loopbridge 2>/dev/null || true\",
               \"sudo docker rm loopbridge 2>/dev/null || true\",
               \"echo '--- Starting new container ---'\",
-              \"sudo docker run -d --name loopbridge --restart unless-stopped -p 80:3000 -v /data:/data -e NODE_ENV=production -e DB_TYPE=sqlite -e DB_PATH=/data/loopbridge.db -e STORAGE_DRIVER=s3 -e S3_BUCKET=${{ env.S3_BUCKET }} -e S3_REGION=${{ env.AWS_REGION }} -e S3_PREFIX=uploads/ -e COOKIE_SECURE=false -e CORS_ORIGIN=true ${IMAGE}:${SHA}\",
+              \"sudo docker run -d --name loopbridge --restart unless-stopped -p 80:3000 -v /data:/data -e NODE_ENV=production -e DB_TYPE=sqlite -e DB_PATH=/data/loopbridge.db -e STORAGE_DRIVER=s3 -e S3_BUCKET=${{ env.S3_BUCKET }} -e S3_REGION=${{ env.AWS_REGION }} -e S3_PREFIX=uploads/ -e MEDIACONVERT_ENDPOINT=https://mediaconvert.us-east-1.amazonaws.com -e MEDIACONVERT_ROLE_ARN=arn:aws:iam::680128294518:role/loopbridge-mediaconvert-role -e COOKIE_SECURE=false -e CORS_ORIGIN=true ${IMAGE}:${SHA}\",
               \"echo '--- Container status ---'\",
               \"sleep 5 && sudo docker ps --filter name=loopbridge --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'\",
               \"echo '--- Last 10 log lines ---'\",
