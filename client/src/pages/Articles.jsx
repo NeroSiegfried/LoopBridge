@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import SEO from '../components/SEO';
+import RecommendedForYou from '../components/RecommendedForYou';
 import { articlesApi } from '../api';
 import '../styles/articles.css';
 
@@ -88,6 +89,8 @@ export default function Articles() {
           </div>
         </div>
       </section>
+
+      <RecommendedForYou kind="articles" limit={4} />
       </div>
     </>
   );

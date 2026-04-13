@@ -9,4 +9,6 @@ module.exports = {
     courseService:  require('./courseService'),
     storageService: require('./storageService'),
     categorizationService: require('./categorizationService'),
+    recommendationService: require('./recommendationService'),
+    transcodingService: require('./transcodingService'),
 };

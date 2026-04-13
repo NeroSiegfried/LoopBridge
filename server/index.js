@@ -38,6 +38,8 @@ const uploadRoutes = require('./routes/uploads');
 const miscRoutes = require('./routes/misc');
 const dashboardRoutes = require('./routes/dashboard');
 const analyticsRoutes = require('./routes/analytics');
+const recommendationsRoutes = require('./routes/recommendations');
+const transcodeRoutes = require('./routes/transcode');
 
 // ─── Create Express App ─────────────────────────────────
 const app = express();
@@ -103,6 +105,8 @@ app.use('/api/courses', rateLimit(RATE_WINDOW_MS, RATE_MAX_GENERAL), courseRoute
 app.use('/api/uploads', rateLimit(RATE_WINDOW_MS, RATE_MAX_GENERAL), uploadRoutes);
 app.use('/api/dashboard', rateLimit(RATE_WINDOW_MS, RATE_MAX_GENERAL), dashboardRoutes);
 app.use('/api/analytics', rateLimit(RATE_WINDOW_MS, RATE_MAX_GENERAL), analyticsRoutes);
+app.use('/api/recommendations', rateLimit(RATE_WINDOW_MS, RATE_MAX_GENERAL), recommendationsRoutes);
+app.use('/api/transcode', rateLimit(RATE_WINDOW_MS, RATE_MAX_GENERAL), transcodeRoutes);
 app.use('/api', miscRoutes);
 
 // ─── Uploaded files (served at /uploads/*) ──────────────

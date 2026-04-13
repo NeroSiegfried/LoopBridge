@@ -14,6 +14,7 @@ const path = require('path');
 const config = require('../config');
 const { requireAuth, requireAuthor } = require('../middleware/auth');
 const { storageService } = require('../services');
+const transcodingService = require('../services/transcodingService');
 
 const router = express.Router();
 
@@ -52,6 +53,20 @@ router.post('/', requireAuthor, upload.array('files', config.maxFiles), async (r
     }
 
     const results = await storageService.saveFiles(req.files, req.user ? req.user.id : null);
+
+    // Auto-trigger transcoding for video uploads (non-blocking)
+    for (const result of results) {
+        if (result.mimeType && result.mimeType.startsWith('video/')) {
+            // Fire and forget — don't block the upload response
+            const rawRecord = await storageService.getRawById(result.id);
+            if (rawRecord) {
+                transcodingService.transcodeVideo(result.id, rawRecord.path).catch(err => {
+                    console.warn('[uploads] Auto-transcode failed for', result.id, err.message);
+                });
+            }
+        }
+    }
+
     return res.status(201).json(results.length === 1 ? results[0] : results);
 });
 

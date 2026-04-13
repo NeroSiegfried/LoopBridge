@@ -91,3 +91,18 @@ export const uploadsApi = {
   get: (id) => request(`/uploads/${id}`),
   delete: (id) => request(`/uploads/${id}`, { method: 'DELETE' }),
 };
+
+// ─── Recommendations ─────────────────────────────────────
+export const recommendationsApi = {
+  articles: (limit = 10) => request(`/recommendations/articles?limit=${limit}`),
+  courses: (limit = 10) => request(`/recommendations/courses?limit=${limit}`),
+  profile: () => request('/recommendations/profile'),
+  analyse: (data) =>
+    request('/recommendations/analyse', { method: 'POST', body: JSON.stringify(data) }),
+};
+
+// ─── Transcoding ─────────────────────────────────────────
+export const transcodeApi = {
+  trigger: (uploadId) => request(`/transcode/${uploadId}`, { method: 'POST' }),
+  status: (uploadId) => request(`/transcode/${uploadId}/status`),
+};

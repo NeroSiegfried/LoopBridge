@@ -301,7 +301,12 @@ CREATE TABLE IF NOT EXISTS uploads (
     path        TEXT NOT NULL,
     url         TEXT NOT NULL,
     uploaded_by TEXT REFERENCES users(id) ON DELETE SET NULL,
-    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+    created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    hls_url          TEXT,
+    thumbnail_url    TEXT,
+    transcode_job_id TEXT,
+    transcode_status TEXT DEFAULT 'none',
+    transcode_error  TEXT
 );
 CREATE TABLE IF NOT EXISTS analytics_events (
     id           SERIAL PRIMARY KEY,
@@ -434,7 +439,12 @@ const SQLITE_SCHEMA = `
         path        TEXT NOT NULL,
         url         TEXT NOT NULL,
         uploaded_by TEXT REFERENCES users(id) ON DELETE SET NULL,
-        created_at  TEXT NOT NULL DEFAULT (datetime('now'))
+        created_at  TEXT NOT NULL DEFAULT (datetime('now')),
+        hls_url          TEXT,
+        thumbnail_url    TEXT,
+        transcode_job_id TEXT,
+        transcode_status TEXT DEFAULT 'none',
+        transcode_error  TEXT
     );
     CREATE TABLE IF NOT EXISTS analytics_events (
         id           INTEGER PRIMARY KEY AUTOINCREMENT,

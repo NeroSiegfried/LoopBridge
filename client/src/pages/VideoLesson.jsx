@@ -1,10 +1,12 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import SEO from '../components/SEO';
+import AdaptiveVideoPlayer from '../components/AdaptiveVideoPlayer';
 import { coursesApi } from '../api';
 import { useAuth } from '../context/AuthContext';
 import { trackEvent } from '../hooks/useAnalytics';
 import '../styles/lesson.css';
+import '../styles/adaptive-player.css';
 
 /**
  * VideoLesson — plays a video with optional inline quiz pause-points.
@@ -35,7 +37,6 @@ export default function VideoLesson() {
   const [completedQuizPoints, setCompletedQuizPoints] = useState(new Set());
 
   const videoRef = useRef(null);
-  const timeCheckRef = useRef(null);
 
   useEffect(() => {
     setLoading(true);
@@ -60,38 +61,7 @@ export default function VideoLesson() {
     }
   }, [courseId, topicIdx, subIdx, sub?.title]); // eslint-disable-line
 
-  // Monitor video time for quiz pause-points
-  useEffect(() => {
-    const video = videoRef.current;
-    if (!video || quizPoints.length === 0) return;
-
-    const onTimeUpdate = () => {
-      const currentTime = video.currentTime;
-      for (let i = 0; i < quizPoints.length; i++) {
-        const point = quizPoints[i];
-        if (
-          !completedQuizPoints.has(i) &&
-          currentTime >= point.atSeconds &&
-          currentTime < point.atSeconds + 1.5
-        ) {
-          video.pause();
-          setActiveQuiz({ ...point, pointIdx: i });
-          setAnswers({});
-          setQuizResult(null);
-          trackEvent('quiz_start', {
-            courseId,
-            quizId: `${courseId}-${topicIdx}-${subIdx}-qp${i}`,
-            userId: user?.id,
-          });
-          break;
-        }
-      }
-    };
-
-    video.addEventListener('timeupdate', onTimeUpdate);
-    timeCheckRef.current = onTimeUpdate;
-    return () => video.removeEventListener('timeupdate', onTimeUpdate);
-  }, [quizPoints, completedQuizPoints, courseId, topicIdx, subIdx, user?.id]);
+  // Quiz pause-point monitoring is handled by the onTimeUpdate prop on AdaptiveVideoPlayer
 
   const handleAnswer = (qIdx, optionIdx) => {
     setAnswers((prev) => ({ ...prev, [qIdx]: optionIdx }));
@@ -220,12 +190,34 @@ export default function VideoLesson() {
         <div className="lesson-container">
           {/* Video player */}
           <div className="video-wrapper">
-            {sub.videoUrl ? (
-              <video
+            {(sub.hlsUrl || sub.videoUrl) ? (
+              <AdaptiveVideoPlayer
                 ref={videoRef}
-                src={sub.videoUrl}
-                controls
+                src={sub.hlsUrl || sub.videoUrl}
+                poster={sub.thumbnailUrl}
                 onEnded={handleVideoEnd}
+                onTimeUpdate={(currentTime) => {
+                  // Quiz pause-point monitoring
+                  for (let i = 0; i < quizPoints.length; i++) {
+                    const point = quizPoints[i];
+                    if (
+                      !completedQuizPoints.has(i) &&
+                      currentTime >= point.atSeconds &&
+                      currentTime < point.atSeconds + 1.5
+                    ) {
+                      if (videoRef.current) videoRef.current.pause();
+                      setActiveQuiz({ ...point, pointIdx: i });
+                      setAnswers({});
+                      setQuizResult(null);
+                      trackEvent('quiz_start', {
+                        courseId,
+                        quizId: `${courseId}-${topicIdx}-${subIdx}-qp${i}`,
+                        userId: user?.id,
+                      });
+                      break;
+                    }
+                  }
+                }}
                 className="lesson-video"
               />
             ) : (

@@ -24,7 +24,7 @@ COPY --from=builder /app/client/dist ./client/dist
 COPY data/ ./data/
 
 # Create uploads directories
-RUN mkdir -p uploads/images uploads/documents uploads/other
+RUN mkdir -p uploads/images uploads/videos uploads/audio uploads/documents uploads/other
 
 EXPOSE 3000
 ENV NODE_ENV=production

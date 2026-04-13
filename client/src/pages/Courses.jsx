@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import SEO from '../components/SEO';
+import RecommendedForYou from '../components/RecommendedForYou';
 import '../styles/courses.css';
 import '../styles/academy.css';
 
@@ -83,6 +84,8 @@ export default function Courses() {
           </div>
         </div>
       </section>
+
+      <RecommendedForYou kind="courses" limit={4} />
     </>
   );
 }

@@ -1,7 +1,7 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useNavigate, Link } from 'react-router-dom';
 import SEO from '../../components/SEO';
-import { articlesApi, uploadsApi } from '../../api';
+import { articlesApi, uploadsApi, recommendationsApi } from '../../api';
 import { useAuth } from '../../context/AuthContext';
 import '../../styles/edit-article.css';
 
@@ -15,6 +15,8 @@ const BLOCK_TYPES = [
   { type: 'audio', icon: 'fa-headphones', label: 'Audio' },
   { type: 'embed', icon: 'fa-code', label: 'Embed' },
 ];
+
+const MEDIA_BLOCK_TYPES = new Set(['image', 'video', 'audio']);
 
 export default function EditArticle() {
   const { id } = useParams();
@@ -30,23 +32,51 @@ export default function EditArticle() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [coverFilename, setCoverFilename] = useState('Choose an image file…');
+  const [suggestedCategories, setSuggestedCategories] = useState(null);
+  const [suggestLoading, setSuggestLoading] = useState(false);
+  const analyseTimeout = useRef(null);
 
   useEffect(() => {
     if (!user) { navigate('/login'); return; }
     if (!isNew) {
       articlesApi.get(id)
-        .then((data) => setForm({
-          title: data.title || '',
-          category: data.category || '',
-          excerpt: data.excerpt || '',
-          body: data.body || '',
-          image: data.image || '',
-          featured: data.featured || false,
-        }))
+        .then((data) => {
+          setForm({
+            title: data.title || '',
+            category: data.category || '',
+            excerpt: data.excerpt || '',
+            body: data.body || '',
+            image: data.image || '',
+            featured: data.featured || false,
+          });
+          if (data.contentBlocks?.length) setBlocks(data.contentBlocks);
+        })
         .catch((err) => setError(err.message))
         .finally(() => setLoading(false));
     }
   }, [id, isNew, user, navigate]);
+
+  /* ── AI category suggestion (debounced) ── */
+  const triggerAnalyse = useCallback(() => {
+    if (analyseTimeout.current) clearTimeout(analyseTimeout.current);
+    analyseTimeout.current = setTimeout(async () => {
+      const title = form.title.trim();
+      const body = form.body?.trim() || form.excerpt?.trim() || '';
+      if (!title && !body) return;
+      setSuggestLoading(true);
+      try {
+        const data = await recommendationsApi.analyse({ title, body });
+        setSuggestedCategories(data.categories || data);
+      } catch { /* ignore */ }
+      setSuggestLoading(false);
+    }, 800);
+  }, [form.title, form.body, form.excerpt]);
+
+  // Re-analyse when title or body changes
+  useEffect(() => {
+    triggerAnalyse();
+    return () => { if (analyseTimeout.current) clearTimeout(analyseTimeout.current); };
+  }, [triggerAnalyse]);
 
   const handleChange = (e) => {
     const { name, value, type, checked } = e.target;
@@ -65,6 +95,7 @@ export default function EditArticle() {
     } catch { setError('Image upload failed'); }
   };
 
+  /* ── Block helpers ── */
   const addBlock = (type) => {
     setBlocks((b) => [...b, { type, content: '' }]);
   };
@@ -77,12 +108,31 @@ export default function EditArticle() {
     setBlocks((b) => b.filter((_, i) => i !== idx));
   };
 
+  const handleBlockMediaUpload = async (idx, file) => {
+    updateBlock(idx, 'Uploading…');
+    const fd = new FormData();
+    fd.append('file', file);
+    try {
+      const data = await uploadsApi.upload(fd);
+      updateBlock(idx, data.url || data.path);
+    } catch {
+      updateBlock(idx, 'Upload failed');
+    }
+  };
+
+  const applySuggestedCategory = (cat) => {
+    const current = form.category.split(',').map(s => s.trim()).filter(Boolean);
+    if (!current.includes(cat)) {
+      setForm((f) => ({ ...f, category: [...current, cat].join(', ') }));
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setSaving(true);
     setError('');
     try {
-      const payload = { ...form };
+      const payload = { ...form, contentBlocks: blocks };
       if (isNew) {
         await articlesApi.create(payload);
       } else {
@@ -130,6 +180,35 @@ export default function EditArticle() {
                 <div className="form-group">
                   <label className="form-label" htmlFor="category">Categories * <span style={{ fontWeight: 300, fontSize: '0.75rem', color: 'var(--black-mid)' }}>(comma-separated)</span></label>
                   <input className="input" type="text" id="category" name="category" placeholder="DeFi, Bitcoin, Security" required value={form.category} onChange={handleChange} />
+                  {/* AI category suggestions */}
+                  {(suggestLoading || suggestedCategories) && (
+                    <div className="ai-category-panel" style={{ marginTop: '0.5rem', padding: '0.5rem 0.75rem', background: 'var(--gray-light, #f7f8fa)', border: '1px solid var(--gray-mid, #e8ebef)', borderRadius: '0.5rem', fontSize: '0.8125rem' }}>
+                      <span style={{ fontWeight: 600, color: 'var(--lb-blue-text)', marginRight: '0.5rem' }}>
+                        <i className="fa-solid fa-wand-magic-sparkles" /> AI Suggests:
+                      </span>
+                      {suggestLoading ? (
+                        <span style={{ color: 'var(--black-mid)' }}>Analysing…</span>
+                      ) : (
+                        <span style={{ display: 'inline-flex', gap: '0.375rem', flexWrap: 'wrap' }}>
+                          {(Array.isArray(suggestedCategories) ? suggestedCategories : []).slice(0, 5).map((cat, idx) => {
+                            const name = typeof cat === 'string' ? cat : cat.category || cat.name;
+                            const score = typeof cat === 'object' ? cat.score : null;
+                            return (
+                              <button
+                                key={idx}
+                                type="button"
+                                className="btn btn-sm btn-ghost"
+                                onClick={() => applySuggestedCategory(name)}
+                                style={{ padding: '0.15rem 0.5rem', fontSize: '0.75rem', border: '1px solid var(--gray-dark, #e8ebef)', borderRadius: '1rem' }}
+                              >
+                                {name}{score != null ? ` (${Math.round(score)}%)` : ''}
+                              </button>
+                            );
+                          })}
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
                 <div className="form-group">
                   <label className="form-label" htmlFor="author-name">Author</label>
@@ -174,13 +253,46 @@ export default function EditArticle() {
                           <i className="fa-solid fa-trash" />
                         </button>
                       </div>
-                      <textarea
-                        className="input textarea"
-                        rows="3"
-                        value={block.content}
-                        onChange={(e) => updateBlock(idx, e.target.value)}
-                        placeholder={`Enter ${block.type} content…`}
-                      />
+                      {MEDIA_BLOCK_TYPES.has(block.type) ? (
+                        <div className="media-block-area">
+                          <div className="media-upload-row" style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                            <input
+                              className="input"
+                              type="text"
+                              value={block.content}
+                              onChange={(e) => updateBlock(idx, e.target.value)}
+                              placeholder={`Paste ${block.type} URL or upload…`}
+                              style={{ flex: 1 }}
+                            />
+                            <label className="btn btn-sm btn-ghost" style={{ cursor: 'pointer', whiteSpace: 'nowrap' }}>
+                              <i className="fa-solid fa-cloud-arrow-up" /> Upload
+                              <input
+                                type="file"
+                                accept={block.type === 'image' ? 'image/*' : block.type === 'video' ? 'video/*' : 'audio/*'}
+                                style={{ display: 'none' }}
+                                onChange={(e) => {
+                                  if (e.target.files[0]) handleBlockMediaUpload(idx, e.target.files[0]);
+                                }}
+                              />
+                            </label>
+                          </div>
+                          {block.content && block.content !== 'Uploading…' && block.content !== 'Upload failed' && (
+                            <div className="media-preview" style={{ marginTop: '0.5rem' }}>
+                              {block.type === 'image' && <img src={block.content} alt="preview" style={{ maxWidth: '100%', maxHeight: '200px', borderRadius: '0.375rem' }} />}
+                              {block.type === 'video' && <video src={block.content} controls style={{ maxWidth: '100%', maxHeight: '200px', borderRadius: '0.375rem' }} />}
+                              {block.type === 'audio' && <audio src={block.content} controls style={{ width: '100%' }} />}
+                            </div>
+                          )}
+                        </div>
+                      ) : (
+                        <textarea
+                          className="input textarea"
+                          rows="3"
+                          value={block.content}
+                          onChange={(e) => updateBlock(idx, e.target.value)}
+                          placeholder={`Enter ${block.type} content…`}
+                        />
+                      )}
                     </div>
                   ))}
                 </div>

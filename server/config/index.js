@@ -41,6 +41,10 @@ const config = {
     s3Prefix: process.env.S3_PREFIX || 'uploads/',
     cdnBaseUrl: process.env.CDN_BASE_URL || null,                // CloudFront distribution URL
 
+    // ─── Video Transcoding (AWS MediaConvert) ────────────
+    mediaConvertEndpoint: process.env.MEDIACONVERT_ENDPOINT || null,
+    mediaConvertRoleArn: process.env.MEDIACONVERT_ROLE_ARN || null,
+
     // ─── Social Media Links ─────────────────────────────────
     socialTelegram: process.env.SOCIAL_TELEGRAM || '',
     socialDiscord: process.env.SOCIAL_DISCORD || '',

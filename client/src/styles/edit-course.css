@@ -201,6 +201,13 @@
     margin-top: 0.5rem;
 }
 
+/* Expanded sub detail area */
+.sub-expanded {
+    margin-top: 0.5rem;
+    padding-top: 0.5rem;
+    border-top: 1px dashed var(--gray-mid, #e8ebef);
+}
+
 /* ─── Actions ─── */
 .editor-actions {
     display: flex; gap: 1rem;
