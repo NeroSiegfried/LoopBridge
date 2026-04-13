@@ -1,0 +1,12 @@
+node_modules
+client/node_modules
+server/node_modules
+server/loopbridge.db
+server/.env
+uploads/
+.git
+.github
+backup/
+*.md
+CREDENTIALS.local.md
+.DS_Store

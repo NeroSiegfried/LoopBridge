@@ -137,12 +137,30 @@
 
 .courses a {
     text-decoration: none;
+    display: flex;
+    width: 100%;
+    min-width: 0;
 }
 
 .course-container {
     padding: 20px 19px 28px;
     border: 1px solid var(--gray-dark);
     border-radius: 12px;
+    transition: box-shadow 0.2s ease, transform 0.2s ease, border-color 0.2s ease;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.course-container:hover {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+    border-color: #ccc;
+    transform: translateY(-2px);
+}
+
+.course-container:active {
+    transform: translateY(0);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
 }
 
 .course-card{
@@ -156,7 +174,6 @@
     display: flex;
     flex-direction: column;
     gap: 1rem;
-    justify-content: space-between;
     flex: 1;
 }
 
@@ -208,6 +225,7 @@
     font-weight: 200;
     color: var(--black-mid);
     font-size: clamp(12px, 1.5vw, 14px);
+    margin-top: auto;
 }
 
 
@@ -233,4 +251,48 @@
         gap: 1.5rem;
         align-items: center;
     }
+}
+
+@media (max-width: 48rem) {
+    .track-hero {
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+
+    .courses-section {
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+}
+
+/* ─── Course Progress Bar on Cards ─── */
+.course-progress-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    padding: 0 0 0.25rem;
+}
+
+.course-progress-bar .progress-track {
+    flex: 1;
+    height: 6px;
+    background: var(--gray-dark, #e8ebef);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.course-progress-bar .progress-fill {
+    height: 100%;
+    background: var(--lb-green, #30c070);
+    border-radius: 3px;
+    transition: width 0.3s ease;
+}
+
+.course-progress-bar .progress-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--lb-green, #30c070);
+    min-width: 2.5rem;
+    text-align: right;
 }

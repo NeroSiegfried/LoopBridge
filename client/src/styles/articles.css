@@ -1,0 +1,318 @@
+.articles-page .featured, .articles-page .article-section {
+    padding: 18rem 4rem 4rem;
+}
+
+.articles-page .related-articles {
+    padding: 4rem;
+}
+
+
+
+.articles-page .featured .section-container, .articles-page .feed .section-container, .articles-page .related-articles .section-container {
+    display: block;
+}
+
+.articles-page .article-section .section-container {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 2rem;
+    padding: 0px 12rem;
+}
+
+.articles-page .article-section .header{
+    margin-bottom: 0;
+    width: 100%;
+}
+
+.articles-page .article-section .article-image{
+    width: 100%;
+    aspect-ratio: 3.1/1;
+    border-radius: 12px;
+    border: 1px solid black;
+    overflow: hidden;
+}
+
+.articles-page .article-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+}
+
+.articles-page .article-meta {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: 12px;
+    flex-wrap: wrap;
+}
+
+.articles-page .author-info {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.articles-page .author-name {
+    font-family: 'Schibsted Grotesk', sans-serif;
+    font-weight: 300;
+    color: var(--black-dark);
+    font-size: 16px;
+}
+
+.articles-page .author-image {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin-right: 8px;
+    overflow: hidden;
+}
+
+.articles-page .author-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+}
+
+.articles-page .other-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.articles-page .other-info>* {
+    font-family: 'Schibsted Grotesk', sans-serif;
+    font-weight: 300;
+    color: var(--black-mid);
+    font-size: 14px;
+    padding: 8px 18px;
+    background-color: white;
+    border: 1px solid var(--gray-dark);
+    border-radius: 19px;
+}
+
+.articles-page .article-section .body {
+    font-family: 'Schibsted Grotesk', sans-serif;
+    font-weight: 300;
+    color: var(--black-two);
+    font-size: 18px;
+    line-height: 2rem;
+    margin-top: 20px;
+}
+
+.articles-page .article-section .body h2 {
+    font-size: 1.5rem; /* 24px */
+    font-weight: 500;
+    color: var(--lb-blue-text);
+    margin: 1.5rem 0;
+    text-align: left;
+}
+
+.articles-page .article-section .body h3 {
+    font-size: 1.25rem; /* 24px */
+    font-weight: 500;
+    color: var(--lb-blue-text);
+    margin: 1rem 0;
+    text-align: left;
+}
+
+.articles-page .article-section .body p {
+    margin: 1rem 0;
+}
+
+.articles-page .featured h2, .articles-page .feed h2, .articles-page .related-articles h2, .articles-page .article-section h1 {
+    text-align: left;
+    font-family: CabinetGrotesk-Variable, sans-serif;
+    font-weight: 600;
+    font-size: clamp(32px, 3vw, 36px);
+    margin-bottom: 2rem;
+    margin-top: 0;
+    color: var(--lb-blue-text);
+}
+
+
+.articles-page .featured .section-container>p, .articles-page .related-articles .section-container>p {
+    font-family: 'schibsted-grotesk', sans-serif;
+    font-size: clamp(16px, 2vw, 20px);
+    font-weight: 300;
+    color: var(--lb-blue-text);
+    margin-bottom: 3rem;
+    max-width: 550px;
+}
+
+.articles-page .categories {
+    display: flex;
+    flex-direction: column;
+    text-align: center;
+    gap: 50px;
+    margin-bottom: 30px;
+
+}
+
+.articles-page .category-buttons {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.articles-page .category-button, .articles-page .load-btn {
+    font-family: 'Schibsted Grotesk', sans-serif;
+    font-weight: 500;
+    color: var(--black-dark);
+    font-size: clamp(14px, 1.5vw, 16px);
+    background-color: white;
+    border-radius: 19px;
+    display: inline-block;
+    padding: 11px 18px;
+    border: 1px solid var(--gray-dark);
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.articles-page .category-button:hover, .articles-page .load-btn:hover {
+    background-color: var(--gray-light);
+    border-color: var(--gray-mid);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+}
+
+.articles-page .category-button:active, .articles-page .load-btn:active {
+    transform: scale(0.97);
+    background-color: var(--gray-mid);
+}
+
+.articles-page .category-button.active {
+    background-color: var(--lb-green);
+    color: white;
+    border: 1px solid transparent;
+}
+
+.articles-page .category-button.active:hover {
+    background-color: #28a85f;
+    box-shadow: 0 2px 8px rgba(48, 192, 112, 0.25);
+}
+
+.articles-page .featured .articles, .articles-page .related-articles .articles {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.25rem;
+}
+
+.articles-page .articles > a {
+    text-decoration: none;
+}
+
+.articles-page .article-card {
+    background-color: var(--gray-light);
+    border-radius: 12px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.articles-page .article-card:hover {
+    box-shadow: 0 0px 18px rgba(0, 0, 0, 0.1);
+}
+
+.articles-page .featured .article-image, .articles-page .related-articles .article-image {
+    height: 240px;
+    object-fit: cover;
+    object-position: center;
+    background-color: #e9fded;
+    margin-bottom: 10px;
+    position: relative;
+}
+
+.articles-page .article-category {
+    font-family: 'Schibsted Grotesk', sans-serif;
+    font-weight: 300;
+    color: var(--black-mid);
+    font-size: clamp(12px, 1.5vw, 14px);
+    margin-bottom: 0.5rem;
+    background-color: var(--gray-mid);
+    border-radius: 19px;
+    display: inline-block;
+    padding: 7px 18px;
+    position: absolute;
+    top: 16px;
+    left: 20px;
+}
+
+.articles-page .article-body {
+    padding: 24px 20px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    height: 100%;
+    flex: 1;
+    
+}
+
+.articles-page .article-title {
+    font-family: 'CabinetGrotesk-Variable', sans-serif;
+    font-weight: 600;
+    color: var(--lb-blue-text);
+    font-size: 22px;
+    margin: 6px 0;
+}
+
+.articles-page .article-description {
+    font-family: 'Schibsted Grotesk', sans-serif;
+    font-weight: 300;
+    color: var(--lb-blue-text);
+    font-size: 16px;
+    line-height: 1.5rem;
+    margin-bottom: 20px;
+}
+
+.articles-page .article-subscript {
+    font-family: 'Schibsted Grotesk', sans-serif;
+    font-weight: 200;
+    color: var(--black-mid);
+    font-size: clamp(12px, 1.5vw, 14px);
+}
+
+@media (max-width: 1200px) {
+    .articles-page .featured .articles, .articles-page .related-articles .articles {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .articles-page .article-section {
+        padding-top: 12rem;
+    }
+
+    .articles-page .article-section .section-container {
+        padding: 0px 4rem;
+    }
+}
+
+@media (max-width: 993px){
+    .articles-page .article-section .article-image {
+        aspect-ratio: 1.5/1;
+    }
+}
+
+@media (max-width: 768px) {
+    .articles-page .featured .articles, .articles-page .related-articles .articles {
+        grid-template-columns: 1fr;
+    }
+
+    .articles-page section.featured, .articles-page section.article-section {
+        padding: 14rem 20px 3rem;
+    }
+
+    .articles-page section.related-articles {
+        padding: 3rem 20px;
+    }
+
+    .articles-page .article-section .section-container {
+        padding: 0;
+    }
+
+    .articles-page .article-section .article-image {
+        height: clamp(200px, 40vw, 650px);
+        aspect-ratio: unset;
+    }
+}

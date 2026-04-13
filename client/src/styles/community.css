@@ -1,0 +1,203 @@
+.community-hero .section-container,
+.community-page .pathways .section-container {
+    display: block;
+}
+
+.community-hero {
+    background-color: #f6fffa;
+    color: var(--lb-blue-text);
+    padding: 300px 40px 160px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    overflow: hidden;
+}
+
+.community-hero .body {
+    max-width: 54rem;
+    position: relative;
+    z-index: 0;
+}
+
+.community-hero h1 {
+    font-family: CabinetGrotesk-Bold, sans-serif;
+    font-size: 3.75rem;
+    margin-bottom: 1.25rem;
+}
+
+.community-hero p {
+    font-family: 'schibsted-grotesk', sans-serif;
+    font-size: 1.25rem;
+    color: var(--black-mid);
+}
+.community-hero-btn {
+    margin-top: 3.75rem;
+    padding: 0.8125rem 2.5625rem;
+    font-size: 1.125rem;
+    border: none;
+    background-color: var(--lb-green);
+    color: white;
+    border-radius: 2.1875rem;
+    cursor: pointer;
+    transition: background-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.community-hero-btn:hover {
+    background-color: #28a85f;
+    box-shadow: 0 2px 8px rgba(48, 192, 112, 0.3);
+}
+
+.community-hero-btn:active {
+    transform: scale(0.97);
+    background-color: #209050;
+}
+
+.community-hero-img {
+    position: absolute;
+    width: 100%;
+    bottom: -60%;
+    z-index: -1;
+}
+
+.community-page .pathways {
+    padding: 160px 40px 100px;
+}
+
+/* Platforms container using CSS Grid */
+/* Platforms container using CSS Grid */
+.platforms {
+    margin-top: 5rem; /* 80px */
+    display: grid;
+    grid-template-columns: repeat(5, 1fr); /* Default: 5 items per row */
+    gap: 1.25rem; /* 20px gap between cards */
+    width: 100%; /* Allow the grid to span the full width of the container */
+}
+
+/* Platform card items */
+.platform-card-item {
+    display: flex;
+    flex-direction: column;
+    padding: 1.25rem; /* 20px */
+    background-color: #fbfffd;
+    border: 1px solid var(--gray-dark);
+    border-radius: 0.75rem; /* 12px */
+    box-sizing: border-box;
+    min-width: 200px; /* Ensure cards never shrink below 200px */
+    width: 100%; /* Allow cards to grow dynamically */
+}
+
+/* Platform body */
+.platform-body {
+    display: flex;
+    flex-grow: 1;
+    flex-direction: column;
+    justify-content: space-between;
+    gap: 1.25rem; /* 20px */
+}
+
+/* Platform icon */
+.platform-icon {
+    width: 3rem; /* 48px */
+    height: 3rem; /* 48px */
+    margin-bottom: 1.25rem; /* 20px */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    border-radius: 50%;
+}
+
+/* Platform heading */
+.platforms h4 {
+    font-family: CabinetGrotesk-Regular, sans-serif;
+    color: var(--lb-blue-text);
+    font-size: 1.25rem; /* 20px */
+    margin-bottom: 0.625rem; /* 10px */
+}
+
+/* Platform paragraph */
+.platforms p {
+    font-family: 'schibsted-grotesk', sans-serif;
+    font-size: 1rem; /* 16px */
+    color: var(--black-mid);
+}
+
+/* Platform link */
+.platforms a {
+    text-decoration: none;
+    font-size: 1rem; /* 16px */
+    color: var(--lb-blue-text);
+}
+
+/* Platform-specific icon styles (scoped to .platform-icon to avoid SPA bleed) */
+.platform-icon.whatsapp {
+    color: var(--lb-green);
+    background-color: #e4ffdf;
+}
+
+.platform-icon.discord {
+    color: #5865f2;
+    background-color: #e6e8fc;
+}
+
+.platform-icon.youtube {
+    color: #e83236;
+    background-color: #ffb9bb;
+}
+
+.platform-icon.twitter {
+    color: #022d49;
+    background-color: #e8eaeb;
+}
+
+.platform-icon.telegram {
+    color: #1e85f4;
+    background-color: #d7eaff;
+}
+
+/* Responsive design: Adjust grid layout for smaller screens */
+
+/* Below 1200px: 3 items per row */
+@media (max-width: 1200px) {
+    .platforms {
+        grid-template-columns: repeat(3, 1fr); /* 3 items per row */
+    }
+}
+
+/* Below 900px: 2 items per row */
+@media (max-width: 900px) {
+    .platforms {
+        grid-template-columns: repeat(2, 1fr); /* 2 items per row */
+    }
+}
+
+/* Adjustments for smaller screens */
+@media (max-width: 768px) {
+    .community-hero {
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+
+    .community-page .pathways {
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+
+    .community-hero-img {
+        width: 100%; /* Reduce the width to prevent excessive shrinking */
+        bottom: -40%; /* Adjust the bottom position to keep it visible */
+    }
+}
+
+/* Below 480px: 1 item per row */
+@media (max-width: 480px) {
+    .platforms {
+        grid-template-columns: 1fr; /* 1 item per row */
+    }
+
+    .community-hero-img {
+        width: 100%; /* Allow the image to take the full width */
+        bottom: -30%; /* Ensure the image stays visible */
+    }
+}

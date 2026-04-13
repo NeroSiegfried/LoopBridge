@@ -12,12 +12,12 @@ const { sessionRepo } = require('../repositories');
 /**
  * Attach user to req from session cookie (runs on every request).
  */
-function sessionMiddleware(req, res, next) {
+async function sessionMiddleware(req, res, next) {
     req.user = null;
     const sessionId = req.cookies[config.cookieName];
     if (!sessionId) return next();
 
-    const session = sessionRepo.findValidWithUser(sessionId);
+    const session = await sessionRepo.findValidWithUser(sessionId);
 
     if (session) {
         req.user = {

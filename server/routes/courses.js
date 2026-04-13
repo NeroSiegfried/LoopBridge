@@ -30,50 +30,50 @@ function sendResult(res, result, successStatus = 200) {
 
 // ─── CRUD ───────────────────────────────────────────────
 
-router.get('/', (req, res) => {
+router.get('/', async (req, res) => {
     const { track, includeDeleted } = req.query;
     const canSeeDeleted = includeDeleted && req.user && req.user.role === 'admin';
-    return res.json(courseService.list({ track, includeDeleted: canSeeDeleted }));
+    return res.json(await courseService.list({ track, includeDeleted: canSeeDeleted }));
 });
 
-router.get('/:id', (req, res) => {
-    const course = courseService.getById(req.params.id);
+router.get('/:id', async (req, res) => {
+    const course = await courseService.getById(req.params.id);
     if (!course) return res.status(404).json({ error: 'Course not found.' });
     return res.json(course);
 });
 
-router.post('/', requireAuthor, (req, res) => {
-    const course = courseService.create(req.body, req.user);
+router.post('/', requireAuthor, async (req, res) => {
+    const course = await courseService.create(req.body, req.user);
     return res.status(201).json(course);
 });
 
-router.put('/:id', requireAuth, (req, res) => {
-    sendResult(res, courseService.update(req.params.id, req.body, req.user));
+router.put('/:id', requireAuth, async (req, res) => {
+    sendResult(res, await courseService.update(req.params.id, req.body, req.user));
 });
 
-router.delete('/:id', requireAuth, (req, res) => {
-    sendResult(res, courseService.delete(req.params.id, req.user));
+router.delete('/:id', requireAuth, async (req, res) => {
+    sendResult(res, await courseService.delete(req.params.id, req.user));
 });
 
-router.post('/:id/restore', requireAuth, (req, res) => {
-    sendResult(res, courseService.restore(req.params.id, req.user));
+router.post('/:id/restore', requireAuth, async (req, res) => {
+    sendResult(res, await courseService.restore(req.params.id, req.user));
 });
 
 // ─── Progress ───────────────────────────────────────────
 
-router.get('/:id/progress', requireAuth, (req, res) => {
-    const progress = courseService.getProgress(req.user.id, req.params.id);
+router.get('/:id/progress', requireAuth, async (req, res) => {
+    const progress = await courseService.getProgress(req.user.id, req.params.id);
     return res.json(progress);
 });
 
-router.post('/:id/enroll', requireAuth, (req, res) => {
-    const result = courseService.enroll(req.user.id, req.params.id);
+router.post('/:id/enroll', requireAuth, async (req, res) => {
+    const result = await courseService.enroll(req.user.id, req.params.id);
     sendResult(res, result);
 });
 
-router.post('/:id/progress', requireAuth, (req, res) => {
+router.post('/:id/progress', requireAuth, async (req, res) => {
     const { subsectionId, complete } = req.body;
-    const result = courseService.updateProgress(req.user.id, req.params.id, subsectionId, complete);
+    const result = await courseService.updateProgress(req.user.id, req.params.id, subsectionId, complete);
     sendResult(res, result);
 });
 

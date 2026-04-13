@@ -51,6 +51,26 @@
     padding: 13px 20px;
     border-radius: 2.1875rem;
     cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.course-enroll-btn:hover {
+    background-color: #f0fdf5;
+    box-shadow: 0 2px 8px rgba(48, 192, 112, 0.15);
+}
+
+.course-enroll-btn:active {
+    transform: scale(0.97);
+    background-color: #e6f9ed;
+}
+
+.course-enroll-btn.btn-primary:hover {
+    background-color: #28a85f;
+    box-shadow: 0 2px 8px rgba(48, 192, 112, 0.3);
+}
+
+.course-enroll-btn.btn-primary:active {
+    background-color: #209050;
 }
 
 
@@ -280,6 +300,17 @@
     display: flex;
     align-items: center;
     gap: 0.5rem;
+    cursor: pointer;
+    transition: color 0.15s ease, transform 0.15s ease;
+}
+
+.learn-btn:hover {
+    color: #28a85f;
+}
+
+.learn-btn:active {
+    transform: scale(0.97);
+    color: #209050;
 }
 
 .learn-btn i {
@@ -297,6 +328,16 @@
 }
 
 @media (max-width: 768px) {
+    .course-hero {
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+
+    .course-body {
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+
     .legal-hero .left.vector,
     .legal-hero .right.vector {
         width: 50%; /* Increase the width for smaller viewports */
@@ -333,4 +374,42 @@
     }
 
     
+}
+
+/* ─── Complete / Progress Buttons ─── */
+.complete-btn {
+    background: none;
+    border: none;
+    cursor: pointer;
+    font-size: 1.1rem;
+    color: var(--gray-dark, #ccc);
+    padding: 0.25rem 0.5rem;
+    border-radius: 50%;
+    transition: color 0.15s ease, transform 0.15s ease;
+    flex-shrink: 0;
+}
+
+.complete-btn:hover {
+    color: var(--lb-green);
+    transform: scale(1.15);
+}
+
+.complete-btn.completed {
+    color: var(--lb-green);
+}
+
+.complete-btn.completed:hover {
+    color: #999;
+}
+
+.topic-progress {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--lb-green);
+    white-space: nowrap;
+}
+
+.subsection {
+    display: flex;
+    align-items: center;
 }

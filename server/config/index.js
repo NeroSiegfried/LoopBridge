@@ -29,6 +29,9 @@ const config = {
     cookieSecure: process.env.COOKIE_SECURE === 'true',          // true behind HTTPS/ALB
     cookieSameSite: process.env.COOKIE_SAMESITE || 'lax',
 
+    // ─── Google OAuth ────────────────────────────────────
+    googleClientId: process.env.GOOGLE_CLIENT_ID || null,
+
     // ─── File Storage ────────────────────────────────────
     // Local: 'disk'  |  AWS: 's3'
     storageDriver: process.env.STORAGE_DRIVER || 'disk',
@@ -38,6 +41,28 @@ const config = {
     s3Prefix: process.env.S3_PREFIX || 'uploads/',
     cdnBaseUrl: process.env.CDN_BASE_URL || null,                // CloudFront distribution URL
 
+    // ─── Social Media Links ─────────────────────────────────
+    socialTelegram: process.env.SOCIAL_TELEGRAM || '',
+    socialDiscord: process.env.SOCIAL_DISCORD || '',
+    socialYoutube: process.env.SOCIAL_YOUTUBE || '',
+    socialTwitter: process.env.SOCIAL_TWITTER || '',
+    socialTiktok: process.env.SOCIAL_TIKTOK || '',
+    socialWhatsapp: process.env.SOCIAL_WHATSAPP || '',
+    whatsappCommunityLink: process.env.WHATSAPP_COMMUNITY_LINK || '',
+
+    // ─── Contact Emails ──────────────────────────────────
+    contactGeneral: process.env.CONTACT_GENERAL || 'hello@loopbridge.network',
+    contactPress: process.env.CONTACT_PRESS || 'press@loopbridge.network',
+    contactSupport: process.env.CONTACT_SUPPORT || 'support@loopbridge.network',
+
+    // ─── Newsletter / SMTP ───────────────────────────────
+    smtpHost: process.env.SMTP_HOST || null,
+    smtpPort: parseInt(process.env.SMTP_PORT, 10) || 587,
+    smtpUser: process.env.SMTP_USER || null,
+    smtpPass: process.env.SMTP_PASS || null,
+    newsletterFromEmail: process.env.NEWSLETTER_FROM_EMAIL || 'newsletter@loopbridge.network',
+    newsletterFromName: process.env.NEWSLETTER_FROM_NAME || 'LoopBridge',
+
     // ─── CORS ────────────────────────────────────────────
     corsOrigin: process.env.CORS_ORIGIN || true,                 // true = reflect
 
@@ -45,7 +70,7 @@ const config = {
     dataDir: process.env.DATA_DIR || path.join(__dirname, '..', '..', 'data'),
 
     // ─── Static Frontend (only used in monolith mode) ────
-    staticRoot: process.env.STATIC_ROOT || path.join(__dirname, '..', '..'),
+    staticRoot: process.env.STATIC_ROOT || path.join(__dirname, '..', '..', 'client', 'dist'),
 
     // ─── Upload Limits ───────────────────────────────────
     maxFileSize: parseInt(process.env.MAX_FILE_SIZE, 10) || 50 * 1024 * 1024,

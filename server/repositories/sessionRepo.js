@@ -5,43 +5,42 @@
  */
 'use strict';
 
-const { getDb } = require('../db');
+const { db } = require('../db');
 
 const sessionRepo = {
-    create({ id, userId, expiresAt }) {
-        getDb().prepare('INSERT INTO sessions (id, user_id, expires_at) VALUES (?, ?, ?)')
-            .run(id, userId, expiresAt);
+    async create({ id, userId, expiresAt }) {
+        await db.run('INSERT INTO sessions (id, user_id, expires_at) VALUES (?, ?, ?)',
+            [id, userId, expiresAt]);
         return this.findById(id);
     },
 
-    findById(id) {
-        return getDb().prepare('SELECT * FROM sessions WHERE id = ?').get(id);
+    async findById(id) {
+        return await db.queryRow('SELECT * FROM sessions WHERE id = ?', [id]);
     },
 
     /**
      * Find a valid (non-expired) session and join the user row.
-     * Returns the merged row or undefined.
      */
-    findValidWithUser(sessionId) {
-        return getDb().prepare(`
+    async findValidWithUser(sessionId) {
+        return await db.queryRow(`
             SELECT s.*, u.id AS uid, u.username, u.display_name, u.email,
                    u.role, u.avatar, u.author_of
             FROM sessions s
             JOIN users u ON u.id = s.user_id
             WHERE s.id = ? AND s.expires_at > datetime('now')
-        `).get(sessionId);
+        `, [sessionId]);
     },
 
-    deleteById(id) {
-        getDb().prepare('DELETE FROM sessions WHERE id = ?').run(id);
+    async deleteById(id) {
+        await db.run('DELETE FROM sessions WHERE id = ?', [id]);
     },
 
-    deleteExpired() {
-        getDb().prepare("DELETE FROM sessions WHERE expires_at <= datetime('now')").run();
+    async deleteExpired() {
+        await db.run("DELETE FROM sessions WHERE expires_at <= datetime('now')");
     },
 
-    deleteByUserId(userId) {
-        getDb().prepare('DELETE FROM sessions WHERE user_id = ?').run(userId);
+    async deleteByUserId(userId) {
+        await db.run('DELETE FROM sessions WHERE user_id = ?', [userId]);
     }
 };
 

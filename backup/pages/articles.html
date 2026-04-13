@@ -4,130 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Articles — LoopBridge</title>
+    <meta name="description" content="Browse crypto articles covering DeFi, trading, market analysis, and Web3.">
+    <meta property="og:title" content="Articles — LoopBridge">
+    <meta property="og:description" content="Browse crypto articles covering DeFi, trading, market analysis, and Web3.">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="/images/logos/loopbridge-og.png">
+    <meta property="og:site_name" content="LoopBridge">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Articles — LoopBridge">
+    <meta name="twitter:description" content="Browse crypto articles covering DeFi, trading, market analysis, and Web3.">
+    <meta name="twitter:image" content="/images/logos/loopbridge-og.png">
     <link rel="stylesheet" href="../styles/global.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
     <link href="https://cdn.lineicons.com/5.1/line/lineicons.css" rel="stylesheet"/>
     <script src="https://kit.fontawesome.com/20310b9de2.js" crossorigin="anonymous"></script>
-    <style>
-        /* Page-specific styles */
-        .articles-page-hero {
-            padding: 14rem 2.5rem 4rem;
-            background-color: var(--gray-light);
-        }
-
-        .articles-page-hero .section-container {
-            display: block;
-            max-width: var(--max-width);
-            margin: auto;
-        }
-
-        .articles-page-hero h1 {
-            font-family: var(--font-heading);
-            font-size: clamp(2rem, 4vw, 3rem);
-            color: var(--lb-blue-text);
-            margin-bottom: 1rem;
-        }
-
-        .articles-page-hero p {
-            font-family: var(--font-body);
-            font-size: clamp(1rem, 2vw, 1.25rem);
-            font-weight: 300;
-            color: var(--black-mid);
-            max-width: 600px;
-        }
-
-        .articles-content {
-            padding: 3rem 2.5rem 6rem;
-        }
-
-        .articles-content .section-container {
-            display: block;
-            max-width: var(--max-width);
-            margin: auto;
-        }
-
-        .articles-controls {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            flex-wrap: wrap;
-            gap: 1rem;
-            margin-bottom: 2rem;
-        }
-
-        .articles-filter {
-            display: flex;
-            gap: 0.5rem;
-            flex-wrap: wrap;
-        }
-
-        .articles-search {
-            display: flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.5rem 1rem;
-            border: 1px solid var(--gray-dark);
-            border-radius: 2rem;
-            background: white;
-            min-width: 220px;
-        }
-
-        .articles-search i {
-            color: var(--black-mid);
-            font-size: 0.875rem;
-        }
-
-        .articles-search input {
-            border: none;
-            outline: none;
-            font-family: var(--font-body);
-            font-size: 0.875rem;
-            width: 100%;
-            background: transparent;
-        }
-
-        .articles-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 1.5rem;
-        }
-
-        .articles-load-more {
-            text-align: center;
-            margin-top: 3rem;
-        }
-
-        @media (max-width: 62rem) {
-            .articles-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-
-            .articles-page-hero {
-                padding: 12rem 1.25rem 3rem;
-            }
-
-            .articles-content {
-                padding: 2rem 1.25rem 4rem;
-            }
-        }
-
-        @media (max-width: 48rem) {
-            .articles-grid {
-                grid-template-columns: 1fr;
-            }
-
-            .articles-controls {
-                flex-direction: column;
-                align-items: flex-start;
-            }
-
-            .articles-search {
-                width: 100%;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="./styles/articles.css">
 </head>
 <body>
     <!-- Navbar Component -->
@@ -182,118 +75,6 @@
     <script src="../lib/component-loader.js"></script>
 
     <!-- Page Script -->
-    <script>
-        document.addEventListener('components-loaded', async () => {
-            const grid = document.getElementById('articles-grid');
-            const filterContainer = document.getElementById('category-filter');
-            const searchInput = document.getElementById('article-search');
-            const loadMoreBtn = document.getElementById('load-more-btn');
-
-            let allArticles = [];
-            let filteredArticles = [];
-            let currentCategory = 'All';
-            let searchQuery = '';
-            const PAGE_SIZE = 9;
-            let displayCount = PAGE_SIZE;
-
-            // Show skeletons while loading
-            Utils.showSkeletons(grid, 6, 'card');
-
-            // Load articles
-            allArticles = await DataService.getArticles();
-            filteredArticles = [...allArticles];
-
-            // Extract unique categories
-            const categories = ['All', ...new Set(allArticles.map(a => a.category).filter(Boolean))];
-
-            // Render category filter buttons
-            filterContainer.innerHTML = categories.map(cat => `
-                <button class="category-pill${cat === 'All' ? ' active' : ''}" data-category="${cat}">${cat}</button>
-            `).join('');
-
-            // Category click handler
-            filterContainer.addEventListener('click', (e) => {
-                const btn = e.target.closest('.category-pill');
-                if (!btn) return;
-
-                currentCategory = btn.dataset.category;
-                filterContainer.querySelectorAll('.category-pill').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-
-                displayCount = PAGE_SIZE;
-                applyFilters();
-            });
-
-            // Search handler
-            searchInput.addEventListener('input', Utils.debounce(() => {
-                searchQuery = searchInput.value.trim().toLowerCase();
-                displayCount = PAGE_SIZE;
-                applyFilters();
-            }, 250));
-
-            // Load more handler
-            loadMoreBtn.addEventListener('click', () => {
-                displayCount += PAGE_SIZE;
-                renderArticles();
-            });
-
-            function applyFilters() {
-                filteredArticles = allArticles.filter(article => {
-                    const matchCategory = currentCategory === 'All' || article.category === currentCategory;
-                    const matchSearch = !searchQuery ||
-                        article.title.toLowerCase().includes(searchQuery) ||
-                        (article.excerpt && article.excerpt.toLowerCase().includes(searchQuery)) ||
-                        (article.category && article.category.toLowerCase().includes(searchQuery));
-                    return matchCategory && matchSearch;
-                });
-                renderArticles();
-            }
-
-            function renderArticles() {
-                const toShow = filteredArticles.slice(0, displayCount);
-                const showAdmin = Auth.isLoggedIn() && (Auth.isAdmin() || Auth.isAuthor());
-
-                ArticleCard.renderGrid(grid, toShow, {
-                    basePath: '../',
-                    showAdmin: showAdmin
-                });
-
-                // Show/hide load more
-                loadMoreBtn.style.display = displayCount < filteredArticles.length ? 'inline-flex' : 'none';
-
-                // Attach admin event handlers
-                if (showAdmin) {
-                    grid.querySelectorAll('[data-action="edit"]').forEach(btn => {
-                        btn.addEventListener('click', (e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            window.location.href = '../admin/edit-article.html?id=' + btn.dataset.id;
-                        });
-                    });
-
-                    grid.querySelectorAll('[data-action="delete"]').forEach(btn => {
-                        btn.addEventListener('click', async (e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            const confirmed = await Utils.confirm('Are you sure you want to delete this article? This cannot be undone.', 'Delete Article');
-                            if (confirmed) {
-                                try {
-                                    await DataService.deleteArticle(btn.dataset.id);
-                                    allArticles = allArticles.filter(a => a.id !== btn.dataset.id);
-                                    Utils.showToast('Article deleted successfully.', 'success');
-                                    applyFilters();
-                                } catch (err) {
-                                    Utils.showToast('Failed to delete article.', 'error');
-                                }
-                            }
-                        });
-                    });
-                }
-            }
-
-            // Initial render
-            applyFilters();
-        });
-    </script>
+    <script src="./scripts/articles.js"></script>
 </body>
 </html>

@@ -14,15 +14,15 @@ const { articleService, courseService } = require('../services');
 
 const router = express.Router();
 
-router.get('/', requireAuth, (req, res) => {
+router.get('/', requireAuth, async (req, res) => {
     const user = req.user;
 
     if (user.role !== 'admin' && user.role !== 'author') {
         return res.status(403).json({ error: 'Dashboard access requires author or admin role.' });
     }
 
-    const articles = articleService.listForDashboard(user);
-    const courses = courseService.listForDashboard(user);
+    const articles = await articleService.listForDashboard(user);
+    const courses = await courseService.listForDashboard(user);
 
     return res.json({ articles, courses });
 });

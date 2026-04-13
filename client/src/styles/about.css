@@ -1,0 +1,343 @@
+.about-hero {
+    background-color: #f6fffa;
+    padding: 300px 60px 160px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    flex-direction: column;
+    color: var(--lb-blue-text);
+}
+
+.about-hero h1 {
+    font-size: clamp(38px, 8vw, 76px);
+    font-family: CabinetGrotesk-Bold, sans-serif;
+}
+
+.about-hero p {
+    font-family: 'Schibsted Grotesk', sans-serif;
+    font-size: clamp(16px, 2vw, 20px);
+    font-weight: 200;
+}
+
+.about-hero .heading {
+    max-width: 600px;
+    text-align: center;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin-bottom: 140px;
+}
+
+.hero-pictures {
+    display: flex;
+    gap: 15px;
+    justify-content: space-between;
+}
+
+.middle-pics {
+    display: flex;
+    gap: 15px;
+    justify-content: space-between;
+    flex-direction: column;
+}
+
+.pic {
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.pic img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+}
+
+
+
+.what-we-do, .mission, .vision {
+    padding: 160px 60px 140px;
+    
+}
+
+.what-we-do, .vision {
+    position: relative;
+    overflow: hidden;
+}
+
+.what-we-do::before, .vision::before {
+    content: ""; 
+    position: absolute;
+    top: 0; left: 0; width: 100%; height: 100%;
+    background-color: #31ad5f06;
+    -webkit-mask: url('/images/stripe-pattern.svg') no-repeat center center;
+    -webkit-mask-size: cover;
+    -webkit-mask-composite: destination-in;
+    mask: url('/images/stripe-pattern.svg') no-repeat center center;
+    mask-size: cover;
+    mask-composite: intersect;
+    z-index: 0;
+    pointer-events: none;
+}
+
+.what-we-do .section-container, .vision .section-container {
+    position: relative;
+    z-index: 1;
+    flex-direction: row;
+}
+
+
+
+.what-we-do .section-body,
+.mission .section-body,
+.vision .section-body {
+    color: var(--lb-blue-text);
+}
+
+.what-we-do .section-body h2,
+.mission .section-body h2,
+.vision .section-body h2 {
+    text-align: left;
+    font-size: clamp(32px, 5vw, 48px);
+    margin-bottom: 2rem;
+    margin-top: 0;
+}
+
+.what-we-do .section-body p,
+.mission .section-body p,
+.vision .section-body p {
+    font-family: 'Schibsted Grotesk', sans-serif;
+    font-size: clamp(16px, 2vw, 24px);
+    font-weight: 200;
+    margin-bottom: 40px;
+}
+
+.what-we-do .section-body,
+.what-we-do .section-image,
+.vision .section-body,
+.vision .section-image {
+    flex: 1;
+    max-width: 600px;
+}
+
+.section-image {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.section-image img {
+    border-radius: 12px;
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    object-position: center;
+}
+
+.mission .cards {
+    margin-top: 5rem; /* 80px */
+    display: grid;
+    grid-template-columns: repeat(2, 1fr); /* Default: 5 items per row */
+    gap: 1.25rem; /* 20px gap between cards */
+    width: 100%; /* Allow the grid to span the full width of the container */
+}
+
+
+.mission .card-item {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    padding: 28px 20px 32px; /* 20px */
+    background-color: white;
+    border: 1px solid var(--gray-mid);
+    border-radius: 1rem; /* 12px */
+    box-sizing: border-box;
+    min-width: 300px; /* Ensure cards never shrink below 200px */
+    width: 100%; /* Allow cards to grow dynamically */
+}
+
+.mission .card-item p {
+    font-size: 16px;
+}
+
+h4.card-name {
+    font-family: CabinetGrotesk-Variable, sans-serif;
+    font-weight: 600;
+    margin-bottom: 15px;
+}
+
+
+.mission .card-icon {
+    width: 60px; /* 48px */
+    height: 60px; /* 48px */
+    margin-bottom: 1.25rem; /* 20px */
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+    border-radius: 12px;
+    color: white;
+}
+
+.vision {
+    background-color: #f6fffa;
+}
+
+.vision::before {
+    background-color: #31ad5f06;
+}
+
+section.team{
+    display: flex;
+    padding: 140px 60px 120px;
+}
+
+.team .section-container {
+    color: var(--lb-blue-text);
+    margin: auto;
+    display: flex;
+    flex-direction: column;
+    width: 100%;
+}
+
+.members {
+    display: grid;
+    gap: 40px;
+    width: 100%;
+    grid-template-columns: repeat(auto-fit, 280px);
+    justify-content: center;
+}
+
+.member {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+}
+
+.member-image {
+    width: 100%;
+    max-width: 300px;
+    aspect-ratio: 1;
+    border-radius: 12px;
+    overflow: hidden;
+    margin-bottom: 20px;
+}
+
+.member-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    object-position: center;
+}
+
+.member-name {
+    font-size: 22px;
+    font-family: CabinetGrotesk-Variable, sans-serif;
+    font-weight: 600;
+    margin-bottom: 8px;
+}
+
+.member-role {
+    font-family: 'Schibsted Grotesk', sans-serif;
+    font-size: 16px;
+    font-weight: 200;
+    color: #33434d;
+}
+
+
+
+.green-bg {
+    background-color: var(--lb-green);
+}
+
+.blue-bg {
+    background-color: #00c1df;
+}
+
+.purple-bg {
+    background-color: #9747ff;
+}
+
+.yellow-bg {
+    background-color: #ffd42a;
+}
+
+.orange-bg {
+    background-color: #ff6e2a;
+}
+
+/* .accent-three moved to global.css */
+
+@media (max-width: 1200px) {
+    .mission .section-container{
+        flex-direction: column;
+    }
+
+    .what-we-do .section-body,
+    .vision .section-body {
+        max-width: none;
+    }
+
+    .hero-pictures {
+        flex-direction: column;
+    }
+
+    .hero-pictures > .pic, .middle-pics {
+        width: 100%;
+        aspect-ratio: 19/9;
+    }
+    .middle-pics {
+        flex-direction: row;
+    }
+
+    .middle-pics > .pic {
+        flex: 1;
+        height: 100%;
+    }
+
+    .hero-pictures img {
+        object-position: top;
+    }
+}
+
+@media (max-width: 768px) {
+    .about-hero,
+    .what-we-do,
+    .mission,
+    .vision,
+    .team {
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+
+    .what-we-do .section-container, .vision .section-container {
+        flex-direction: column-reverse;
+    }
+
+    .mission .cards {
+        grid-template-columns: 1fr; /* Stack cards vertically on small screens */
+    }
+
+    .mission .card-item {
+        min-width: none;
+    }
+
+    .members {
+        display: flex;
+        flex-direction: column;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 20px;
+    }
+
+    .member {
+        flex: 1 1 0;
+    }
+
+    .member-image {
+        max-width: none;
+        width: 100%;
+    }
+}

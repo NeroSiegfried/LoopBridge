@@ -6,30 +6,39 @@
  */
 'use strict';
 
-const { getDb } = require('../db');
+const { db } = require('../db');
 
 const userRepo = {
-    findByUsername(username) {
-        return getDb().prepare('SELECT * FROM users WHERE username = ?').get(username);
+    async findByUsername(username) {
+        return await db.queryRow('SELECT * FROM users WHERE username = ?', [username]);
     },
 
-    findById(id) {
-        return getDb().prepare('SELECT * FROM users WHERE id = ?').get(id);
+    async findById(id) {
+        return await db.queryRow('SELECT * FROM users WHERE id = ?', [id]);
     },
 
-    findByEmail(email) {
-        return getDb().prepare('SELECT * FROM users WHERE email = ?').get(email);
+    async findByEmail(email) {
+        return await db.queryRow('SELECT * FROM users WHERE email = ?', [email]);
     },
 
-    getAll() {
-        return getDb().prepare('SELECT id, username, display_name, email, role, avatar, author_of, created_at FROM users ORDER BY created_at DESC').all();
+    async findByGoogleId(googleId) {
+        return await db.queryRow('SELECT * FROM users WHERE google_id = ?', [googleId]);
     },
 
-    create({ id, username, passwordHash, displayName, email, role, avatar, authorOf }) {
-        getDb().prepare(`
-            INSERT INTO users (id, username, password_hash, display_name, email, role, avatar, author_of)
-            VALUES (@id, @username, @password_hash, @display_name, @email, @role, @avatar, @author_of)
-        `).run({
+    async findByPhone(phone) {
+        return await db.queryRow('SELECT * FROM users WHERE phone = ?', [phone]);
+    },
+
+    async getAll() {
+        const { rows } = await db.query('SELECT id, username, display_name, email, role, avatar, author_of, created_at FROM users ORDER BY created_at DESC');
+        return rows;
+    },
+
+    async create({ id, username, passwordHash, displayName, email, role, avatar, authorOf, googleId, phone }) {
+        await db.runNamed(`
+            INSERT INTO users (id, username, password_hash, display_name, email, role, avatar, author_of, google_id, phone)
+            VALUES (@id, @username, @password_hash, @display_name, @email, @role, @avatar, @author_of, @google_id, @phone)
+        `, {
             id,
             username,
             password_hash: passwordHash,
@@ -37,13 +46,15 @@ const userRepo = {
             email,
             role: role || 'user',
             avatar: avatar || null,
-            author_of: JSON.stringify(authorOf || [])
+            author_of: JSON.stringify(authorOf || []),
+            google_id: googleId || null,
+            phone: phone || null
         });
         return this.findById(id);
     },
 
-    update(id, fields) {
-        const existing = this.findById(id);
+    async update(id, fields) {
+        const existing = await this.findById(id);
         if (!existing) return null;
 
         const merged = {
@@ -53,13 +64,23 @@ const userRepo = {
             role: fields.role !== undefined ? fields.role : existing.role,
         };
 
-        getDb().prepare(`
+        await db.runNamed(`
             UPDATE users SET display_name = @display_name, email = @email,
                              avatar = @avatar, role = @role, updated_at = datetime('now')
             WHERE id = @id
-        `).run({ id, ...merged });
+        `, { id, ...merged });
 
         return this.findById(id);
+    },
+
+    async linkGoogleId(userId, googleId) {
+        await db.run("UPDATE users SET google_id = ?, updated_at = datetime('now') WHERE id = ?",
+            [googleId, userId]);
+    },
+
+    async setPhoneVerified(userId, phone) {
+        await db.run("UPDATE users SET phone = ?, phone_verified = 1, updated_at = datetime('now') WHERE id = ?",
+            [phone, userId]);
     }
 };
 

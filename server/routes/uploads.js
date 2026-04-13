@@ -46,38 +46,38 @@ const upload = multer({
 });
 
 // ─── POST /api/uploads ──────────────────────────────────
-router.post('/', requireAuthor, upload.array('files', config.maxFiles), (req, res) => {
+router.post('/', requireAuthor, upload.array('files', config.maxFiles), async (req, res) => {
     if (!req.files || req.files.length === 0) {
         return res.status(400).json({ error: 'No files uploaded.' });
     }
 
-    const results = storageService.saveFiles(req.files, req.user ? req.user.id : null);
+    const results = await storageService.saveFiles(req.files, req.user ? req.user.id : null);
     return res.status(201).json(results.length === 1 ? results[0] : results);
 });
 
 // ─── GET /api/uploads ───────────────────────────────────
-router.get('/', requireAuthor, (req, res) => {
+router.get('/', requireAuthor, async (req, res) => {
     const { type, limit } = req.query;
-    return res.json(storageService.list({ type, limit }));
+    return res.json(await storageService.list({ type, limit }));
 });
 
 // ─── GET /api/uploads/:id ───────────────────────────────
-router.get('/:id', (req, res) => {
-    const upload = storageService.getById(req.params.id);
+router.get('/:id', async (req, res) => {
+    const upload = await storageService.getById(req.params.id);
     if (!upload) return res.status(404).json({ error: 'Upload not found.' });
     return res.json(upload);
 });
 
 // ─── DELETE /api/uploads/:id ────────────────────────────
-router.delete('/:id', requireAuth, (req, res) => {
-    const record = storageService.getRawById(req.params.id);
+router.delete('/:id', requireAuth, async (req, res) => {
+    const record = await storageService.getRawById(req.params.id);
     if (!record) return res.status(404).json({ error: 'Upload not found.' });
 
     if (req.user.role !== 'admin' && record.uploaded_by !== req.user.id) {
         return res.status(403).json({ error: 'Permission denied.' });
     }
 
-    storageService.deleteFile(record);
+    await storageService.deleteFile(record);
     return res.json({ ok: true });
 });
 

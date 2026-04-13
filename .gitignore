@@ -32,6 +32,9 @@ npm-debug.log*
 .env.local
 .env.*.local
 
+# Credentials
+CREDENTIALS.local.md
+*.md
 # Build artifacts
 dist/
 build/

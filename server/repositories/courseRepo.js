@@ -5,7 +5,7 @@
  */
 'use strict';
 
-const { getDb } = require('../db');
+const { db } = require('../db');
 
 function rowToCourse(row) {
     if (!row) return null;
@@ -38,15 +38,15 @@ function rowToCourse(row) {
 const courseRepo = {
     rowToCourse,
 
-    findById(id) {
-        return getDb().prepare('SELECT * FROM courses WHERE id = ?').get(id) || null;
+    async findById(id) {
+        return await db.queryRow('SELECT * FROM courses WHERE id = ?', [id]);
     },
 
-    findByIdFormatted(id) {
-        return rowToCourse(this.findById(id));
+    async findByIdFormatted(id) {
+        return rowToCourse(await this.findById(id));
     },
 
-    list({ track, includeDeleted } = {}) {
+    async list({ track, includeDeleted } = {}) {
         let sql = 'SELECT * FROM courses';
         const conditions = [];
         const params = {};
@@ -64,12 +64,13 @@ const courseRepo = {
         }
         sql += ' ORDER BY published_at DESC';
 
-        return getDb().prepare(sql).all(params).map(rowToCourse);
+        const { rows } = await db.queryNamed(sql, params);
+        return rows.map(rowToCourse);
     },
 
-    create(data) {
+    async create(data) {
         const now = new Date().toISOString();
-        getDb().prepare(`
+        await db.runNamed(`
             INSERT INTO courses
                 (id, title, slug, description, image,
                  author_name, author_avatar, duration, level, track, price,
@@ -80,7 +81,7 @@ const courseRepo = {
                  @author_name, @author_avatar, @duration, @level, @track, @price,
                  @published_at, @updated_at, @created_at, @approved,
                  @topics, @overview, @learning_objectives)
-        `).run({
+        `, {
             id: data.id,
             title: data.title || 'Untitled',
             slug: data.slug || null,
@@ -103,12 +104,12 @@ const courseRepo = {
         return this.findByIdFormatted(data.id);
     },
 
-    update(id, data) {
-        const existing = this.findById(id);
+    async update(id, data) {
+        const existing = await this.findById(id);
         if (!existing) return null;
 
         const now = new Date().toISOString();
-        getDb().prepare(`
+        await db.runNamed(`
             UPDATE courses SET
                 title = @title, slug = @slug, description = @description,
                 image = @image, author_name = @author_name, author_avatar = @author_avatar,
@@ -117,7 +118,7 @@ const courseRepo = {
                 approved = @approved, topics = @topics,
                 overview = @overview, learning_objectives = @learning_objectives
             WHERE id = @id
-        `).run({
+        `, {
             id,
             title: data.title !== undefined ? data.title : existing.title,
             slug: data.slug !== undefined ? data.slug : existing.slug,
@@ -139,22 +140,21 @@ const courseRepo = {
         return this.findByIdFormatted(id);
     },
 
-    softDelete(id) {
+    async softDelete(id) {
         const now = new Date().toISOString();
-        getDb().prepare('UPDATE courses SET deleted = 1, deleted_at = ? WHERE id = ?')
-            .run(now, id);
+        await db.run('UPDATE courses SET deleted = 1, deleted_at = ? WHERE id = ?', [now, id]);
     },
 
-    restore(id) {
-        getDb().prepare('UPDATE courses SET deleted = 0, deleted_at = NULL WHERE id = ?')
-            .run(id);
+    async restore(id) {
+        await db.run('UPDATE courses SET deleted = 0, deleted_at = NULL WHERE id = ?', [id]);
         return this.findByIdFormatted(id);
     },
 
-    listByAuthorName(authorName) {
-        return getDb().prepare(
-            'SELECT * FROM courses WHERE author_name = ? ORDER BY published_at DESC'
-        ).all(authorName).map(rowToCourse);
+    async listByAuthorName(authorName) {
+        const { rows } = await db.query(
+            'SELECT * FROM courses WHERE author_name = ? ORDER BY published_at DESC',
+            [authorName]);
+        return rows.map(rowToCourse);
     }
 };
 

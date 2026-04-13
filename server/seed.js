@@ -1,17 +1,19 @@
 /**
  * LoopBridge — Seed Script
  *
- * Reads the existing JSON data files and populates the SQLite database.
+ * Reads the existing JSON data files and populates the database.
+ * Works with both SQLite and PostgreSQL (based on DB_TYPE env).
+ *
  * Run with: node seed.js
  *
- * Safe to re-run — uses INSERT OR REPLACE.
+ * Safe to re-run — uses INSERT OR REPLACE (auto-converted for PG).
  */
 'use strict';
 
 const fs = require('fs');
 const path = require('path');
 const bcrypt = require('bcrypt');
-const { getDb, initTables } = require('./db');
+const { db, initTables } = require('./db');
 
 const DATA_DIR = path.join(__dirname, '..', 'data');
 
@@ -25,23 +27,19 @@ function readJSON(filename) {
 }
 
 async function seed() {
-    initTables();
-    const db = getDb();
+    await initTables();
 
     // ─── Users ──────────────────────────────────────────
     const usersData = readJSON('users.json');
     if (usersData && usersData.users) {
-        const stmt = db.prepare(`
-            INSERT OR REPLACE INTO users
-                (id, username, password_hash, display_name, email, role, avatar, author_of)
-            VALUES
-                (@id, @username, @password_hash, @display_name, @email, @role, @avatar, @author_of)
-        `);
-
-        const tx = db.transaction((users) => {
-            for (const u of users) {
-                const hash = bcrypt.hashSync(u.password, 10);
-                stmt.run({
+        for (const u of usersData.users) {
+            const hash = bcrypt.hashSync(u.password, 10);
+            await db.runNamed(
+                `INSERT OR REPLACE INTO users
+                    (id, username, password_hash, display_name, email, role, avatar, author_of)
+                 VALUES
+                    (@id, @username, @password_hash, @display_name, @email, @role, @avatar, @author_of)`,
+                {
                     id: u.id,
                     username: u.username,
                     password_hash: hash,
@@ -50,30 +48,26 @@ async function seed() {
                     role: u.role || 'user',
                     avatar: u.avatar || null,
                     author_of: JSON.stringify(u.authorOf || [])
-                });
-            }
-        });
-        tx(usersData.users);
+                }
+            );
+        }
         console.log(`[seed] Inserted ${usersData.users.length} users`);
     }
 
     // ─── Articles ───────────────────────────────────────
     const articlesData = readJSON('articles.json');
     if (Array.isArray(articlesData)) {
-        const stmt = db.prepare(`
-            INSERT OR REPLACE INTO articles
-                (id, title, slug, description, category, image,
-                 author_name, author_avatar, read_time,
-                 published_at, updated_at, featured, deleted, content)
-            VALUES
-                (@id, @title, @slug, @description, @category, @image,
-                 @author_name, @author_avatar, @read_time,
-                 @published_at, @updated_at, @featured, @deleted, @content)
-        `);
-
-        const tx = db.transaction((articles) => {
-            for (const a of articles) {
-                stmt.run({
+        for (const a of articlesData) {
+            await db.runNamed(
+                `INSERT OR REPLACE INTO articles
+                    (id, title, slug, description, category, image,
+                     author_name, author_avatar, read_time,
+                     published_at, updated_at, featured, deleted, content)
+                 VALUES
+                    (@id, @title, @slug, @description, @category, @image,
+                     @author_name, @author_avatar, @read_time,
+                     @published_at, @updated_at, @featured, @deleted, @content)`,
+                {
                     id: a.id,
                     title: a.title,
                     slug: a.slug || null,
@@ -88,32 +82,28 @@ async function seed() {
                     featured: a.featured ? 1 : 0,
                     deleted: a.deleted ? 1 : 0,
                     content: JSON.stringify(a.content || [])
-                });
-            }
-        });
-        tx(articlesData);
+                }
+            );
+        }
         console.log(`[seed] Inserted ${articlesData.length} articles`);
     }
 
     // ─── Courses ────────────────────────────────────────
     const coursesData = readJSON('courses.json');
     if (Array.isArray(coursesData)) {
-        const stmt = db.prepare(`
-            INSERT OR REPLACE INTO courses
-                (id, title, slug, description, image,
-                 author_name, author_avatar, duration, level, track, price,
-                 published_at, updated_at, approved, deleted,
-                 topics, overview, learning_objectives)
-            VALUES
-                (@id, @title, @slug, @description, @image,
-                 @author_name, @author_avatar, @duration, @level, @track, @price,
-                 @published_at, @updated_at, @approved, @deleted,
-                 @topics, @overview, @learning_objectives)
-        `);
-
-        const tx = db.transaction((courses) => {
-            for (const c of courses) {
-                stmt.run({
+        for (const c of coursesData) {
+            await db.runNamed(
+                `INSERT OR REPLACE INTO courses
+                    (id, title, slug, description, image,
+                     author_name, author_avatar, duration, level, track, price,
+                     published_at, updated_at, approved, deleted,
+                     topics, overview, learning_objectives)
+                 VALUES
+                    (@id, @title, @slug, @description, @image,
+                     @author_name, @author_avatar, @duration, @level, @track, @price,
+                     @published_at, @updated_at, @approved, @deleted,
+                     @topics, @overview, @learning_objectives)`,
+                {
                     id: c.id,
                     title: c.title,
                     slug: c.slug || null,
@@ -132,38 +122,33 @@ async function seed() {
                     topics: JSON.stringify(c.topics || []),
                     overview: c.overview || null,
                     learning_objectives: JSON.stringify(c.learningObjectives || [])
-                });
-            }
-        });
-        tx(coursesData);
+                }
+            );
+        }
         console.log(`[seed] Inserted ${coursesData.length} courses`);
     }
 
     // ─── FAQs ───────────────────────────────────────────
     const faqsData = readJSON('faqs.json');
     if (faqsData && typeof faqsData === 'object') {
-        const stmt = db.prepare(`
-            INSERT OR REPLACE INTO faqs (id, category, question, answer, sort_order)
-            VALUES (@id, @category, @question, @answer, @sort_order)
-        `);
-
         let count = 0;
-        const tx = db.transaction((faqs) => {
-            let order = 0;
-            for (const [category, items] of Object.entries(faqs)) {
-                for (const faq of items) {
-                    stmt.run({
+        let order = 0;
+        for (const [category, items] of Object.entries(faqsData)) {
+            for (const faq of items) {
+                await db.runNamed(
+                    `INSERT OR REPLACE INTO faqs (id, category, question, answer, sort_order)
+                     VALUES (@id, @category, @question, @answer, @sort_order)`,
+                    {
                         id: faq.id,
                         category,
                         question: faq.question,
                         answer: faq.answer,
                         sort_order: order++
-                    });
-                    count++;
-                }
+                    }
+                );
+                count++;
             }
-        });
-        tx(faqsData);
+        }
         console.log(`[seed] Inserted ${count} FAQs`);
     }
 

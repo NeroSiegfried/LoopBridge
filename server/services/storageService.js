@@ -44,7 +44,7 @@ const diskDriver = {
      * @param {string|null} userId
      * @returns {Array} saved upload metadata objects
      */
-    saveFiles(multerFiles, userId) {
+    async saveFiles(multerFiles, userId) {
         const results = [];
         for (const file of multerFiles) {
             const id = uuidv4();
@@ -52,7 +52,7 @@ const diskDriver = {
             const relativePath = `uploads/${subdir}/${file.filename}`;
             const url = `/${relativePath}`;
 
-            uploadRepo.create({
+            await uploadRepo.create({
                 id,
                 filename: file.filename,
                 originalName: file.originalname,
@@ -68,14 +68,14 @@ const diskDriver = {
         return results;
     },
 
-    deleteFile(record) {
+    async deleteFile(record) {
         const fullPath = path.join(config.uploadsDir, '..', record.path);
         try {
             if (fs.existsSync(fullPath)) fs.unlinkSync(fullPath);
         } catch (err) {
             console.warn('[storage/disk] Failed to delete file:', err.message);
         }
-        uploadRepo.deleteById(record.id);
+        await uploadRepo.deleteById(record.id);
     }
 };
 
@@ -108,23 +108,23 @@ const storageService = {
         driver.init();
     },
 
-    saveFiles(multerFiles, userId) {
+    async saveFiles(multerFiles, userId) {
         return driver.saveFiles(multerFiles, userId);
     },
 
-    deleteFile(record) {
+    async deleteFile(record) {
         return driver.deleteFile(record);
     },
 
-    getById(id) {
+    async getById(id) {
         return uploadRepo.findByIdFormatted(id);
     },
 
-    list(filters) {
+    async list(filters) {
         return uploadRepo.list(filters);
     },
 
-    getRawById(id) {
+    async getRawById(id) {
         return uploadRepo.findById(id);
     }
 };

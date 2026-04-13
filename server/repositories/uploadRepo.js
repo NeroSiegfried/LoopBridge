@@ -5,7 +5,7 @@
  */
 'use strict';
 
-const { getDb } = require('../db');
+const { db } = require('../db');
 
 function rowToUpload(row) {
     if (!row) return null;
@@ -25,16 +25,15 @@ function rowToUpload(row) {
 const uploadRepo = {
     rowToUpload,
 
-    findById(id) {
-        const row = getDb().prepare('SELECT * FROM uploads WHERE id = ?').get(id);
-        return row || null;
+    async findById(id) {
+        return await db.queryRow('SELECT * FROM uploads WHERE id = ?', [id]);
     },
 
-    findByIdFormatted(id) {
-        return rowToUpload(this.findById(id));
+    async findByIdFormatted(id) {
+        return rowToUpload(await this.findById(id));
     },
 
-    list({ type, limit } = {}) {
+    async list({ type, limit } = {}) {
         let sql = 'SELECT * FROM uploads';
 
         if (type === 'image') {
@@ -51,14 +50,15 @@ const uploadRepo = {
             sql += ` LIMIT ${parseInt(limit, 10)}`;
         }
 
-        return getDb().prepare(sql).all().map(rowToUpload);
+        const { rows } = await db.query(sql);
+        return rows.map(rowToUpload);
     },
 
-    create({ id, filename, originalName, mimeType, size, path, url, uploadedBy }) {
-        getDb().prepare(`
+    async create({ id, filename, originalName, mimeType, size, path, url, uploadedBy }) {
+        await db.runNamed(`
             INSERT INTO uploads (id, filename, original_name, mime_type, size, path, url, uploaded_by)
             VALUES (@id, @filename, @original_name, @mime_type, @size, @path, @url, @uploaded_by)
-        `).run({
+        `, {
             id,
             filename,
             original_name: originalName,
@@ -71,8 +71,8 @@ const uploadRepo = {
         return this.findByIdFormatted(id);
     },
 
-    deleteById(id) {
-        getDb().prepare('DELETE FROM uploads WHERE id = ?').run(id);
+    async deleteById(id) {
+        await db.run('DELETE FROM uploads WHERE id = ?', [id]);
     }
 };
 

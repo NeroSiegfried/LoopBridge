@@ -292,6 +292,15 @@ section.team{
 }
 
 @media (max-width: 768px) {
+    .about-hero,
+    .what-we-do,
+    .mission,
+    .vision,
+    .team {
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+
     .what-we-do .section-container, .vision .section-container {
         flex-direction: column-reverse;
     }

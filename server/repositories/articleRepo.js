@@ -5,7 +5,7 @@
  */
 'use strict';
 
-const { getDb } = require('../db');
+const { db } = require('../db');
 
 function rowToArticle(row) {
     if (!row) return null;
@@ -35,16 +35,15 @@ function rowToArticle(row) {
 const articleRepo = {
     rowToArticle,
 
-    findById(id) {
-        const row = getDb().prepare('SELECT * FROM articles WHERE id = ?').get(id);
-        return row || null;
+    async findById(id) {
+        return await db.queryRow('SELECT * FROM articles WHERE id = ?', [id]);
     },
 
-    findByIdFormatted(id) {
-        return rowToArticle(this.findById(id));
+    async findByIdFormatted(id) {
+        return rowToArticle(await this.findById(id));
     },
 
-    list({ category, featured, includeDeleted } = {}) {
+    async list({ category, featured, includeDeleted } = {}) {
         let sql = 'SELECT * FROM articles';
         const conditions = [];
         const params = {};
@@ -64,12 +63,13 @@ const articleRepo = {
         }
         sql += ' ORDER BY published_at DESC';
 
-        return getDb().prepare(sql).all(params).map(rowToArticle);
+        const { rows } = await db.queryNamed(sql, params);
+        return rows.map(rowToArticle);
     },
 
-    create(data) {
+    async create(data) {
         const now = new Date().toISOString();
-        getDb().prepare(`
+        await db.runNamed(`
             INSERT INTO articles
                 (id, title, slug, description, category, image,
                  author_name, author_avatar, read_time,
@@ -78,7 +78,7 @@ const articleRepo = {
                 (@id, @title, @slug, @description, @category, @image,
                  @author_name, @author_avatar, @read_time,
                  @published_at, @updated_at, @created_at, @featured, @content)
-        `).run({
+        `, {
             id: data.id,
             title: data.title || 'Untitled',
             slug: data.slug || null,
@@ -97,12 +97,12 @@ const articleRepo = {
         return this.findByIdFormatted(data.id);
     },
 
-    update(id, data) {
-        const existing = this.findById(id);
+    async update(id, data) {
+        const existing = await this.findById(id);
         if (!existing) return null;
 
         const now = new Date().toISOString();
-        getDb().prepare(`
+        await db.runNamed(`
             UPDATE articles SET
                 title = @title, slug = @slug, description = @description,
                 category = @category, image = @image,
@@ -110,7 +110,7 @@ const articleRepo = {
                 read_time = @read_time, published_at = @published_at,
                 updated_at = @updated_at, featured = @featured, content = @content
             WHERE id = @id
-        `).run({
+        `, {
             id,
             title: data.title !== undefined ? data.title : existing.title,
             slug: data.slug !== undefined ? data.slug : existing.slug,
@@ -128,37 +128,33 @@ const articleRepo = {
         return this.findByIdFormatted(id);
     },
 
-    softDelete(id) {
+    async softDelete(id) {
         const now = new Date().toISOString();
-        getDb().prepare('UPDATE articles SET deleted = 1, deleted_at = ? WHERE id = ?')
-            .run(now, id);
+        await db.run('UPDATE articles SET deleted = 1, deleted_at = ? WHERE id = ?', [now, id]);
     },
 
-    restore(id) {
-        getDb().prepare('UPDATE articles SET deleted = 0, deleted_at = NULL WHERE id = ?')
-            .run(id);
+    async restore(id) {
+        await db.run('UPDATE articles SET deleted = 0, deleted_at = NULL WHERE id = ?', [id]);
         return this.findByIdFormatted(id);
     },
 
-    incrementViews(id) {
-        getDb().prepare('UPDATE articles SET views = views + 1 WHERE id = ?').run(id);
+    async incrementViews(id) {
+        await db.run('UPDATE articles SET views = views + 1 WHERE id = ?', [id]);
     },
 
-    /**
-     * List articles the given author owns (by id list).
-     * Includes deleted items so the dashboard can show them.
-     */
-    listByAuthorIds(articleIds) {
+    async listByAuthorIds(articleIds) {
         if (!articleIds || articleIds.length === 0) return [];
         const placeholders = articleIds.map(() => '?').join(',');
         const sql = `SELECT * FROM articles WHERE id IN (${placeholders}) ORDER BY published_at DESC`;
-        return getDb().prepare(sql).all(...articleIds).map(rowToArticle);
+        const { rows } = await db.query(sql, articleIds);
+        return rows.map(rowToArticle);
     },
 
-    listByAuthorName(authorName) {
-        return getDb().prepare(
-            'SELECT * FROM articles WHERE author_name = ? ORDER BY published_at DESC'
-        ).all(authorName).map(rowToArticle);
+    async listByAuthorName(authorName) {
+        const { rows } = await db.query(
+            'SELECT * FROM articles WHERE author_name = ? ORDER BY published_at DESC',
+            [authorName]);
+        return rows.map(rowToArticle);
     }
 };
 

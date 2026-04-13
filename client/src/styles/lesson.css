@@ -1,0 +1,679 @@
+/* ============================================= */
+/*           LESSON PAGES (Video + Reading)       */
+/* ============================================= */
+
+.lesson-section {
+    min-height: 100vh;
+    background-color: #f9fafb;
+    padding-top: 12rem;
+    padding-bottom: 4rem;
+}
+
+.lesson-section .section-container {
+    display: block;
+}
+
+/* ─── Back Link ──────────────────────────────── */
+
+.lesson-back {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    font-family: 'Schibsted Grotesk', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--lb-blue-text, #013352);
+    text-decoration: none;
+    transition: color 0.15s ease;
+    margin-bottom: 1.5rem;
+}
+
+.lesson-back i {
+    font-size: 20px;
+}
+
+.lesson-back:hover {
+    color: var(--lb-green, #30c070);
+}
+
+/* ─── Container ──────────────────────────────── */
+
+.lesson-container {
+    max-width: 900px;
+    margin: 0 auto;
+    padding: 2rem 1.5rem;
+}
+
+.lesson-loading,
+.lesson-error {
+    font-family: 'Schibsted Grotesk', sans-serif;
+    font-size: 1.125rem;
+    color: var(--black-mid);
+    text-align: center;
+    padding: 4rem 0;
+}
+
+/* ─── Video Wrapper ──────────────────────────── */
+
+.video-wrapper {
+    position: relative;
+    width: 100%;
+    border-radius: 1rem;
+    overflow: hidden;
+    background-color: #000;
+    margin-bottom: 2rem;
+}
+
+.lesson-video {
+    width: 100%;
+    display: block;
+    aspect-ratio: 16 / 9;
+    background-color: #000;
+}
+
+.video-placeholder {
+    aspect-ratio: 16 / 9;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.75rem;
+    color: #888;
+    background-color: #1a1a2e;
+}
+
+.video-placeholder i {
+    font-size: 3rem;
+    color: #555;
+}
+
+.video-placeholder p {
+    font-family: 'Schibsted Grotesk', sans-serif;
+    font-size: 1.125rem;
+    color: #aaa;
+    margin: 0;
+}
+
+.video-placeholder .placeholder-sub {
+    font-size: 0.875rem;
+    color: #666;
+}
+
+/* ─── Reading Placeholder ────────────────────── */
+
+.reading-placeholder {
+    text-align: center;
+    padding: 4rem 2rem;
+    color: var(--black-mid);
+}
+
+.reading-placeholder i {
+    font-size: 3rem;
+    color: var(--gray-dark);
+    margin-bottom: 1rem;
+}
+
+.reading-placeholder p {
+    font-size: 1.125rem;
+}
+
+/* ─── Lesson Info ────────────────────────────── */
+
+.lesson-info {
+    margin-bottom: 2rem;
+}
+
+.lesson-title {
+    font-family: CabinetGrotesk-Bold, sans-serif;
+    font-size: clamp(1.5rem, 4vw, 2.25rem);
+    color: var(--lb-blue-text, #013352);
+    line-height: 1.2;
+    margin-bottom: 0.75rem;
+}
+
+.lesson-meta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    font-family: 'Schibsted Grotesk', sans-serif;
+    font-size: 0.875rem;
+    color: var(--black-mid, #444b54);
+}
+
+.lesson-meta span {
+    display: flex;
+    align-items: center;
+    gap: 0.35rem;
+}
+
+.lesson-type-badge {
+    padding: 0.2rem 0.6rem;
+    border-radius: 1rem;
+    font-size: 0.75rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+}
+
+.video-badge {
+    background-color: #e3f2fd;
+    color: #1565c0;
+}
+
+.reading-badge {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+}
+
+/* ─── Lesson Content (notes / reading) ───────── */
+
+.lesson-content {
+    font-family: 'Schibsted Grotesk', sans-serif;
+    color: var(--black-dark, #1e1e1e);
+    line-height: 1.75;
+    margin-bottom: 2.5rem;
+}
+
+.lesson-content h2 {
+    font-family: CabinetGrotesk-Bold, sans-serif;
+    font-size: clamp(1.25rem, 3vw, 1.75rem);
+    color: var(--lb-blue-text);
+    margin: 2rem 0 1rem;
+    line-height: 1.3;
+}
+
+.lesson-content h3 {
+    font-family: CabinetGrotesk-Medium, sans-serif;
+    font-size: 1.25rem;
+    color: var(--lb-blue-text);
+    margin: 1.5rem 0 0.75rem;
+}
+
+.lesson-content p {
+    font-size: 1.0625rem;
+    margin-bottom: 1.25rem;
+    font-weight: 300;
+}
+
+.reading-content p {
+    font-size: 1.125rem;
+    line-height: 1.8;
+}
+
+.lesson-content-img {
+    width: 100%;
+    border-radius: 0.75rem;
+    margin: 1rem 0;
+}
+
+.lesson-figure {
+    margin: 1.5rem 0;
+}
+
+.lesson-figure figcaption {
+    text-align: center;
+    font-size: 0.8125rem;
+    color: var(--black-mid);
+    margin-top: 0.5rem;
+    font-style: italic;
+}
+
+.lesson-code {
+    background-color: #1e1e2e;
+    color: #cdd6f4;
+    padding: 1.25rem;
+    border-radius: 0.75rem;
+    overflow-x: auto;
+    font-family: 'Fira Code', 'Consolas', monospace;
+    font-size: 0.875rem;
+    line-height: 1.6;
+    margin: 1rem 0;
+}
+
+.lesson-note {
+    display: flex;
+    gap: 0.75rem;
+    background-color: #f0fdf4;
+    border-left: 4px solid var(--lb-green, #30c070);
+    padding: 1rem 1.25rem;
+    border-radius: 0 0.5rem 0.5rem 0;
+    margin: 1rem 0;
+}
+
+.lesson-note i {
+    color: var(--lb-green);
+    font-size: 1.125rem;
+    margin-top: 0.15rem;
+}
+
+.lesson-note p {
+    margin: 0;
+    font-size: 0.9375rem;
+}
+
+.lesson-warning {
+    display: flex;
+    gap: 0.75rem;
+    background-color: #fff8e1;
+    border-left: 4px solid #ff9800;
+    padding: 1rem 1.25rem;
+    border-radius: 0 0.5rem 0.5rem 0;
+    margin: 1rem 0;
+}
+
+.lesson-warning i {
+    color: #ff9800;
+    font-size: 1.125rem;
+    margin-top: 0.15rem;
+}
+
+.lesson-warning p {
+    margin: 0;
+    font-size: 0.9375rem;
+}
+
+.lesson-list {
+    padding-left: 1.5rem;
+    margin: 1rem 0;
+}
+
+.lesson-list li {
+    font-size: 1.0625rem;
+    margin-bottom: 0.5rem;
+    font-weight: 300;
+    line-height: 1.6;
+}
+
+.lesson-divider {
+    border: none;
+    border-top: 1px solid var(--gray-dark);
+    margin: 2rem 0;
+}
+
+/* ─── Quiz Overlay (video pause-points) ──────── */
+
+.quiz-overlay {
+    position: absolute;
+    inset: 0;
+    background-color: rgba(0, 0, 0, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 20;
+    padding: 1.5rem;
+}
+
+.quiz-card {
+    background-color: white;
+    border-radius: 1rem;
+    padding: 2rem;
+    max-width: 600px;
+    width: 100%;
+    max-height: 80vh;
+    overflow-y: auto;
+}
+
+.inline-quiz {
+    margin: 2rem 0;
+    border: 1px solid var(--gray-dark);
+}
+
+.quiz-header {
+    text-align: center;
+    margin-bottom: 1.5rem;
+}
+
+.quiz-header i {
+    font-size: 2rem;
+    color: var(--lb-green);
+    margin-bottom: 0.5rem;
+}
+
+.quiz-header h3 {
+    font-family: CabinetGrotesk-Bold, sans-serif;
+    font-size: 1.5rem;
+    color: var(--lb-blue-text);
+    margin-bottom: 0.25rem;
+}
+
+.quiz-header p {
+    font-family: 'Schibsted Grotesk', sans-serif;
+    font-size: 0.875rem;
+    color: var(--black-mid);
+    margin: 0;
+}
+
+/* ─── Quiz Questions ─────────────────────────── */
+
+.quiz-body {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+.quiz-question {
+    font-family: 'Schibsted Grotesk', sans-serif;
+}
+
+.question-text {
+    font-weight: 600;
+    font-size: 1rem;
+    color: var(--lb-blue-text);
+    margin-bottom: 0.75rem;
+}
+
+.question-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.option-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    width: 100%;
+    padding: 0.75rem 1rem;
+    border: 1.5px solid var(--gray-dark, #e8ebef);
+    border-radius: 0.625rem;
+    background-color: white;
+    font-family: 'Schibsted Grotesk', sans-serif;
+    font-size: 0.9375rem;
+    color: var(--black-dark);
+    cursor: pointer;
+    transition: all 0.15s ease;
+    text-align: left;
+}
+
+.option-btn:hover {
+    border-color: var(--lb-green);
+    background-color: #f0fdf4;
+}
+
+.option-btn.selected {
+    border-color: var(--lb-green);
+    background-color: #e6f9ee;
+    font-weight: 600;
+}
+
+.option-letter {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 1.75rem;
+    height: 1.75rem;
+    border-radius: 50%;
+    background-color: var(--gray-mid, #f2f4f6);
+    font-weight: 700;
+    font-size: 0.8125rem;
+    color: var(--lb-blue-text);
+    flex-shrink: 0;
+}
+
+.option-btn.selected .option-letter {
+    background-color: var(--lb-green);
+    color: white;
+}
+
+/* ─── Quiz Submit / Actions ──────────────────── */
+
+.quiz-submit-btn {
+    width: 100%;
+    padding: 0.875rem;
+    border: none;
+    border-radius: 2.1875rem;
+    background-color: var(--lb-green);
+    color: white;
+    font-family: 'Schibsted Grotesk', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+    margin-top: 0.5rem;
+}
+
+.quiz-submit-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.quiz-submit-btn:not(:disabled):hover {
+    background-color: var(--lb-green-hover, #28a85f);
+}
+
+.start-quiz-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    width: 100%;
+    padding: 1rem;
+    border: 2px dashed var(--lb-green);
+    border-radius: 0.75rem;
+    background-color: #f0fdf4;
+    color: var(--lb-green);
+    font-family: 'Schibsted Grotesk', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.15s ease;
+}
+
+.start-quiz-btn:hover {
+    background-color: #e6f9ee;
+    border-color: var(--lb-green-hover);
+}
+
+.start-quiz-btn.complete-btn {
+    border-color: var(--lb-blue-dark);
+    color: var(--lb-blue-dark);
+    background-color: #e3f0ff;
+}
+
+.start-quiz-btn.complete-btn:hover {
+    background-color: #d0e4ff;
+}
+
+/* ─── Quiz Result ────────────────────────────── */
+
+.quiz-result {
+    text-align: center;
+    padding: 1rem 0;
+}
+
+.result-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border-radius: 2rem;
+    font-family: CabinetGrotesk-Bold, sans-serif;
+    font-size: 1.5rem;
+    margin-bottom: 1rem;
+}
+
+.result-badge.passed {
+    background-color: #e6f9ee;
+    color: #1b8a3d;
+}
+
+.result-badge.failed {
+    background-color: #ffeaec;
+    color: #d32f2f;
+}
+
+.result-badge i {
+    font-size: 1.25rem;
+}
+
+.result-text {
+    font-family: 'Schibsted Grotesk', sans-serif;
+    font-size: 1rem;
+    color: var(--black-mid);
+    margin-bottom: 1.5rem;
+}
+
+.quiz-continue-btn,
+.quiz-retry-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.5rem;
+    border: none;
+    border-radius: 2.1875rem;
+    font-family: 'Schibsted Grotesk', sans-serif;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.15s ease;
+}
+
+.quiz-continue-btn {
+    background-color: var(--lb-green);
+    color: white;
+}
+
+.quiz-continue-btn:hover {
+    background-color: var(--lb-green-hover, #28a85f);
+}
+
+.quiz-retry-btn {
+    background-color: var(--gray-mid);
+    color: var(--lb-blue-text);
+}
+
+.quiz-retry-btn:hover {
+    background-color: var(--gray-dark);
+}
+
+/* ─── Lesson Complete Badge ──────────────────── */
+
+.lesson-complete-badge {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 1rem;
+    background-color: #e6f9ee;
+    border-radius: 0.75rem;
+    font-family: 'Schibsted Grotesk', sans-serif;
+    font-size: 1rem;
+    font-weight: 600;
+    color: #1b8a3d;
+}
+
+.lesson-complete-badge i {
+    font-size: 1.25rem;
+}
+
+/* ─── End Quiz Section ───────────────────────── */
+
+.end-quiz-section {
+    margin: 2rem 0;
+}
+
+/* ─── Lesson Navigation ─────────────────────── */
+
+.lesson-nav {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: 3rem;
+    padding-top: 2rem;
+    border-top: 1px solid var(--gray-dark);
+}
+
+.lesson-nav-btn {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    border-radius: 2.1875rem;
+    font-family: 'Schibsted Grotesk', sans-serif;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    text-decoration: none;
+    transition: all 0.15s ease;
+}
+
+.lesson-nav-btn.prev {
+    background-color: var(--gray-mid, #f2f4f6);
+    color: var(--lb-blue-text);
+}
+
+.lesson-nav-btn.prev:hover {
+    background-color: var(--gray-dark);
+}
+
+.lesson-nav-btn.next {
+    background-color: var(--lb-green);
+    color: white;
+}
+
+.lesson-nav-btn.next:hover {
+    background-color: var(--lb-green-hover, #28a85f);
+}
+
+.lesson-nav-btn.complete {
+    background-color: var(--lb-blue-dark);
+}
+
+.lesson-nav-btn.complete:hover {
+    background-color: var(--lb-blue-dark-hover, #01253d);
+}
+
+/* ─── Responsive ─────────────────────────────── */
+
+@media (max-width: 768px) {
+    .lesson-topbar {
+        flex-direction: column;
+        gap: 0.5rem;
+        padding: 0.75rem 1rem;
+        align-items: flex-start;
+    }
+
+    .lesson-container {
+        padding: 1.5rem 1rem;
+    }
+
+    .quiz-card {
+        padding: 1.25rem;
+    }
+
+    .quiz-overlay {
+        padding: 0.75rem;
+        align-items: flex-start;
+        padding-top: 2rem;
+    }
+
+    .lesson-nav {
+        flex-direction: column;
+        gap: 0.75rem;
+    }
+
+    .lesson-nav-btn {
+        width: 100%;
+        justify-content: center;
+    }
+
+    .option-btn {
+        padding: 0.625rem 0.75rem;
+        font-size: 0.875rem;
+    }
+}
+
+@media (max-width: 480px) {
+    .lesson-title {
+        font-size: 1.375rem;
+    }
+
+    .lesson-meta {
+        flex-direction: column;
+        gap: 0.5rem;
+    }
+
+    .result-badge {
+        font-size: 1.25rem;
+        padding: 0.5rem 1rem;
+    }
+}

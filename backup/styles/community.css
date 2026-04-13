@@ -42,6 +42,18 @@
     background-color: var(--lb-green);
     color: white;
     border-radius: 2.1875rem;
+    cursor: pointer;
+    transition: background-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.community-hero-btn:hover {
+    background-color: #28a85f;
+    box-shadow: 0 2px 8px rgba(48, 192, 112, 0.3);
+}
+
+.community-hero-btn:active {
+    transform: scale(0.97);
+    background-color: #209050;
 }
 
 .community-hero-img {
@@ -165,6 +177,16 @@
 
 /* Adjustments for smaller screens */
 @media (max-width: 768px) {
+    .community-hero {
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+
+    .pathways {
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+
     .community-hero-img {
         width: 100%; /* Reduce the width to prevent excessive shrinking */
         bottom: -40%; /* Adjust the bottom position to keep it visible */

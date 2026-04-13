@@ -75,6 +75,17 @@
     padding: 13px 41px;
     border-radius: 35px;
     cursor: pointer;
+    transition: background-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.exchange-hero-btn:hover {
+    background-color: #28a85f;
+    box-shadow: 0 2px 8px rgba(48, 192, 112, 0.3);
+}
+
+.exchange-hero-btn:active {
+    transform: scale(0.97);
+    background-color: #209050;
 }
 
 /* Marquee */
@@ -140,6 +151,14 @@
     font-size: 14px;
     font-weight: 200;
     color: var(--black-mid);
+}
+
+.currency .change.positive {
+    color: #16a34a;
+}
+
+.currency .change.negative {
+    color: #dc2626;
 }
 
 .currency .numbers {
@@ -372,6 +391,16 @@
 
 
 @media (max-width: 768px) {
+    .exchange-hero {
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+
+    .exchange-pathways {
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+
     .exchange-hero .left.vector,
     .exchange-hero .right.vector {
         width: 50%; /* Increase the width for smaller viewports */

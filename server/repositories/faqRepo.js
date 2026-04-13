@@ -5,11 +5,11 @@
  */
 'use strict';
 
-const { getDb } = require('../db');
+const { db } = require('../db');
 
 const faqRepo = {
-    listGrouped() {
-        const rows = getDb().prepare('SELECT * FROM faqs ORDER BY sort_order ASC').all();
+    async listGrouped() {
+        const { rows } = await db.query('SELECT * FROM faqs ORDER BY sort_order ASC');
         const grouped = {};
         for (const row of rows) {
             if (!grouped[row.category]) grouped[row.category] = [];
@@ -22,8 +22,8 @@ const faqRepo = {
         return grouped;
     },
 
-    listCategories() {
-        const rows = getDb().prepare('SELECT DISTINCT category FROM faqs ORDER BY sort_order ASC').all();
+    async listCategories() {
+        const { rows } = await db.query('SELECT DISTINCT category FROM faqs ORDER BY sort_order ASC');
         return rows.map(r => r.category);
     }
 };

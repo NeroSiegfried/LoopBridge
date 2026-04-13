@@ -76,6 +76,13 @@
     gap: 1.25rem;
 }
 
+/* Reset link styling for article cards */
+.featured .articles a,
+.feed .articles a {
+    text-decoration: none;
+    color: inherit;
+}
+
 .featured .article-image {
     height: 300px;
     border-radius: 16px;
@@ -141,12 +148,30 @@
     display: inline-block;
     padding: 7px 18px;
     border: 1px solid var(--gray-dark);
+    cursor: pointer;
+    transition: background-color 0.15s ease, color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.category-button:hover, .load-btn:hover {
+    background-color: var(--gray-light);
+    border-color: var(--gray-mid);
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
+}
+
+.category-button:active, .load-btn:active {
+    transform: scale(0.97);
+    background-color: var(--gray-mid);
 }
 
 .category-button.active {
     background-color: var(--lb-green);
     color: white;
-    border: none;
+    border: 1px solid transparent;
+}
+
+.category-button.active:hover {
+    background-color: #28a85f;
+    box-shadow: 0 2px 8px rgba(48, 192, 112, 0.25);
 }
 
 /* Dropdown wrapper — positioning context for the absolutely positioned menu */
@@ -169,6 +194,12 @@
     color: var(--black-mid);
     background-color: white;
     cursor: pointer;
+    transition: background-color 0.15s ease, border-color 0.15s ease;
+}
+
+.category-dropdown:hover {
+    background-color: var(--gray-light);
+    border-color: var(--gray-mid);
 }
 
 /* Caret icon */
@@ -230,6 +261,13 @@
     padding: 20px 20px 24px;
     border-radius: 16px;
     border: 1px solid var(--gray-mid);
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+}
+
+.article-container:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.07);
+    border-color: var(--gray-dark);
 }
 
 .feed .articles {
@@ -306,9 +344,26 @@
     color: #ffffff99;
 }
 
+.subscribe-section input:focus {
+    outline: none;
+    background-color: rgba(255, 255, 255, 0.12);
+}
+
 .newsletter-button {
     margin: 0;
     font-weight: 200;
+    cursor: pointer;
+    transition: background-color 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+
+.newsletter-button:hover {
+    background-color: #28a85f;
+    box-shadow: 0 2px 8px rgba(48, 192, 112, 0.3);
+}
+
+.newsletter-button:active {
+    transform: scale(0.97);
+    background-color: #209050;
 }
 
 .newsletter .image {
@@ -440,6 +495,28 @@
 
     .blog-header .blog-inner-section {
         padding: 3rem;
+    }
+}
+
+@media (max-width: 48rem) {
+    .blog-header {
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+
+    .featured {
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+
+    .feed {
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+
+    .newsletter {
+        padding-left: 20px;
+        padding-right: 20px;
     }
 }
 

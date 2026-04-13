@@ -8,4 +8,5 @@ module.exports = {
     articleService: require('./articleService'),
     courseService:  require('./courseService'),
     storageService: require('./storageService'),
+    categorizationService: require('./categorizationService'),
 };

@@ -450,6 +450,19 @@ h1, h2, h3, h4, h5, h6 {
     transform: scale(1.0);
 }
 
+/* Remove social-icon hover effect inside footer (footer has its own styles) */
+footer .social-icon:hover {
+    background-color: transparent;
+    color: var(--lb-green-hover, #28a85f);
+    transform: translateY(-2px);
+}
+
+footer .social-icon:active {
+    background-color: transparent;
+    color: var(--lb-blue-dark, #001b2c);
+    transform: translateY(0);
+}
+
 /* --- Nav Link Hover (desktop) --- */
 .nav-link-hover {
     position: relative;

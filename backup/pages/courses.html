@@ -4,81 +4,23 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Courses — LoopBridge</title>
+    <meta name="description" content="Browse all LoopBridge crypto courses.">
+    <meta property="og:title" content="Courses — LoopBridge">
+    <meta property="og:description" content="Browse all LoopBridge crypto courses.">
+    <meta property="og:type" content="website">
+    <meta property="og:image" content="/images/logos/loopbridge-og.png">
+    <meta property="og:site_name" content="LoopBridge">
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Courses — LoopBridge">
+    <meta name="twitter:description" content="Browse all LoopBridge crypto courses.">
+    <meta name="twitter:image" content="/images/logos/loopbridge-og.png">
     <link rel="stylesheet" href="../styles/global.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Schibsted+Grotesk:ital,wght@0,400..900;1,400..900&display=swap" rel="stylesheet">
     <link href="https://cdn.lineicons.com/5.1/line/lineicons.css" rel="stylesheet"/>
     <script src="https://kit.fontawesome.com/20310b9de2.js" crossorigin="anonymous"></script>
-    <style>
-        .courses-page-hero {
-            padding: 14rem 2.5rem 4rem;
-            background-color: var(--lb-blue-dark);
-        }
-
-        .courses-page-hero .section-container {
-            display: block;
-            max-width: var(--max-width);
-            margin: auto;
-        }
-
-        .courses-page-hero h1 {
-            font-family: var(--font-heading);
-            font-size: clamp(2rem, 4vw, 3.5rem);
-            color: white;
-            margin-bottom: 1rem;
-        }
-
-        .courses-page-hero p {
-            font-family: var(--font-body);
-            font-size: clamp(1rem, 2vw, 1.25rem);
-            font-weight: 300;
-            color: var(--gray-mid);
-            max-width: 600px;
-        }
-
-        /* Track Tabs */
-        .courses-content {
-            padding: 3rem 2.5rem 6rem;
-        }
-
-        .courses-content .section-container {
-            display: block;
-            max-width: var(--max-width);
-            margin: auto;
-        }
-
-        .track-tabs {
-            display: flex;
-            gap: 0.5rem;
-            flex-wrap: wrap;
-            margin-bottom: 2rem;
-        }
-
-        .courses-grid {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 1.5rem;
-        }
-
-        @media (max-width: 62rem) {
-            .courses-page-hero {
-                padding: 12rem 1.25rem 3rem;
-            }
-            .courses-content {
-                padding: 2rem 1.25rem 4rem;
-            }
-            .courses-grid {
-                grid-template-columns: repeat(2, 1fr);
-            }
-        }
-
-        @media (max-width: 48rem) {
-            .courses-grid {
-                grid-template-columns: 1fr;
-            }
-        }
-    </style>
+    <link rel="stylesheet" href="./styles/courses.css">
 </head>
 <body>
     <!-- Navbar -->
@@ -112,82 +54,6 @@
     <script src="../lib/auth.js"></script>
     <script src="../lib/component-loader.js"></script>
 
-    <script>
-        document.addEventListener('components-loaded', async () => {
-            const grid = document.getElementById('courses-grid');
-            const tabsContainer = document.getElementById('track-tabs');
-
-            let allCourses = [];
-            let currentTrack = 'All';
-
-            Utils.showSkeletons(grid, 6, 'card');
-
-            allCourses = await DataService.getCourses();
-
-            // Extract unique tracks
-            const tracks = ['All', ...new Set(allCourses.map(c => c.track).filter(Boolean))];
-
-            // Render track tabs
-            tabsContainer.innerHTML = tracks.map(track => `
-                <button class="category-pill${track === 'All' ? ' active' : ''}" data-track="${track}">
-                    ${track.charAt(0).toUpperCase() + track.slice(1)}
-                </button>
-            `).join('');
-
-            tabsContainer.addEventListener('click', (e) => {
-                const btn = e.target.closest('.category-pill');
-                if (!btn) return;
-
-                currentTrack = btn.dataset.track;
-                tabsContainer.querySelectorAll('.category-pill').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                renderCourses();
-            });
-
-            function renderCourses() {
-                const filtered = currentTrack === 'All'
-                    ? allCourses
-                    : allCourses.filter(c => c.track === currentTrack);
-
-                const showAdmin = Auth.isLoggedIn() && Auth.isAdmin();
-
-                CourseCard.renderGrid(grid, filtered, {
-                    basePath: '../',
-                    showAdmin: showAdmin
-                });
-
-                // Admin handlers
-                if (showAdmin) {
-                    grid.querySelectorAll('[data-action="edit"]').forEach(btn => {
-                        btn.addEventListener('click', (e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            window.location.href = '../admin/edit-course.html?id=' + btn.dataset.id;
-                        });
-                    });
-
-                    grid.querySelectorAll('[data-action="delete"]').forEach(btn => {
-                        btn.addEventListener('click', async (e) => {
-                            e.preventDefault();
-                            e.stopPropagation();
-                            const confirmed = await Utils.confirm('Delete this course?', 'Delete Course');
-                            if (confirmed) {
-                                try {
-                                    await DataService.deleteCourse(btn.dataset.id);
-                                    allCourses = allCourses.filter(c => c.id !== btn.dataset.id);
-                                    Utils.showToast('Course deleted.', 'success');
-                                    renderCourses();
-                                } catch (err) {
-                                    Utils.showToast('Failed to delete.', 'error');
-                                }
-                            }
-                        });
-                    });
-                }
-            }
-
-            renderCourses();
-        });
-    </script>
+    <script src="./scripts/courses.js"></script>
 </body>
 </html>

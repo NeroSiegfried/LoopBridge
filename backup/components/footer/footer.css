@@ -68,9 +68,18 @@ footer {
 .socials a {
     color: var(--lb-green);
     text-decoration: none;
+    transition: color 0.15s ease, transform 0.15s ease;
 }
 
-/* social-icon hover is in global.css */
+.socials a:hover {
+    color: var(--lb-green-hover, #28a85f);
+    transform: translateY(-2px);
+}
+
+.socials a:active {
+    color: var(--lb-blue-dark, #001b2c);
+    transform: translateY(0);
+}
 
 .contacts {
     display: flex;
@@ -147,5 +156,13 @@ footer {
 
     .contact-item {
         text-align: left;
+    }
+}
+
+/* SMALL MOBILE — enforce 20px horizontal padding */
+@media (max-width: 30rem) {
+    footer {
+        padding-left: 20px;
+        padding-right: 20px;
     }
 }

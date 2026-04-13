@@ -14,15 +14,15 @@ function generateId() {
 }
 
 const courseService = {
-    list(filters) {
+    async list(filters) {
         return courseRepo.list(filters);
     },
 
-    getById(id) {
+    async getById(id) {
         return courseRepo.findByIdFormatted(id);
     },
 
-    create(data, user) {
+    async create(data, user) {
         const id = generateId();
         const authorName = data.author?.name || user.displayName || 'LoopBridge Team';
         const authorAvatar = data.author?.avatar || user.avatar || null;
@@ -47,8 +47,8 @@ const courseService = {
         });
     },
 
-    update(id, data, user) {
-        const existing = courseRepo.findById(id);
+    async update(id, data, user) {
+        const existing = await courseRepo.findById(id);
         if (!existing) return { error: 'Course not found.', status: 404 };
 
         if (!this._canModify(user, existing)) {
@@ -74,34 +74,28 @@ const courseService = {
         });
     },
 
-    delete(id, user) {
-        const existing = courseRepo.findById(id);
+    async delete(id, user) {
+        const existing = await courseRepo.findById(id);
         if (!existing) return { error: 'Course not found.', status: 404 };
 
         if (!this._canModify(user, existing)) {
             return { error: 'You do not have permission to modify this item.', status: 403 };
         }
 
-        courseRepo.softDelete(id);
+        await courseRepo.softDelete(id);
         return { ok: true };
     },
 
-    restore(id, user) {
+    async restore(id, user) {
         if (user.role !== 'admin') {
             return { error: 'Admin only.', status: 403 };
         }
-        const result = courseRepo.restore(id);
+        const result = await courseRepo.restore(id);
         if (!result) return { error: 'Course not found.', status: 404 };
         return result;
     },
 
-    /**
-     * List courses filtered by the user's role:
-     *   admin  → all (including deleted)
-     *   author → only their own courses
-     *   user   → nothing
-     */
-    listForDashboard(user) {
+    async listForDashboard(user) {
         if (!user) return [];
         if (user.role === 'admin') {
             return courseRepo.list({ includeDeleted: true });
@@ -113,17 +107,17 @@ const courseService = {
     },
 
     // ─── Progress ────────────────────────────────────────
-    getProgress(userId, courseId) {
+    async getProgress(userId, courseId) {
         return progressRepo.findFormatted(userId, courseId);
     },
 
-    enroll(userId, courseId) {
-        const course = courseRepo.findById(courseId);
+    async enroll(userId, courseId) {
+        const course = await courseRepo.findById(courseId);
         if (!course) return { error: 'Course not found.', status: 404 };
         return progressRepo.enroll(userId, courseId);
     },
 
-    updateProgress(userId, courseId, subsectionId, complete) {
+    async updateProgress(userId, courseId, subsectionId, complete) {
         if (!subsectionId) {
             return { error: 'subsectionId is required.', status: 400 };
         }

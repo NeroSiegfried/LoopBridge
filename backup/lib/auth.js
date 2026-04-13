@@ -1,26 +1,26 @@
 /**
- * LoopBridge Auth Service (Mock)
- * 
- * Provides mock authentication with login/logout, role checks,
- * and ownership verification. Uses localStorage for session persistence.
- * 
+ * LoopBridge Auth Service
+ *
+ * API-backed authentication with login/logout, role checks,
+ * and ownership verification. Session is managed server-side
+ * via an httpOnly cookie; a localStorage cache keeps getCurrentUser()
+ * synchronous for existing code that depends on it.
+ *
  * Roles: admin, author, user
- * 
+ *
  * Usage:
  *   await Auth.login('admin', 'admin123');
  *   const user = Auth.getCurrentUser();
- *   Auth.isAdmin();         // true if role === 'admin'
- *   Auth.isAuthor();        // true if role === 'author' or 'admin'
- *   Auth.canEdit('art-001'); // true if admin or owner of that article
- *   Auth.logout();
+ *   Auth.isAdmin();
+ *   Auth.isAuthor();
+ *   Auth.canEdit('art-001');
+ *   await Auth.logout();
  */
 (function () {
     'use strict';
 
-    const SESSION_KEY = 'lb_session';
-    const USERS_CACHE_KEY = '_auth_users';
-
-    let usersCache = null;
+    const SESSION_KEY = 'lb_session';  // localStorage cache key
+    const API = '/api/auth';
 
     function getBasePath() {
         const path = window.location.pathname;
@@ -30,54 +30,78 @@
         return './';
     }
 
-    /**
-     * Load users from JSON (cached after first load).
-     */
-    async function loadUsers() {
-        if (usersCache) return usersCache;
+    // ─── API Helpers ────────────────────────────────────────
+    async function apiFetch(path, opts = {}) {
+        const url = API + path;
+        const options = {
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json', ...(opts.headers || {}) },
+            ...opts
+        };
+        const res = await fetch(url, options);
+        return res.json();
+    }
 
+    // ─── Login ──────────────────────────────────────────────
+    /**
+     * Login with username and password.
+     * Returns the user object on success, null on failure.
+     */
+    async function login(username, password) {
         try {
-            const res = await fetch(getBasePath() + 'data/users.json');
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            const data = await res.json();
-            usersCache = data.users || [];
-            return usersCache;
+            const res = await fetch(API + '/login', {
+                method: 'POST',
+                credentials: 'include',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ username, password })
+            });
+
+            if (!res.ok) return null;
+
+            const user = await res.json();
+            // Cache in localStorage for synchronous access
+            localStorage.setItem(SESSION_KEY, JSON.stringify(user));
+            return user;
         } catch (err) {
-            console.error('[Auth] Failed to load users:', err);
-            return [];
+            console.error('[Auth] Login failed:', err);
+            return null;
         }
     }
 
-    /**
-     * Login with username and password.
-     * Returns the user object (without password) on success, null on failure.
-     */
-    async function login(username, password) {
-        const users = await loadUsers();
-        const user = users.find(
-            u => u.username === username && u.password === password
-        );
-
-        if (!user) return null;
-
-        // Store session (exclude password)
-        const session = { ...user };
-        delete session.password;
-        localStorage.setItem(SESSION_KEY, JSON.stringify(session));
-
-        return session;
-    }
-
-    /**
-     * Logout the current user.
-     */
-    function logout() {
+    // ─── Logout ─────────────────────────────────────────────
+    async function logout() {
+        try {
+            await fetch(API + '/logout', {
+                method: 'POST',
+                credentials: 'include'
+            });
+        } catch {
+            // silent
+        }
         localStorage.removeItem(SESSION_KEY);
     }
 
+    // ─── Session Check ──────────────────────────────────────
     /**
-     * Get the currently logged-in user, or null.
+     * Verify session with the server and update localStorage cache.
+     * Call this once on page load (e.g. after components-loaded).
      */
+    async function checkSession() {
+        try {
+            const data = await apiFetch('/session');
+            if (data.user) {
+                localStorage.setItem(SESSION_KEY, JSON.stringify(data.user));
+                return data.user;
+            } else {
+                localStorage.removeItem(SESSION_KEY);
+                return null;
+            }
+        } catch {
+            return getCurrentUser(); // fall back to cache
+        }
+    }
+
+    // ─── Synchronous Getters (from localStorage cache) ─────
     function getCurrentUser() {
         try {
             const raw = localStorage.getItem(SESSION_KEY);
@@ -87,33 +111,20 @@
         }
     }
 
-    /**
-     * Check if anyone is logged in.
-     */
     function isLoggedIn() {
         return getCurrentUser() !== null;
     }
 
-    /**
-     * Check if current user has admin role.
-     */
     function isAdmin() {
         const user = getCurrentUser();
         return user && user.role === 'admin';
     }
 
-    /**
-     * Check if current user has author or admin role.
-     */
     function isAuthor() {
         const user = getCurrentUser();
         return user && (user.role === 'author' || user.role === 'admin');
     }
 
-    /**
-     * Check if current user can edit an article/course.
-     * Admins can edit anything. Authors can edit items they own.
-     */
     function canEdit(itemId) {
         const user = getCurrentUser();
         if (!user) return false;
@@ -124,18 +135,11 @@
         return false;
     }
 
-    /**
-     * Check if current user can delete an item.
-     * Only admins can delete; authors can delete their own.
-     */
     function canDelete(itemId) {
-        return canEdit(itemId); // Same permission model
+        return canEdit(itemId);
     }
 
-    /**
-     * Require login — redirects to login page if not logged in.
-     * Returns the current user if logged in.
-     */
+    // ─── Guards ─────────────────────────────────────────────
     function requireAuth(redirectUrl) {
         const user = getCurrentUser();
         if (!user) {
@@ -147,9 +151,6 @@
         return user;
     }
 
-    /**
-     * Require admin role — redirects if not admin.
-     */
     function requireAdmin() {
         const user = requireAuth();
         if (user && user.role !== 'admin') {
@@ -160,10 +161,7 @@
         return user;
     }
 
-    /**
-     * Render a login/logout UI element.
-     * Pass a container element; it will be populated with user info or login button.
-     */
+    // ─── Render Auth UI (legacy helper) ─────────────────────
     function renderAuthUI(container) {
         if (!container) return;
 
@@ -177,8 +175,8 @@
                     <button class="btn btn-sm btn-ghost auth-logout-btn">Logout</button>
                 </div>
             `;
-            container.querySelector('.auth-logout-btn').addEventListener('click', () => {
-                logout();
+            container.querySelector('.auth-logout-btn').addEventListener('click', async () => {
+                await logout();
                 window.location.reload();
             });
         } else {
@@ -188,10 +186,18 @@
         }
     }
 
+    // ─── Auto-verify session on load ────────────────────────
+    // Fire-and-forget: validates the cookie with the server and
+    // updates the localStorage cache. Doesn't block rendering.
+    if (typeof window !== 'undefined') {
+        checkSession().catch(() => {});
+    }
+
     // ─── Public API ─────────────────────────────────────────
     window.Auth = {
         login,
         logout,
+        checkSession,
         getCurrentUser,
         isLoggedIn,
         isAdmin,

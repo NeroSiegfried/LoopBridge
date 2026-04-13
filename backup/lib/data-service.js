@@ -1,10 +1,12 @@
 /**
  * LoopBridge Data Service
- * 
+ *
  * Provides CRUD operations for articles, courses, FAQs, etc.
- * Reads from JSON files on first load, then uses localStorage for
- * any user-created/edited/deleted data (mock backend).
- * 
+ * Communicates with the Express API at /api/*.
+ *
+ * The public API is identical to the original localStorage-based version
+ * so all existing page scripts continue to work without changes.
+ *
  * Usage:
  *   const articles = await DataService.getArticles();
  *   const article  = await DataService.getArticle('art-001');
@@ -15,269 +17,281 @@
 (function () {
     'use strict';
 
-    const BASE = getBasePath() + 'data/';
-    const STORAGE_PREFIX = 'lb_';
+    const API = '/api';
 
-    function getBasePath() {
-        const path = window.location.pathname;
-        if (path.includes('/pages/') || path.includes('/admin/')) {
-            return '../';
-        }
-        return './';
-    }
-
-    // ─── Cache ──────────────────────────────────────────────
-    const cache = {};
-
-    /**
-     * Fetch a JSON file. Returns cached data if available.
-     */
-    async function fetchJSON(filename) {
-        if (cache[filename]) return cache[filename];
-
+    // ─── HTTP Helpers ───────────────────────────────────────
+    async function apiFetch(path, opts = {}) {
+        const url = API + path;
+        const options = {
+            credentials: 'include',          // send session cookie
+            headers: { 'Content-Type': 'application/json', ...(opts.headers || {}) },
+            ...opts
+        };
         try {
-            const res = await fetch(BASE + filename);
-            if (!res.ok) throw new Error(`HTTP ${res.status}`);
-            const data = await res.json();
-            cache[filename] = data;
-            return data;
+            const res = await fetch(url, options);
+            if (!res.ok) {
+                const body = await res.json().catch(() => ({}));
+                throw new Error(body.error || `HTTP ${res.status}`);
+            }
+            return res.json();
         } catch (err) {
-            console.error(`[DataService] Failed to fetch ${filename}:`, err);
-            return null;
+            console.error(`[DataService] ${opts.method || 'GET'} ${url} failed:`, err);
+            throw err;
         }
     }
 
-    // ─── LocalStorage Helpers ───────────────────────────────
-    function lsKey(collection) {
-        return STORAGE_PREFIX + collection;
+    function apiGet(path)             { return apiFetch(path); }
+    function apiPost(path, body)      { return apiFetch(path, { method: 'POST',   body: JSON.stringify(body) }); }
+    function apiPut(path, body)       { return apiFetch(path, { method: 'PUT',     body: JSON.stringify(body) }); }
+    function apiDelete(path)          { return apiFetch(path, { method: 'DELETE' }); }
+
+    // ─── Articles ───────────────────────────────────────────
+    async function getArticles(includeDeleted = false) {
+        const qs = includeDeleted ? '?includeDeleted=1' : '';
+        return apiGet('/articles' + qs);
     }
 
-    function lsGet(collection) {
+    async function getAllArticles() {
+        return apiGet('/articles?includeDeleted=1');
+    }
+
+    async function getArticle(id) {
         try {
-            const raw = localStorage.getItem(lsKey(collection));
-            return raw ? JSON.parse(raw) : null;
+            return await apiGet('/articles/' + id);
         } catch {
             return null;
         }
     }
 
-    function lsSet(collection, data) {
-        localStorage.setItem(lsKey(collection), JSON.stringify(data));
-    }
-
-    /**
-     * Get the "live" array for a collection:
-     * If localStorage has overrides, use those. Otherwise load from JSON.
-     */
-    async function getCollection(collection, filename, extractKey) {
-        // Check localStorage first
-        const local = lsGet(collection);
-        if (local) return local;
-
-        // Fall back to JSON file
-        const data = await fetchJSON(filename);
-        if (!data) return [];
-
-        // Some JSON files wrap data in a key (e.g., { "articles": [...] })
-        const items = extractKey ? data[extractKey] : (Array.isArray(data) ? data : []);
-        return items || [];
-    }
-
-    /**
-     * Save the collection to localStorage (creating a mutable copy).
-     */
-    function saveCollection(collection, items) {
-        lsSet(collection, items);
-    }
-
-    /**
-     * Generate a unique ID for a new item.
-     */
-    function generateId(prefix) {
-        const timestamp = Date.now().toString(36);
-        const random = Math.random().toString(36).substring(2, 7);
-        return `${prefix}-${timestamp}-${random}`;
-    }
-
-    // ─── Articles ───────────────────────────────────────────
-    async function getArticles() {
-        return getCollection('articles', 'articles.json', 'articles');
-    }
-
-    async function getArticle(id) {
-        const articles = await getArticles();
-        return articles.find(a => a.id === id) || null;
-    }
-
     async function getArticlesByCategory(category) {
-        const articles = await getArticles();
-        if (!category || category === 'All' || category === 'All topics') return articles;
-        return articles.filter(a => a.category === category);
+        if (!category || category === 'All' || category === 'All topics') {
+            return getArticles();
+        }
+        return apiGet('/articles?category=' + encodeURIComponent(category));
     }
 
     async function getFeaturedArticles() {
-        const articles = await getArticles();
-        return articles.filter(a => a.featured);
+        return apiGet('/articles?featured=1');
     }
 
     async function createArticle(articleData) {
-        const articles = await getArticles();
-        const newArticle = {
-            ...articleData,
-            id: generateId('art'),
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-        };
-        articles.push(newArticle);
-        saveCollection('articles', articles);
-        return newArticle;
+        return apiPost('/articles', articleData);
     }
 
     async function updateArticle(id, updates) {
-        const articles = await getArticles();
-        const index = articles.findIndex(a => a.id === id);
-        if (index === -1) throw new Error(`Article "${id}" not found`);
-
-        articles[index] = {
-            ...articles[index],
-            ...updates,
-            id: id, // Prevent ID overwrite
-            updatedAt: new Date().toISOString()
-        };
-        saveCollection('articles', articles);
-        return articles[index];
+        return apiPut('/articles/' + id, updates);
     }
 
     async function deleteArticle(id) {
-        const articles = await getArticles();
-        const filtered = articles.filter(a => a.id !== id);
-        if (filtered.length === articles.length) throw new Error(`Article "${id}" not found`);
-        saveCollection('articles', filtered);
-        return true;
+        return apiDelete('/articles/' + id);
+    }
+
+    async function restoreArticle(id) {
+        return apiPost('/articles/' + id + '/restore');
     }
 
     // ─── Courses ────────────────────────────────────────────
-    async function getCourses() {
-        return getCollection('courses', 'courses.json', 'courses');
+    async function getCourses(includeDeleted = false) {
+        const qs = includeDeleted ? '?includeDeleted=1' : '';
+        return apiGet('/courses' + qs);
+    }
+
+    async function getAllCourses() {
+        return apiGet('/courses?includeDeleted=1');
     }
 
     async function getCourse(id) {
-        const courses = await getCourses();
-        return courses.find(c => c.id === id) || null;
+        try {
+            return await apiGet('/courses/' + id);
+        } catch {
+            return null;
+        }
     }
 
     async function getCoursesByTrack(track) {
-        const courses = await getCourses();
-        if (!track || track === 'All') return courses;
-        return courses.filter(c => c.track === track);
+        if (!track || track === 'All') return getCourses();
+        return apiGet('/courses?track=' + encodeURIComponent(track));
     }
 
     async function createCourse(courseData) {
-        const courses = await getCourses();
-        const newCourse = {
-            ...courseData,
-            id: generateId('course'),
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-        };
-        courses.push(newCourse);
-        saveCollection('courses', courses);
-        return newCourse;
+        return apiPost('/courses', courseData);
     }
 
     async function updateCourse(id, updates) {
-        const courses = await getCourses();
-        const index = courses.findIndex(c => c.id === id);
-        if (index === -1) throw new Error(`Course "${id}" not found`);
-
-        courses[index] = {
-            ...courses[index],
-            ...updates,
-            id: id,
-            updatedAt: new Date().toISOString()
-        };
-        saveCollection('courses', courses);
-        return courses[index];
+        return apiPut('/courses/' + id, updates);
     }
 
     async function deleteCourse(id) {
-        const courses = await getCourses();
-        const filtered = courses.filter(c => c.id !== id);
-        if (filtered.length === courses.length) throw new Error(`Course "${id}" not found`);
-        saveCollection('courses', filtered);
-        return true;
+        return apiDelete('/courses/' + id);
+    }
+
+    async function restoreCourse(id) {
+        return apiPost('/courses/' + id + '/restore');
     }
 
     // ─── FAQs ───────────────────────────────────────────────
     async function getFaqs() {
-        // FAQs JSON is organized by category (object, not array)
-        const local = lsGet('faqs');
-        if (local) return local;
-
-        const data = await fetchJSON('faqs.json');
-        return data || {};
+        return apiGet('/faqs');
     }
 
     async function getFaqsByCategory(category) {
         const faqs = await getFaqs();
         if (!category || category === 'All') {
-            // Flatten all categories into one array
             return Object.values(faqs).flat();
         }
         return faqs[category] || [];
     }
 
     async function getFaqCategories() {
-        const faqs = await getFaqs();
-        return Object.keys(faqs);
+        return apiGet('/faqs/categories');
     }
 
     // ─── Site Config ────────────────────────────────────────
     async function getSiteConfig() {
-        return fetchJSON('site.json');
+        return apiGet('/site');
     }
 
     // ─── Team ───────────────────────────────────────────────
     async function getTeam() {
-        const data = await fetchJSON('team.json');
-        return data ? data.members : [];
+        return apiGet('/team');
     }
 
     // ─── Platforms ──────────────────────────────────────────
     async function getPlatforms() {
-        const data = await fetchJSON('platforms.json');
-        return data ? data.platforms : [];
+        return apiGet('/platforms');
     }
 
     // ─── Reset (for development) ────────────────────────────
     function resetAll() {
+        // Clear any remaining localStorage keys from the old system
+        const STORAGE_PREFIX = 'lb_';
         Object.keys(localStorage).forEach(key => {
             if (key.startsWith(STORAGE_PREFIX)) {
                 localStorage.removeItem(key);
             }
         });
-        Object.keys(cache).forEach(key => delete cache[key]);
-        console.log('[DataService] All local data cleared.');
+        console.log('[DataService] Local cache cleared.');
+    }
+
+    // ─── Course Progress Tracking ───────────────────────────
+    // Progress is now server-side. These methods call the API.
+    // userId is still accepted for API compatibility but the server
+    // determines the user from the session cookie.
+
+    async function getUserProgress(userId) {
+        // The server returns all enrolled courses for the session user.
+        // We fetch each course's progress individually — or we can
+        // just return localStorage fallback for now since the API
+        // only exposes per-course progress.
+        // For backward compat, keep the localStorage approach for reads
+        // until a dedicated /api/progress endpoint exists.
+        try {
+            const raw = localStorage.getItem('lb_progress');
+            const all = raw ? JSON.parse(raw) : {};
+            return all[userId] || {};
+        } catch {
+            return {};
+        }
+    }
+
+    async function getCourseProgress(userId, courseId) {
+        try {
+            const data = await apiGet('/courses/' + courseId + '/progress');
+            return data;
+        } catch {
+            // Fall back to localStorage
+            const prog = await getUserProgress(userId);
+            return prog[courseId] || null;
+        }
+    }
+
+    async function enrollInCourse(userId, courseId) {
+        try {
+            return await apiPost('/courses/' + courseId + '/enroll');
+        } catch {
+            // Fallback: localStorage
+            const STORAGE_PREFIX = 'lb_';
+            const raw = localStorage.getItem(STORAGE_PREFIX + 'progress');
+            const all = raw ? JSON.parse(raw) : {};
+            if (!all[userId]) all[userId] = {};
+            if (!all[userId][courseId]) {
+                all[userId][courseId] = {
+                    enrolledAt: new Date().toISOString(),
+                    lastAccessedAt: new Date().toISOString(),
+                    completedSubs: []
+                };
+            }
+            localStorage.setItem(STORAGE_PREFIX + 'progress', JSON.stringify(all));
+            return all[userId][courseId];
+        }
+    }
+
+    async function markSubsectionComplete(userId, courseId, subsectionId) {
+        try {
+            return await apiPost('/courses/' + courseId + '/progress', { subsectionId, complete: true });
+        } catch {
+            return null;
+        }
+    }
+
+    async function unmarkSubsectionComplete(userId, courseId, subsectionId) {
+        try {
+            return await apiPost('/courses/' + courseId + '/progress', { subsectionId, complete: false });
+        } catch {
+            return null;
+        }
+    }
+
+    function getCourseCompletionPercent(userId, courseId, totalSubsections) {
+        // This is called synchronously in some places, so keep localStorage fallback
+        try {
+            const raw = localStorage.getItem('lb_progress');
+            const all = raw ? JSON.parse(raw) : {};
+            const prog = all[userId] && all[userId][courseId];
+            if (!prog || !totalSubsections) return 0;
+            return Math.round((prog.completedSubs.length / totalSubsections) * 100);
+        } catch {
+            return 0;
+        }
+    }
+
+    function getUserEnrolledCourses(userId) {
+        try {
+            const raw = localStorage.getItem('lb_progress');
+            const all = raw ? JSON.parse(raw) : {};
+            return Object.keys(all[userId] || {});
+        } catch {
+            return [];
+        }
+    }
+
+    // ─── Dashboard ────────────────────────────────────────
+    async function getDashboard() {
+        return apiGet('/dashboard');
     }
 
     // ─── Public API ─────────────────────────────────────────
     window.DataService = {
         // Articles
         getArticles,
+        getAllArticles,
         getArticle,
         getArticlesByCategory,
         getFeaturedArticles,
         createArticle,
         updateArticle,
         deleteArticle,
+        restoreArticle,
 
         // Courses
         getCourses,
+        getAllCourses,
         getCourse,
         getCoursesByTrack,
         createCourse,
         updateCourse,
         deleteCourse,
+        restoreCourse,
 
         // FAQs
         getFaqs,
@@ -288,6 +302,16 @@
         getSiteConfig,
         getTeam,
         getPlatforms,
+        getDashboard,
+
+        // Course Progress
+        getUserProgress,
+        getCourseProgress,
+        enrollInCourse,
+        markSubsectionComplete,
+        unmarkSubsectionComplete,
+        getCourseCompletionPercent,
+        getUserEnrolledCourses,
 
         // Dev
         resetAll

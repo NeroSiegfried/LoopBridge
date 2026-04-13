@@ -37,10 +37,7 @@ const courseRoutes = require('./routes/courses');
 const uploadRoutes = require('./routes/uploads');
 const miscRoutes = require('./routes/misc');
 const dashboardRoutes = require('./routes/dashboard');
-
-// ─── Bootstrap ──────────────────────────────────────────
-initTables();
-storageService.init();
+const analyticsRoutes = require('./routes/analytics');
 
 // ─── Create Express App ─────────────────────────────────
 const app = express();
@@ -105,11 +102,14 @@ app.use('/api/articles', rateLimit(RATE_WINDOW_MS, RATE_MAX_GENERAL), articleRou
 app.use('/api/courses', rateLimit(RATE_WINDOW_MS, RATE_MAX_GENERAL), courseRoutes);
 app.use('/api/uploads', rateLimit(RATE_WINDOW_MS, RATE_MAX_GENERAL), uploadRoutes);
 app.use('/api/dashboard', rateLimit(RATE_WINDOW_MS, RATE_MAX_GENERAL), dashboardRoutes);
+app.use('/api/analytics', rateLimit(RATE_WINDOW_MS, RATE_MAX_GENERAL), analyticsRoutes);
 app.use('/api', miscRoutes);
 
-// ─── Static Files (the frontend — monolith mode) ────────
+// ─── Uploaded files (served at /uploads/*) ──────────────
+app.use('/uploads', express.static(config.uploadsDir));
+
+// ─── Static Files (React SPA from client/dist) ─────────
 app.use(express.static(config.staticRoot, {
-    extensions: ['html'],
     index: 'index.html'
 }));
 
@@ -126,39 +126,50 @@ app.use((err, req, res, _next) => {
 });
 
 // ─── Export app for Lambda / tests ──────────────────────
-module.exports = { app };
+module.exports = { app, bootstrap };
+
+// ─── Async bootstrap (DB init + storage) ────────────────
+async function bootstrap() {
+    await initTables();
+    storageService.init();
+}
 
 // ─── Start (only when run directly, not when imported) ──
 if (require.main === module) {
-    const server = app.listen(config.port, () => {
-        console.log(`[LoopBridge] Server running on http://localhost:${config.port}`);
-        console.log(`[LoopBridge] Environment: ${config.nodeEnv}`);
-        console.log(`[LoopBridge] Storage driver: ${config.storageDriver}`);
-    });
-
-    server.on('error', (err) => {
-        if (err.code === 'EADDRINUSE') {
-            console.error(`[LoopBridge] Port ${config.port} is already in use.`);
-            console.error(`  Kill the existing process:  lsof -ti:${config.port} | xargs kill -9`);
-            console.error(`  Or use a different port:    PORT=3001 npm start`);
-            process.exit(1);
-        }
-        throw err;
-    });
-
-    // Graceful shutdown
-    const shutdown = (signal) => {
-        console.log(`\n[LoopBridge] Received ${signal}. Shutting down...`);
-        server.close(() => {
-            console.log('[LoopBridge] Server closed.');
-            process.exit(0);
+    bootstrap().then(() => {
+        const server = app.listen(config.port, () => {
+            console.log(`[LoopBridge] Server running on http://localhost:${config.port}`);
+            console.log(`[LoopBridge] Environment: ${config.nodeEnv}`);
+            console.log(`[LoopBridge] Storage driver: ${config.storageDriver}`);
         });
-        setTimeout(() => {
-            console.error('[LoopBridge] Forced shutdown after timeout.');
-            process.exit(1);
-        }, 5000);
-    };
 
-    process.on('SIGTERM', () => shutdown('SIGTERM'));
-    process.on('SIGINT', () => shutdown('SIGINT'));
+        server.on('error', (err) => {
+            if (err.code === 'EADDRINUSE') {
+                console.error(`[LoopBridge] Port ${config.port} is already in use.`);
+                console.error(`  Kill the existing process:  lsof -ti:${config.port} | xargs kill -9`);
+                console.error(`  Or use a different port:    PORT=3001 npm start`);
+                process.exit(1);
+            }
+            throw err;
+        });
+
+        // Graceful shutdown
+        const shutdown = (signal) => {
+            console.log(`\n[LoopBridge] Received ${signal}. Shutting down...`);
+            server.close(() => {
+                console.log('[LoopBridge] Server closed.');
+                process.exit(0);
+            });
+            setTimeout(() => {
+                console.error('[LoopBridge] Forced shutdown after timeout.');
+                process.exit(1);
+            }, 5000);
+        };
+
+        process.on('SIGTERM', () => shutdown('SIGTERM'));
+        process.on('SIGINT', () => shutdown('SIGINT'));
+    }).catch(err => {
+        console.error('[LoopBridge] Bootstrap failed:', err);
+        process.exit(1);
+    });
 }

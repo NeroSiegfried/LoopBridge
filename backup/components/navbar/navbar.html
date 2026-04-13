@@ -5,9 +5,11 @@
                 <img src="{{basePath}}images/logos/LB text no symbol black 2.png" alt="LoopBridge Logo" class="logo">
             </a>
         </div>
-        <button class="menu-toggle" id="mobile-menu-btn" aria-label="Toggle navigation menu" aria-expanded="false">
-            <i class="fa-solid fa-bars"></i>
-        </button>
+        <div class="nav-right-controls">
+            <button class="menu-toggle" id="mobile-menu-btn" aria-label="Toggle navigation menu" aria-expanded="false">
+                <i class="fa-solid fa-bars"></i>
+            </button>
+        </div>
         <div class="nav-menu" id="nav-menu" role="navigation">
             <div class="nav-links">
                 <a href="{{basePath}}academy.html" class="nav-link-hover" data-page="academy">Academy</a>
@@ -17,8 +19,9 @@
                 <a href="{{basePath}}blog.html" class="nav-link-hover" data-page="blog">Blog</a>
                 <a href="{{basePath}}faqs.html" class="nav-link-hover" data-page="faqs">FAQs</a>
             </div>
-            <div class="nav-join">
-                <a href="{{basePath}}community.html">Join the Community</a>
+            <div class="nav-user" id="nav-user-slot"></div>
+            <div class="nav-join" id="nav-join-btn">
+                <a href="{{basePath}}pages/login.html">Join the Community</a>
             </div>
         </div>
     </div>
