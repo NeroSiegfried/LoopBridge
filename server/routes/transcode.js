@@ -12,6 +12,7 @@
 const express = require('express');
 const { requireAuthor } = require('../middleware/auth');
 const { storageService } = require('../services');
+const { uploadRepo } = require('../repositories');
 const transcodingService = require('../services/transcodingService');
 
 const router = express.Router();
@@ -73,6 +74,35 @@ router.get('/:uploadId/status', requireAuthor, async (req, res) => {
     } catch (err) {
         console.error('[transcode status]', err.message);
         return res.status(500).json({ error: 'Failed to get transcode status.' });
+    }
+});
+
+// ─── POST /api/transcode/webhook ────────────────────────
+// Called by the EventBridge → Lambda callback when MediaConvert finishes.
+// No auth — secured by a shared secret token in the Authorization header.
+router.post('/webhook', async (req, res) => {
+    const expectedToken = process.env.TRANSCODE_WEBHOOK_SECRET || 'loopbridge-transcode-callback';
+    const authHeader = req.headers.authorization || '';
+    if (authHeader !== `Bearer ${expectedToken}`) {
+        return res.status(401).json({ error: 'Unauthorized' });
+    }
+
+    const { uploadId, status, hlsUrl, errorMessage } = req.body;
+    if (!uploadId || !status) {
+        return res.status(400).json({ error: 'uploadId and status are required.' });
+    }
+
+    try {
+        const update = { transcodeStatus: status };
+        if (hlsUrl) update.hlsUrl = hlsUrl;
+        if (errorMessage) update.transcodeError = errorMessage;
+
+        await uploadRepo.updateTranscodeStatus(uploadId, update);
+        console.log(`[transcode webhook] Updated upload ${uploadId} → ${status}`);
+        return res.json({ ok: true });
+    } catch (err) {
+        console.error('[transcode webhook]', err.message);
+        return res.status(500).json({ error: 'Failed to update status.' });
     }
 });
 
