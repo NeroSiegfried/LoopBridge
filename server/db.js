@@ -79,8 +79,12 @@ function createSqliteDriver() {
 function createPgDriver() {
     const { Pool } = require('pg');
 
+    // Strip sslmode from the connection string — we control SSL via the
+    // ssl object below so the pg library doesn't override rejectUnauthorized.
+    const connStr = (config.databaseUrl || '').replace(/[?&]sslmode=[^&]*/g, '').replace(/\?$/, '');
+
     const pool = new Pool({
-        connectionString: config.databaseUrl,
+        connectionString: connStr,
         ssl: { rejectUnauthorized: false },
         max: 10,
         idleTimeoutMillis: 30000,

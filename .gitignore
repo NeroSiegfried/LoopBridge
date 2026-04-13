@@ -1,43 +1,58 @@
-# Dependencies
+# ─── Dependencies ────────────────────────────────────────
 node_modules/
+client/node_modules/
 server/node_modules/
 
-# SQLite database (generated — seed from JSON)
+# ─── Build artifacts ─────────────────────────────────────
+client/dist/
+build/
+dist/
+
+# ─── Database (generated — do not commit) ────────────────
 server/loopbridge.db
 server/loopbridge.db-wal
 server/loopbridge.db-shm
+*.db
+*.db-wal
+*.db-shm
 
-# Uploaded files (user-generated content)
+# ─── Uploaded files (user-generated content) ─────────────
 uploads/
 
-# Backup files
+# ─── Backup & scratch files ──────────────────────────────
 *.bak
+backup/
 
-# OS files
+# ─── Environment & secrets ───────────────────────────────
+.env
+.env.local
+.env.*.local
+CREDENTIALS.local.md
+
+# ─── SSH keys & certificates ─────────────────────────────
+*.pem
+*.key
+*.p12
+*.pfx
+
+# ─── Scratch / migration docs (not for repo) ────────────
+AWS-ARCHITECTURE.md
+AWS-DEPLOYMENT-GUIDE.md
+AWS-MIGRATION-GUIDE.md
+CICD-PIPELINE.md
+MIGRATION-TODO.md
+audit-and-todo.md
+
+# ─── OS & editor ─────────────────────────────────────────
 .DS_Store
 Thumbs.db
-
-# Editor
 .vscode/
 *.swp
 *.swo
 *~
 
-# Logs
+# ─── Logs ────────────────────────────────────────────────
 *.log
 npm-debug.log*
+logs/
 
-# Environment
-.env
-.env.local
-.env.*.local
-
-# Credentials
-CREDENTIALS.local.md
-*.md
-# Build artifacts
-dist/
-build/
-
-# Backup folder (optional — remove this line if you want to track it)
-# backup/

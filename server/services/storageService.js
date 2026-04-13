@@ -20,8 +20,12 @@ const ALLOWED_TYPES = {
     'image/jpeg': 'images', 'image/png': 'images', 'image/gif': 'images',
     'image/webp': 'images', 'image/svg+xml': 'images',
     'video/mp4': 'videos', 'video/webm': 'videos', 'video/ogg': 'videos',
+    'video/quicktime': 'videos', 'video/x-msvideo': 'videos',
     'audio/mpeg': 'audio', 'audio/ogg': 'audio', 'audio/wav': 'audio',
-    'audio/webm': 'audio',
+    'audio/webm': 'audio', 'audio/aac': 'audio',
+    'application/pdf': 'documents',
+    'application/msword': 'documents',
+    'application/vnd.openxmlformats-officedocument.wordprocessingml.document': 'documents',
 };
 
 function subdirFor(mimeType) {
@@ -79,22 +83,75 @@ const diskDriver = {
     }
 };
 
-// ─── S3 Driver (stub — implement when deploying to AWS) ──
+// ─── S3 Driver ───────────────────────────────────────────
 const s3Driver = {
+    _client: null,
+
+    client() {
+        if (!this._client) {
+            const { S3Client } = require('@aws-sdk/client-s3');
+            this._client = new S3Client({ region: config.s3Region || 'us-east-1' });
+        }
+        return this._client;
+    },
+
     init() {
-        // AWS SDK v3 client init would go here
+        if (!config.s3Bucket) throw new Error('[storage/s3] S3_BUCKET env var is required.');
+        this.client(); // eagerly init
         console.log('[storage/s3] S3 driver initialised (bucket: %s)', config.s3Bucket);
     },
 
     async saveFiles(multerFiles, userId) {
-        // TODO: upload each file to S3 using @aws-sdk/client-s3
-        // Then store metadata via uploadRepo.create()
-        throw new Error('S3 driver not yet implemented — set STORAGE_DRIVER=disk for local dev.');
+        const { PutObjectCommand } = require('@aws-sdk/client-s3');
+        const results = [];
+
+        for (const file of multerFiles) {
+            const id = uuidv4();
+            const subdir = subdirFor(file.mimetype);
+            const key = `${config.s3Prefix || 'uploads/'}${subdir}/${id}-${file.originalname.replace(/[^a-zA-Z0-9._-]/g, '_')}`;
+            const publicUrl = config.cdnBaseUrl
+                ? `${config.cdnBaseUrl}/${key}`
+                : `https://${config.s3Bucket}.s3.${config.s3Region || 'us-east-1'}.amazonaws.com/${key}`;
+
+            const fileBuffer = fs.readFileSync(file.path);
+            await this.client().send(new PutObjectCommand({
+                Bucket: config.s3Bucket,
+                Key: key,
+                Body: fileBuffer,
+                ContentType: file.mimetype,
+                ContentDisposition: 'inline',
+            }));
+
+            // Clean up temp file left by multer
+            try { fs.unlinkSync(file.path); } catch (_) {}
+
+            await uploadRepo.create({
+                id,
+                filename: path.basename(key),
+                originalName: file.originalname,
+                mimeType: file.mimetype,
+                size: file.size,
+                path: key,
+                url: publicUrl,
+                uploadedBy: userId
+            });
+
+            results.push({ id, filename: path.basename(key), originalName: file.originalname, mimeType: file.mimetype, size: file.size, url: publicUrl });
+        }
+        return results;
     },
 
     async deleteFile(record) {
-        // TODO: DeleteObjectCommand to S3, then uploadRepo.deleteById()
-        throw new Error('S3 driver not yet implemented.');
+        const { DeleteObjectCommand } = require('@aws-sdk/client-s3');
+        try {
+            await this.client().send(new DeleteObjectCommand({
+                Bucket: config.s3Bucket,
+                Key: record.path,
+            }));
+        } catch (err) {
+            console.warn('[storage/s3] Failed to delete S3 object:', err.message);
+        }
+        await uploadRepo.deleteById(record.id);
     }
 };
 
