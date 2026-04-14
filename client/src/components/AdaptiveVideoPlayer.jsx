@@ -18,10 +18,11 @@ import Hls from 'hls.js';
  *   autoPlay      — boolean
  */
 const AdaptiveVideoPlayer = forwardRef(function AdaptiveVideoPlayer(
-  { src, poster, onEnded, onTimeUpdate, className = '', autoPlay = false },
+  { src, poster, onEnded, onTimeUpdate, className = '', autoPlay = false, quizOverlay = null },
   ref
 ) {
   const videoRef = useRef(null);
+  const containerRef = useRef(null);
   const hlsRef = useRef(null);
   const [levels, setLevels] = useState([]); // available quality levels
   const [currentLevel, setCurrentLevel] = useState(-1); // -1 = auto
@@ -29,9 +30,19 @@ const AdaptiveVideoPlayer = forwardRef(function AdaptiveVideoPlayer(
   const [isHLS, setIsHLS] = useState(false);
   const [buffering, setBuffering] = useState(false);
   const [currentBandwidth, setCurrentBandwidth] = useState(null);
+  const [isFullscreen, setIsFullscreen] = useState(false);
 
-  // Expose the video element to parent via ref
-  useImperativeHandle(ref, () => videoRef.current, []);
+  // Expose both the video element AND container to parent via ref
+  useImperativeHandle(ref, () => ({
+    get currentTime() { return videoRef.current?.currentTime; },
+    set currentTime(v) { if (videoRef.current) videoRef.current.currentTime = v; },
+    play() { return videoRef.current?.play(); },
+    pause() { return videoRef.current?.pause(); },
+    get paused() { return videoRef.current?.paused; },
+    get duration() { return videoRef.current?.duration; },
+    get videoElement() { return videoRef.current; },
+    get containerElement() { return containerRef.current; },
+  }), []);
 
   const isM3U8 = src && src.includes('.m3u8');
 
@@ -180,12 +191,62 @@ const AdaptiveVideoPlayer = forwardRef(function AdaptiveVideoPlayer(
     };
   }, []);
 
+  // Track fullscreen state so quiz overlay renders inside the fullscreen container
+  useEffect(() => {
+    const onFSChange = () => {
+      const fsEl = document.fullscreenElement || document.webkitFullscreenElement;
+      setIsFullscreen(fsEl === containerRef.current);
+    };
+    document.addEventListener('fullscreenchange', onFSChange);
+    document.addEventListener('webkitfullscreenchange', onFSChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', onFSChange);
+      document.removeEventListener('webkitfullscreenchange', onFSChange);
+    };
+  }, []);
+
+  // Intercept the native video fullscreen and redirect to our container
+  // so that quiz overlay + quality selector remain visible
+  useEffect(() => {
+    const video = videoRef.current;
+    const container = containerRef.current;
+    if (!video || !container) return;
+
+    const onFSChange = () => {
+      const fsEl = document.fullscreenElement || document.webkitFullscreenElement;
+      // If the VIDEO itself went fullscreen (native controls did it), swap to container
+      if (fsEl === video) {
+        (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+        setTimeout(() => {
+          (container.requestFullscreen || container.webkitRequestFullscreen).call(container);
+        }, 50);
+      }
+    };
+    document.addEventListener('fullscreenchange', onFSChange);
+    document.addEventListener('webkitfullscreenchange', onFSChange);
+    return () => {
+      document.removeEventListener('fullscreenchange', onFSChange);
+      document.removeEventListener('webkitfullscreenchange', onFSChange);
+    };
+  }, []);
+
+  // Toggle fullscreen on our wrapper (not the <video>) so quality + quiz stay visible
+  const toggleFullscreen = useCallback(() => {
+    const el = containerRef.current;
+    if (!el) return;
+    if (document.fullscreenElement || document.webkitFullscreenElement) {
+      (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+    } else {
+      (el.requestFullscreen || el.webkitRequestFullscreen).call(el);
+    }
+  }, []);
+
   return (
-    <div className={`adaptive-player ${className}`} style={{ position: 'relative' }}>
+    <div ref={containerRef} className={`adaptive-player ${className} ${isFullscreen ? 'is-fullscreen' : ''}`}>
       <video
         ref={videoRef}
         controls
-        controlsList="nodownload"
+        controlsList="nodownload nofullscreen"
         disablePictureInPicture
         onContextMenu={(e) => e.preventDefault()}
         poster={poster || undefined}
@@ -202,6 +263,15 @@ const AdaptiveVideoPlayer = forwardRef(function AdaptiveVideoPlayer(
         </div>
       )}
 
+      {/* Custom fullscreen button (replaces the native one we disabled) */}
+      <button
+        className="player-fullscreen-btn"
+        onClick={toggleFullscreen}
+        title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
+      >
+        <i className={`fa-solid ${isFullscreen ? 'fa-compress' : 'fa-expand'}`} />
+      </button>
+
       {/* Quality selector (only for HLS with multiple levels) */}
       {isHLS && levels.length > 1 && (
         <div className="quality-selector">
@@ -214,9 +284,6 @@ const AdaptiveVideoPlayer = forwardRef(function AdaptiveVideoPlayer(
             <span className="quality-current">
               {currentLevel === -1 ? 'Auto' : levelLabel(levels[currentLevel])}
             </span>
-            {currentBandwidth && (
-              <span className="quality-bandwidth">{currentBandwidth} kbps</span>
-            )}
           </button>
 
           {showQuality && (
@@ -243,6 +310,9 @@ const AdaptiveVideoPlayer = forwardRef(function AdaptiveVideoPlayer(
           )}
         </div>
       )}
+
+      {/* Quiz overlay — rendered INSIDE the player container so it's visible in fullscreen */}
+      {quizOverlay}
     </div>
   );
 });

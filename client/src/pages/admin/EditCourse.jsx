@@ -602,14 +602,53 @@ export default function EditCourse() {
                                       <span className="block-type-badge" style={{ fontSize: '0.6875rem', padding: '0.15rem 0.4rem', borderRadius: '0.25rem', background: 'var(--gray-light)', border: '1px solid var(--gray-mid)', whiteSpace: 'nowrap', marginTop: '0.5rem' }}>
                                         {block.type}
                                       </span>
-                                      <textarea
-                                        className="input textarea"
-                                        rows={block.type === 'heading' ? 1 : 3}
-                                        value={block.value}
-                                        onChange={(e) => updateContentBlock(tIdx, sIdx, bIdx, e.target.value)}
-                                        placeholder={`${block.type} content…`}
-                                        style={{ flex: 1, fontSize: '0.8125rem' }}
-                                      />
+                                      {block.type === 'image' ? (
+                                        <div style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.375rem' }}>
+                                          {block.value && (
+                                            <img src={block.value} alt="" style={{ width: '100%', maxHeight: '120px', objectFit: 'cover', borderRadius: '0.375rem', border: '1px solid var(--gray-mid)' }} />
+                                          )}
+                                          <div style={{ display: 'flex', gap: '0.375rem', alignItems: 'center' }}>
+                                            <label className="btn btn-sm btn-ghost" style={{ fontSize: '0.7rem', padding: '0.2rem 0.5rem', cursor: 'pointer', margin: 0 }}>
+                                              <i className="fa-solid fa-upload" /> {block.value ? 'Replace' : 'Upload Image'}
+                                              <input
+                                                type="file"
+                                                accept="image/*"
+                                                hidden
+                                                onChange={async (e) => {
+                                                  const file = e.target.files[0];
+                                                  if (!file) return;
+                                                  updateContentBlock(tIdx, sIdx, bIdx, 'Uploading…');
+                                                  try {
+                                                    const fd = new FormData();
+                                                    fd.append('files', file);
+                                                    const data = await uploadsApi.upload(fd);
+                                                    updateContentBlock(tIdx, sIdx, bIdx, data.url || data.path);
+                                                  } catch {
+                                                    updateContentBlock(tIdx, sIdx, bIdx, '');
+                                                  }
+                                                }}
+                                              />
+                                            </label>
+                                            <input
+                                              className="input"
+                                              type="text"
+                                              value={block.value}
+                                              onChange={(e) => updateContentBlock(tIdx, sIdx, bIdx, e.target.value)}
+                                              placeholder="…or paste image URL"
+                                              style={{ flex: 1, fontSize: '0.75rem', padding: '0.25rem 0.5rem' }}
+                                            />
+                                          </div>
+                                        </div>
+                                      ) : (
+                                        <textarea
+                                          className="input textarea"
+                                          rows={block.type === 'heading' ? 1 : 3}
+                                          value={block.value}
+                                          onChange={(e) => updateContentBlock(tIdx, sIdx, bIdx, e.target.value)}
+                                          placeholder={`${block.type} content…`}
+                                          style={{ flex: 1, fontSize: '0.8125rem' }}
+                                        />
+                                      )}
                                       <button type="button" onClick={() => removeContentBlock(tIdx, sIdx, bIdx)} style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--black-mid)', padding: '0.5rem 0.25rem' }}>
                                         <i className="fa-solid fa-xmark" />
                                       </button>

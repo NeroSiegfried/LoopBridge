@@ -5,6 +5,8 @@ import { articlesApi } from '../api';
 import { formatDate, readingTime } from '../utils';
 import '../styles/articles.css';
 
+const DEFAULT_COVER = '/images/article-pic.jpg';
+
 export default function ArticleView() {
   const { id } = useParams();
   const [article, setArticle] = useState(null);
@@ -42,11 +44,9 @@ export default function ArticleView() {
         <div className="section-container">
           <div className="header">
             <h1 className="article-title">{article.title}</h1>
-            {article.image && (
-              <div className="article-image">
-                <img src={article.image} alt={article.title} />
-              </div>
-            )}
+            <div className="article-image">
+              <img src={article.image || DEFAULT_COVER} alt={article.title} />
+            </div>
             <div className="article-meta">
               <div className="author-info">
                 <div className="author-image">
@@ -56,7 +56,7 @@ export default function ArticleView() {
               </div>
               <div className="other-info">
                 {article.createdAt && <div className="date">{formatDate(article.createdAt)}</div>}
-                <div className="time">{readingTime(article.body || '')} min read</div>
+                <div className="time">{readingTime(article.content || article.body || '')}</div>
               </div>
             </div>
           </div>
@@ -75,7 +75,7 @@ export default function ArticleView() {
               {related.map((a) => (
                 <Link to={`/articles/${a.id}`} key={a.id}>
                   <div className="article-card">
-                    <div className="article-image" style={a.image ? { backgroundImage: `url(${a.image})` } : {}}>
+                    <div className="article-image" style={{ backgroundImage: `url(${a.image || DEFAULT_COVER})` }}>
                       <div className="article-category">{a.category || 'Category Name'}</div>
                     </div>
                     <div className="article-body">
@@ -83,7 +83,7 @@ export default function ArticleView() {
                         <h3 className="article-title">{a.title}</h3>
                         <p className="article-description">{a.description || a.excerpt || ''}</p>
                       </div>
-                      <p className="article-subscript">{a.readTime || '5 min read'}</p>
+                      <p className="article-subscript">{readingTime(a.content)}</p>
                     </div>
                   </div>
                 </Link>

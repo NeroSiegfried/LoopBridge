@@ -298,17 +298,17 @@
 }
 
 /* ─── Quiz Overlay (video pause-points) ──────── */
+/* Rendered inside .adaptive-player via quizOverlay prop */
 
 .quiz-overlay {
     position: absolute;
     inset: 0;
-    background-color: rgba(0, 0, 0, 0.85);
+    background-color: rgba(0, 0, 0, 0.88);
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 20;
+    z-index: 50;
     padding: 1.5rem;
-    border-radius: 1rem;
     overflow-y: auto;
 }
 
@@ -318,7 +318,7 @@
     padding: 2rem;
     max-width: 600px;
     width: 100%;
-    max-height: 80vh;
+    max-height: 85%;
     overflow-y: auto;
 }
 

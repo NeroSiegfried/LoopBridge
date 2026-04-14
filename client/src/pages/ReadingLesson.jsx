@@ -99,7 +99,7 @@ export default function ReadingLesson() {
       quizId: `${courseId}-${topicIdx}-${subIdx}-endquiz`,
       score,
       userId: user?.id,
-      metadata: { passed, correct, total: questions.length },
+      metadata: { passed, correct, total: quizQuestions.length },
     });
 
     if (passed) {

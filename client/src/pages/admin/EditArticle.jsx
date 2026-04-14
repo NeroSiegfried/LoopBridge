@@ -61,18 +61,20 @@ export default function EditArticle() {
     if (analyseTimeout.current) clearTimeout(analyseTimeout.current);
     analyseTimeout.current = setTimeout(async () => {
       const title = form.title.trim();
-      const body = form.body?.trim() || form.description?.trim() || '';
-      if (!title && !body) return;
+      const description = form.description?.trim() || '';
+      // Flatten content blocks into a single string for the categorisation engine
+      const contentText = blocks.map(b => b.content || '').join(' ').trim();
+      if (!title && !description && !contentText) return;
       setSuggestLoading(true);
       try {
-        const data = await recommendationsApi.analyse({ title, body });
-        setSuggestedCategories(data.categories || data);
+        const data = await recommendationsApi.analyse({ title, description, content: contentText });
+        setSuggestedCategories(data.scores || data.categories || data);
       } catch { /* ignore */ }
       setSuggestLoading(false);
     }, 800);
-  }, [form.title, form.body, form.description]);
+  }, [form.title, form.description, blocks]);
 
-  // Re-analyse when title or body changes
+  // Re-analyse when title, description or content changes
   useEffect(() => {
     triggerAnalyse();
     return () => { if (analyseTimeout.current) clearTimeout(analyseTimeout.current); };

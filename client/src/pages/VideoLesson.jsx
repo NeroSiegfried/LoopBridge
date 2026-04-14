@@ -262,7 +262,6 @@ export default function VideoLesson() {
         <div className="lesson-container">
           {/* Video player */}
           <div className="video-quiz-container">
-            <div className="video-wrapper">
               {(sub.hlsUrl || sub.videoUrl) ? (
                 <AdaptiveVideoPlayer
                   ref={videoRef}
@@ -292,6 +291,67 @@ export default function VideoLesson() {
                     }
                   }}
                   className="lesson-video"
+                  quizOverlay={activeQuiz ? (
+                    <div className="quiz-overlay">
+                      <div className="quiz-card">
+                        <div className="quiz-header">
+                          <i className="fa-solid fa-clipboard-list" />
+                          <h3>Quick Check</h3>
+                          <p>Answer correctly to continue (70% to pass)</p>
+                        </div>
+
+                        {!quizResult ? (
+                          <div className="quiz-body">
+                            {activeQuiz.questions.map((q, qIdx) => (
+                              <div className="quiz-question" key={qIdx}>
+                                <p className="question-text">{qIdx + 1}. {q.question}</p>
+                                <div className="question-options">
+                                  {q.options.map((opt, oIdx) => (
+                                    <button
+                                      key={oIdx}
+                                      className={`option-btn${answers[qIdx] === oIdx ? ' selected' : ''}`}
+                                      onClick={() => handleAnswer(qIdx, oIdx)}
+                                    >
+                                      <span className="option-letter">{String.fromCharCode(65 + oIdx)}</span>
+                                      {opt}
+                                    </button>
+                                  ))}
+                                </div>
+                              </div>
+                            ))}
+                            <button
+                              className="quiz-submit-btn"
+                              onClick={handleSubmitQuiz}
+                              disabled={Object.keys(answers).length < activeQuiz.questions.length}
+                            >
+                              Submit Answers
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="quiz-result">
+                            <div className={`result-badge ${quizResult.passed ? 'passed' : 'failed'}`}>
+                              <i className={`fa-solid ${quizResult.passed ? 'fa-circle-check' : 'fa-circle-xmark'}`} />
+                              <span>{quizResult.score}%</span>
+                            </div>
+                            <p className="result-text">
+                              {quizResult.passed
+                                ? `Great job! You got ${quizResult.correct}/${quizResult.total} correct.`
+                                : `You got ${quizResult.correct}/${quizResult.total}. You need 70% to continue.`}
+                            </p>
+                            {quizResult.passed ? (
+                              <button className="quiz-continue-btn" onClick={handleContinueAfterQuiz}>
+                                Continue Video <i className="fa-solid fa-arrow-right" />
+                              </button>
+                            ) : (
+                              <button className="quiz-retry-btn" onClick={handleRetryQuiz}>
+                                <i className="fa-solid fa-rotate-left" /> Try Again
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ) : null}
                 />
               ) : (
                 <div className="video-placeholder">
@@ -300,70 +360,6 @@ export default function VideoLesson() {
                   <p className="placeholder-sub">This lesson's video content is being prepared.</p>
                 </div>
               )}
-            </div>
-
-            {/* Quiz overlay — outside video-wrapper to avoid overflow:hidden clipping */}
-            {activeQuiz && (
-              <div className="quiz-overlay">
-                <div className="quiz-card">
-                  <div className="quiz-header">
-                    <i className="fa-solid fa-clipboard-list" />
-                    <h3>Quick Check</h3>
-                    <p>Answer correctly to continue (70% to pass)</p>
-                  </div>
-
-                  {!quizResult ? (
-                    <div className="quiz-body">
-                      {activeQuiz.questions.map((q, qIdx) => (
-                        <div className="quiz-question" key={qIdx}>
-                          <p className="question-text">{qIdx + 1}. {q.question}</p>
-                          <div className="question-options">
-                            {q.options.map((opt, oIdx) => (
-                              <button
-                                key={oIdx}
-                                className={`option-btn${answers[qIdx] === oIdx ? ' selected' : ''}`}
-                                onClick={() => handleAnswer(qIdx, oIdx)}
-                              >
-                                <span className="option-letter">{String.fromCharCode(65 + oIdx)}</span>
-                                {opt}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                      <button
-                        className="quiz-submit-btn"
-                        onClick={handleSubmitQuiz}
-                        disabled={Object.keys(answers).length < activeQuiz.questions.length}
-                      >
-                        Submit Answers
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="quiz-result">
-                      <div className={`result-badge ${quizResult.passed ? 'passed' : 'failed'}`}>
-                        <i className={`fa-solid ${quizResult.passed ? 'fa-circle-check' : 'fa-circle-xmark'}`} />
-                        <span>{quizResult.score}%</span>
-                      </div>
-                      <p className="result-text">
-                        {quizResult.passed
-                          ? `Great job! You got ${quizResult.correct}/${quizResult.total} correct.`
-                          : `You got ${quizResult.correct}/${quizResult.total}. You need 70% to continue.`}
-                      </p>
-                      {quizResult.passed ? (
-                        <button className="quiz-continue-btn" onClick={handleContinueAfterQuiz}>
-                          Continue Video <i className="fa-solid fa-arrow-right" />
-                        </button>
-                      ) : (
-                        <button className="quiz-retry-btn" onClick={handleRetryQuiz}>
-                          <i className="fa-solid fa-rotate-left" /> Try Again
-                        </button>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Lesson info */}
