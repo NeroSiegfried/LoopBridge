@@ -140,6 +140,8 @@ jobs:
               \"echo '--- Stopping old sandbox container ---'\",
               \"sudo docker stop ${{ env.CONTAINER_NAME }} 2>/dev/null || true\",
               \"sudo docker rm   ${{ env.CONTAINER_NAME }} 2>/dev/null || true\",
+              \"echo '--- Snapshotting prod DB into sandbox DB ---'\",
+              \"sudo cp /data/loopbridge.db ${{ env.DB_PATH }} && echo 'DB snapshot done' || echo 'WARNING: prod DB not found, sandbox will start fresh'\",
               \"echo '--- Starting sandbox container on port ${{ env.SANDBOX_PORT }} ---'\",
               \"sudo docker run -d --name ${{ env.CONTAINER_NAME }} --restart unless-stopped -p ${{ env.SANDBOX_PORT }}:3000 -v /data:/data -e NODE_ENV=production -e DB_TYPE=sqlite -e DB_PATH=${{ env.DB_PATH }} -e STORAGE_DRIVER=s3 -e S3_BUCKET=${{ env.S3_BUCKET }} -e S3_REGION=${{ env.AWS_REGION }} -e S3_PREFIX=sandbox/ -e MEDIACONVERT_ENDPOINT=https://mediaconvert.us-east-1.amazonaws.com -e MEDIACONVERT_ROLE_ARN=arn:aws:iam::680128294518:role/loopbridge-mediaconvert-role -e COOKIE_SECURE=false -e CORS_ORIGIN=true ${IMAGE}:sandbox-${SHA}\",
               \"echo '--- Container status ---'\",
