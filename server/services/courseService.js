@@ -5,7 +5,7 @@
  */
 'use strict';
 
-const { courseRepo, progressRepo } = require('../repositories');
+const { courseRepo, progressRepo, uploadRepo } = require('../repositories');
 
 function generateId() {
     const ts = Date.now().toString(36);
@@ -19,7 +19,35 @@ const courseService = {
     },
 
     async getById(id) {
-        return courseRepo.findByIdFormatted(id);
+        const course = await courseRepo.findByIdFormatted(id);
+        if (!course) return null;
+
+        // Enrich subsections: look up hlsUrl from upload records if missing
+        if (course.topics) {
+            for (const topic of course.topics) {
+                for (const sub of (topic.subsections || [])) {
+                    if (sub.hlsUrl) continue; // already populated
+
+                    let upload = null;
+                    try {
+                        if (sub.uploadId) {
+                            upload = await uploadRepo.findByIdFormatted(sub.uploadId);
+                        } else if (sub.videoUrl) {
+                            // Backward compat: match upload record by URL
+                            upload = await uploadRepo.findByUrl(sub.videoUrl);
+                        }
+                    } catch (_) { /* ignore lookup errors */ }
+
+                    if (upload) {
+                        if (upload.hlsUrl)       sub.hlsUrl = upload.hlsUrl;
+                        if (upload.thumbnailUrl)  sub.thumbnailUrl = upload.thumbnailUrl;
+                        if (!sub.uploadId)        sub.uploadId = upload.id;
+                    }
+                }
+            }
+        }
+
+        return course;
     },
 
     async create(data, user) {

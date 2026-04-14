@@ -43,6 +43,25 @@ export default function ReadingLesson() {
       .finally(() => setLoading(false));
   }, [courseId]);
 
+  // Reset quiz/lesson state when navigating between lessons
+  useEffect(() => {
+    setShowQuiz(false);
+    setAnswers({});
+    setQuizResult(null);
+    setLessonComplete(false);
+
+    // Check if this lesson was already completed
+    if (user) {
+      coursesApi.getProgress(courseId)
+        .then((data) => {
+          if (data?.completedSubs?.includes(`${topicIdx}-${subIdx}`)) {
+            setLessonComplete(true);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [courseId, topicIdx, subIdx]); // eslint-disable-line
+
   const topic = course?.topics?.[Number(topicIdx)];
   const sub = topic?.subsections?.[Number(subIdx)];
   // Support both old { quiz: { questions: [...] } } and new { endQuiz: [...] } shapes

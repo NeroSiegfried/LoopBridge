@@ -50,6 +50,29 @@ export default function VideoLesson() {
       .finally(() => setLoading(false));
   }, [courseId]);
 
+  // Reset all quiz/lesson state when navigating between lessons
+  useEffect(() => {
+    setActiveQuiz(null);
+    setAnswers({});
+    setQuizResult(null);
+    setCompletedQuizPoints(new Set());
+    setShowEndQuiz(false);
+    setEndQuizAnswers({});
+    setEndQuizResult(null);
+    setLessonComplete(false);
+
+    // Check if this lesson was already completed
+    if (user) {
+      coursesApi.getProgress(courseId)
+        .then((data) => {
+          if (data?.completedSubs?.includes(`${topicIdx}-${subIdx}`)) {
+            setLessonComplete(true);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [courseId, topicIdx, subIdx]); // eslint-disable-line
+
   const topic = course?.topics?.[Number(topicIdx)];
   const sub = topic?.subsections?.[Number(subIdx)];
   const quizPoints = sub?.quizPoints || [];
@@ -238,46 +261,48 @@ export default function VideoLesson() {
 
         <div className="lesson-container">
           {/* Video player */}
-          <div className="video-wrapper">
-            {(sub.hlsUrl || sub.videoUrl) ? (
-              <AdaptiveVideoPlayer
-                ref={videoRef}
-                src={sub.hlsUrl || sub.videoUrl}
-                poster={sub.thumbnailUrl}
-                onEnded={handleVideoEnd}
-                onTimeUpdate={(currentTime) => {
-                  // Quiz pause-point monitoring
-                  for (let i = 0; i < quizPoints.length; i++) {
-                    const point = quizPoints[i];
-                    if (
-                      !completedQuizPoints.has(i) &&
-                      currentTime >= point.atSeconds &&
-                      currentTime < point.atSeconds + 1.5
-                    ) {
-                      if (videoRef.current) videoRef.current.pause();
-                      setActiveQuiz({ ...point, pointIdx: i });
-                      setAnswers({});
-                      setQuizResult(null);
-                      trackEvent('quiz_start', {
-                        courseId,
-                        quizId: `${courseId}-${topicIdx}-${subIdx}-qp${i}`,
-                        userId: user?.id,
-                      });
-                      break;
+          <div className="video-quiz-container">
+            <div className="video-wrapper">
+              {(sub.hlsUrl || sub.videoUrl) ? (
+                <AdaptiveVideoPlayer
+                  ref={videoRef}
+                  src={sub.hlsUrl || sub.videoUrl}
+                  poster={sub.thumbnailUrl}
+                  onEnded={handleVideoEnd}
+                  onTimeUpdate={(currentTime) => {
+                    // Quiz pause-point monitoring
+                    for (let i = 0; i < quizPoints.length; i++) {
+                      const point = quizPoints[i];
+                      if (
+                        !completedQuizPoints.has(i) &&
+                        currentTime >= point.atSeconds &&
+                        currentTime < point.atSeconds + 1.5
+                      ) {
+                        if (videoRef.current) videoRef.current.pause();
+                        setActiveQuiz({ ...point, pointIdx: i });
+                        setAnswers({});
+                        setQuizResult(null);
+                        trackEvent('quiz_start', {
+                          courseId,
+                          quizId: `${courseId}-${topicIdx}-${subIdx}-qp${i}`,
+                          userId: user?.id,
+                        });
+                        break;
+                      }
                     }
-                  }
-                }}
-                className="lesson-video"
-              />
-            ) : (
-              <div className="video-placeholder">
-                <i className="fa-solid fa-video" />
-                <p>Video coming soon</p>
-                <p className="placeholder-sub">This lesson's video content is being prepared.</p>
-              </div>
-            )}
+                  }}
+                  className="lesson-video"
+                />
+              ) : (
+                <div className="video-placeholder">
+                  <i className="fa-solid fa-video" />
+                  <p>Video coming soon</p>
+                  <p className="placeholder-sub">This lesson's video content is being prepared.</p>
+                </div>
+              )}
+            </div>
 
-            {/* Quiz overlay */}
+            {/* Quiz overlay — outside video-wrapper to avoid overflow:hidden clipping */}
             {activeQuiz && (
               <div className="quiz-overlay">
                 <div className="quiz-card">

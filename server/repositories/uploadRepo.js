@@ -38,6 +38,11 @@ const uploadRepo = {
         return rowToUpload(await this.findById(id));
     },
 
+    async findByUrl(url) {
+        const row = await db.queryRow('SELECT * FROM uploads WHERE url = ?', [url]);
+        return rowToUpload(row);
+    },
+
     async list({ type, limit } = {}) {
         let sql = 'SELECT * FROM uploads';
 

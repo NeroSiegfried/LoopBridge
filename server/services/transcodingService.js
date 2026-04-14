@@ -63,7 +63,10 @@ async function createTranscodeJob(uploadId, s3Key) {
     const bucket = config.s3Bucket;
     const inputUri = `s3://${bucket}/${s3Key}`;
     const outputPrefix = `transcoded/${uploadId}/`;
-    const outputUri = `s3://${bucket}/${outputPrefix}`;
+    // Destination must include base filename — MediaConvert appends NameModifier + .m3u8
+    // e.g. s3://bucket/transcoded/<id>/stream  →  stream.m3u8 (master), stream_1080p.m3u8, etc.
+    const hlsDestination = `s3://${bucket}/${outputPrefix}stream`;
+    const thumbDestination = `s3://${bucket}/${outputPrefix}`;
 
     const outputs = PRESETS.map((p) => ({
         NameModifier: `_${p.name}`,
@@ -110,7 +113,7 @@ async function createTranscodeJob(uploadId, s3Key) {
                     OutputGroupSettings: {
                         Type: 'HLS_GROUP_SETTINGS',
                         HlsGroupSettings: {
-                            Destination: outputUri,
+                            Destination: hlsDestination,
                             SegmentLength: 6,
                             MinSegmentLength: 2,
                             ManifestCompression: 'NONE',
@@ -122,7 +125,7 @@ async function createTranscodeJob(uploadId, s3Key) {
                     Name: 'Thumbnail',
                     OutputGroupSettings: {
                         Type: 'FILE_GROUP_SETTINGS',
-                        FileGroupSettings: { Destination: outputUri },
+                        FileGroupSettings: { Destination: thumbDestination },
                     },
                     Outputs: [{
                         NameModifier: '_thumb',
@@ -154,8 +157,8 @@ async function createTranscodeJob(uploadId, s3Key) {
     const response = await client.send(command);
 
     const hlsUrl = config.cdnBaseUrl
-        ? `${config.cdnBaseUrl}/${outputPrefix}manifest.m3u8`
-        : `https://${bucket}.s3.${config.s3Region || 'us-east-1'}.amazonaws.com/${outputPrefix}manifest.m3u8`;
+        ? `${config.cdnBaseUrl}/${outputPrefix}stream.m3u8`
+        : `https://${bucket}.s3.${config.s3Region || 'us-east-1'}.amazonaws.com/${outputPrefix}stream.m3u8`;
 
     console.log(`[transcode] Created job ${response.Job.Id} for upload ${uploadId}`);
 

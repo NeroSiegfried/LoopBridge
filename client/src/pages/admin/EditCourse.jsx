@@ -17,6 +17,7 @@ const emptySubsection = () => ({
   uploadState: null,     // null | 'uploading' | 'processing' | 'done' | 'error'
   uploadProgress: 0,     // 0-100
   uploadError: '',
+  uploadId: '',
   hlsUrl: '',
   thumbnailUrl: '',
   content: [],           // content blocks — available for ALL lesson types
@@ -64,7 +65,7 @@ export default function EditCourse() {
               ...emptySubsection(),
               ...s,
               id: s.id || uid(),
-              uploadState: s.videoUrl ? 'done' : null,
+              uploadState: (s.videoUrl || s.hlsUrl) ? 'done' : null,
               // Normalize quiz: support both old format (quiz/quizTiming) and new (quizPoints/endQuiz)
               quizPoints: (s.quizPoints || []).map(qp => ({
                 ...qp,
@@ -157,6 +158,7 @@ export default function EditCourse() {
         videoUrl: data.url || data.path,
         hlsUrl: data.hlsUrl || '',
         thumbnailUrl: data.thumbnailUrl || '',
+        uploadId: data.id || '',
         uploadState: data.hlsUrl ? 'done' : 'processing',
         uploadProgress: 100,
       });
@@ -353,6 +355,7 @@ export default function EditCourse() {
               out.videoUrl = s.videoUrl;
               out.hlsUrl = s.hlsUrl;
               out.thumbnailUrl = s.thumbnailUrl;
+              out.uploadId = s.uploadId;
             }
             // Inline quiz pause-points (video only)
             if (s.quizPoints?.length > 0) {
@@ -498,7 +501,7 @@ export default function EditCourse() {
                         {(topic.subsections || []).filter(s => s.type === 'video').length} video{(topic.subsections || []).filter(s => s.type === 'video').length !== 1 ? 's' : ''}
                       </span>
                       <span className="topic-badge quizzes">
-                        {(topic.subsections || []).filter(s => s.quiz?.length > 0).length} quiz{(topic.subsections || []).filter(s => s.quiz?.length > 0).length !== 1 ? 'zes' : ''}
+                        {(topic.subsections || []).filter(s => (s.endQuiz?.length > 0) || (s.quizPoints?.length > 0)).length} quiz{(topic.subsections || []).filter(s => (s.endQuiz?.length > 0) || (s.quizPoints?.length > 0)).length !== 1 ? 'zes' : ''}
                       </span>
                     </div>
                     <button type="button" onClick={() => removeTopic(tIdx)} title="Remove topic">

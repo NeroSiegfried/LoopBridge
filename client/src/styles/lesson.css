@@ -61,6 +61,13 @@
     border-radius: 1rem;
     overflow: hidden;
     background-color: #000;
+}
+
+/* Container that holds both the video and quiz overlay so the quiz
+   isn't clipped by video-wrapper's overflow:hidden */
+.video-quiz-container {
+    position: relative;
+    width: 100%;
     margin-bottom: 2rem;
 }
 
@@ -301,6 +308,8 @@
     justify-content: center;
     z-index: 20;
     padding: 1.5rem;
+    border-radius: 1rem;
+    overflow-y: auto;
 }
 
 .quiz-card {
@@ -643,7 +652,7 @@
     .quiz-overlay {
         padding: 0.75rem;
         align-items: flex-start;
-        padding-top: 2rem;
+        padding-top: 1rem;
     }
 
     .lesson-nav {

@@ -25,7 +25,7 @@ export default function EditArticle() {
   const isNew = !id;
 
   const [form, setForm] = useState({
-    title: '', category: '', excerpt: '', body: '', image: '', featured: false,
+    title: '', category: '', description: '', body: '', image: '', featured: false,
   });
   const [blocks, setBlocks] = useState([]);
   const [loading, setLoading] = useState(!isNew);
@@ -44,12 +44,12 @@ export default function EditArticle() {
           setForm({
             title: data.title || '',
             category: data.category || '',
-            excerpt: data.excerpt || '',
+            description: data.description || '',
             body: data.body || '',
             image: data.image || '',
             featured: data.featured || false,
           });
-          if (data.contentBlocks?.length) setBlocks(data.contentBlocks);
+          if (data.content?.length) setBlocks(data.content);
         })
         .catch((err) => setError(err.message))
         .finally(() => setLoading(false));
@@ -61,7 +61,7 @@ export default function EditArticle() {
     if (analyseTimeout.current) clearTimeout(analyseTimeout.current);
     analyseTimeout.current = setTimeout(async () => {
       const title = form.title.trim();
-      const body = form.body?.trim() || form.excerpt?.trim() || '';
+      const body = form.body?.trim() || form.description?.trim() || '';
       if (!title && !body) return;
       setSuggestLoading(true);
       try {
@@ -70,7 +70,7 @@ export default function EditArticle() {
       } catch { /* ignore */ }
       setSuggestLoading(false);
     }, 800);
-  }, [form.title, form.body, form.excerpt]);
+  }, [form.title, form.body, form.description]);
 
   // Re-analyse when title or body changes
   useEffect(() => {
@@ -136,7 +136,7 @@ export default function EditArticle() {
     setSaving(true);
     setError('');
     try {
-      const payload = { ...form, contentBlocks: blocks };
+      const payload = { ...form, content: blocks };
       if (isNew) {
         await articlesApi.create(payload);
       } else {
@@ -222,7 +222,7 @@ export default function EditArticle() {
 
               <div className="form-group">
                 <label className="form-label" htmlFor="excerpt">Excerpt / Description</label>
-                <textarea className="input textarea" id="excerpt" name="excerpt" rows="2" placeholder="Brief summary of the article" value={form.excerpt} onChange={handleChange} />
+                <textarea className="input textarea" id="excerpt" name="description" rows="2" placeholder="Brief summary of the article" value={form.description} onChange={handleChange} />
               </div>
 
               <div className="form-group">

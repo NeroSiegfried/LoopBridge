@@ -510,6 +510,39 @@ async function initTables() {
         await db.exec(SQLITE_SCHEMA);
         console.log('[db] SQLite tables initialised.');
     }
+
+    // ── Schema migrations (add columns that may be missing on existing DBs) ──
+    await runMigrations();
+}
+
+/**
+ * Run safe ALTER TABLE migrations for both drivers.
+ * Each migration is idempotent: silently skipped if the column already exists.
+ */
+async function runMigrations() {
+    const migrations = [
+        { table: 'uploads', column: 'hls_url',          type: 'TEXT',                     pgType: 'TEXT' },
+        { table: 'uploads', column: 'thumbnail_url',    type: 'TEXT',                     pgType: 'TEXT' },
+        { table: 'uploads', column: 'transcode_job_id', type: 'TEXT',                     pgType: 'TEXT' },
+        { table: 'uploads', column: 'transcode_status', type: "TEXT DEFAULT 'none'",      pgType: "TEXT DEFAULT 'none'" },
+        { table: 'uploads', column: 'transcode_error',  type: 'TEXT',                     pgType: 'TEXT' },
+    ];
+
+    for (const m of migrations) {
+        try {
+            if (isPg) {
+                await db.exec(`ALTER TABLE ${m.table} ADD COLUMN IF NOT EXISTS ${m.column} ${m.pgType}`);
+            } else {
+                await db.exec(`ALTER TABLE ${m.table} ADD COLUMN ${m.column} ${m.type}`);
+            }
+            console.log(`[db] migration: added ${m.table}.${m.column}`);
+        } catch (err) {
+            // SQLite throws "duplicate column name" if column exists — that's fine
+            if (err.message && err.message.includes('duplicate column')) continue;
+            // PG uses IF NOT EXISTS so should never throw, but guard anyway
+            console.error(`[db] migration warning for ${m.table}.${m.column}:`, err.message);
+        }
+    }
 }
 
 /**

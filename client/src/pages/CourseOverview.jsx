@@ -75,6 +75,11 @@ export default function CourseOverview() {
 
   const topics = course.topics || course.sections || [];
 
+  // Compute total subsections for progress calculation
+  const totalSubsections = topics.reduce((sum, t) => sum + (t.subsections?.length || 0), 0);
+  const completedCount = completedSubs.length;
+  const progressPct = totalSubsections > 0 ? Math.round((completedCount / totalSubsections) * 100) : 0;
+
   return (
     <>
       <SEO
@@ -95,8 +100,10 @@ export default function CourseOverview() {
               <p>{course.description}</p>
               <button className="course-enroll-btn btn-primary hero-btn" onClick={() => {
                 const topics = course.topics || [];
-                if (topics.length > 0 && topics[0].subtopics?.length > 0) {
-                  navigate(`/courses/${id}/lesson/0/0`);
+                if (topics.length > 0 && topics[0].subsections?.length > 0) {
+                  navigate(`/courses/${id}/lessons/0/0`);
+                } else {
+                  navigate(`/courses/${id}/lessons/0/0`);
                 }
               }}>Start Course</button>
               <div className="metadata">
@@ -117,6 +124,18 @@ export default function CourseOverview() {
                   <p>{course.level ? `${course.level.charAt(0).toUpperCase() + course.level.slice(1)} Level` : 'Beginner Level'}</p>
                 </div>
               </div>
+              {/* Progress bar (only if user is enrolled and has any progress) */}
+              {user && completedCount > 0 && (
+                <div className="course-progress-bar" style={{ marginTop: '1rem' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8125rem', marginBottom: '0.35rem', color: 'var(--black-mid, #666)' }}>
+                    <span>{completedCount}/{totalSubsections} lessons completed</span>
+                    <span>{progressPct}%</span>
+                  </div>
+                  <div style={{ width: '100%', height: '8px', borderRadius: '4px', background: 'rgba(255,255,255,0.2)' }}>
+                    <div style={{ width: `${progressPct}%`, height: '100%', borderRadius: '4px', background: 'var(--lb-green, #30c070)', transition: 'width 0.3s ease' }} />
+                  </div>
+                </div>
+              )}
             </div>
             <div className="right vector">
               <img src="/images/right-vector.svg" alt="Vector Pattern" />
