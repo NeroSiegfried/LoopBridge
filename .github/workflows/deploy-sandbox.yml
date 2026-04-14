@@ -1,0 +1,249 @@
+# LoopBridge — Sandbox CI/CD Pipeline
+#
+# Mirrors the prod pipeline exactly, but:
+#   - Triggers on pushes to any branch EXCEPT main
+#   - Deploys to a separate container (loopbridge-sandbox) on port 3001
+#   - Uses a :sandbox-<sha> image tag (never overwrites :latest)
+#   - Uses a separate SQLite DB at /data/loopbridge-sandbox.db
+#   - Health-checks /api/articles on port 3001
+#
+# No extra secrets needed — reuses the same AWS creds as prod.
+# Access sandbox at:  http://<EC2_IP>:3001
+
+name: Deploy Sandbox
+
+on:
+  push:
+    branches-ignore: [main]
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: Branch to deploy to sandbox
+        required: false
+        default: ''
+
+env:
+  AWS_REGION:       us-east-1
+  ECR_REPOSITORY:   loopbridge-api
+  ECR_REGISTRY:     680128294518.dkr.ecr.us-east-1.amazonaws.com
+  EC2_INSTANCE_ID:  i-035f5e2909653efa0
+  S3_BUCKET:        loopbridge-uploads-680128294518
+  SANDBOX_PORT:     3001
+  CONTAINER_NAME:   loopbridge-sandbox
+  DB_PATH:          /data/loopbridge-sandbox.db
+
+permissions:
+  contents: read
+
+jobs:
+  # ─── Job 1: Build & Test ─────────────────────────────────────────────────
+  build-and-test:
+    name: Build & Test (sandbox)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: |
+            client/package-lock.json
+            server/package-lock.json
+
+      - name: Install client dependencies
+        run: cd client && npm ci --legacy-peer-deps
+
+      - name: Install server dependencies
+        run: cd server && npm ci
+
+      - name: Lint (if configured)
+        run: |
+          cd client && npm run lint --if-present
+          cd ../server && npm run lint --if-present
+
+      - name: Server tests (if configured)
+        run: cd server && npm test --if-present
+
+      - name: Verify client builds cleanly
+        run: cd client && npm run build
+
+  # ─── Job 2: Push Docker image to ECR (sandbox tag) ───────────────────────
+  push-image:
+    name: Push Sandbox Image to ECR
+    needs: build-and-test
+    runs-on: ubuntu-latest
+    outputs:
+      image_tag: ${{ github.sha }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region:            ${{ env.AWS_REGION }}
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push Docker image (sandbox tag only — never overwrites :latest)
+        run: |
+          IMAGE=${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}
+          SHA=${{ github.sha }}
+          BRANCH=$(echo "${GITHUB_REF_NAME}" | tr '/' '-')
+
+          docker build \
+            --platform linux/amd64 \
+            --file server/Dockerfile \
+            --tag $IMAGE:sandbox-$SHA \
+            --tag $IMAGE:sandbox-$BRANCH \
+            .
+
+          docker push $IMAGE:sandbox-$SHA
+          docker push $IMAGE:sandbox-$BRANCH
+
+          echo "Pushed $IMAGE:sandbox-$SHA"
+
+  # ─── Job 3: Deploy sandbox container via SSM ─────────────────────────────
+  deploy:
+    name: Deploy Sandbox to EC2 via SSM
+    needs: push-image
+    runs-on: ubuntu-latest
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region:            ${{ env.AWS_REGION }}
+
+      - name: Send sandbox deploy command via SSM
+        id: ssm
+        run: |
+          IMAGE=${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}
+          SHA=${{ github.sha }}
+
+          COMMAND_ID=$(aws ssm send-command \
+            --instance-ids "${{ env.EC2_INSTANCE_ID }}" \
+            --document-name AWS-RunShellScript \
+            --comment "Sandbox deploy $SHA" \
+            --timeout-seconds 300 \
+            --parameters "commands=[
+              \"set -euo pipefail\",
+              \"echo '--- Authenticating with ECR ---'\",
+              \"aws ecr get-login-password --region us-east-1 | sudo docker login --username AWS --password-stdin 680128294518.dkr.ecr.us-east-1.amazonaws.com\",
+              \"echo '--- Pulling sandbox image ---'\",
+              \"sudo docker pull ${IMAGE}:sandbox-${SHA}\",
+              \"echo '--- Stopping old sandbox container ---'\",
+              \"sudo docker stop ${{ env.CONTAINER_NAME }} 2>/dev/null || true\",
+              \"sudo docker rm   ${{ env.CONTAINER_NAME }} 2>/dev/null || true\",
+              \"echo '--- Starting sandbox container on port ${{ env.SANDBOX_PORT }} ---'\",
+              \"sudo docker run -d --name ${{ env.CONTAINER_NAME }} --restart unless-stopped -p ${{ env.SANDBOX_PORT }}:3000 -v /data:/data -e NODE_ENV=production -e DB_TYPE=sqlite -e DB_PATH=${{ env.DB_PATH }} -e STORAGE_DRIVER=s3 -e S3_BUCKET=${{ env.S3_BUCKET }} -e S3_REGION=${{ env.AWS_REGION }} -e S3_PREFIX=sandbox/ -e MEDIACONVERT_ENDPOINT=https://mediaconvert.us-east-1.amazonaws.com -e MEDIACONVERT_ROLE_ARN=arn:aws:iam::680128294518:role/loopbridge-mediaconvert-role -e COOKIE_SECURE=false -e CORS_ORIGIN=true ${IMAGE}:sandbox-${SHA}\",
+              \"echo '--- Container status ---'\",
+              \"sleep 5 && sudo docker ps --filter name=${{ env.CONTAINER_NAME }} --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'\",
+              \"echo '--- Last 10 log lines ---'\",
+              \"sudo docker logs ${{ env.CONTAINER_NAME }} --tail 10\",
+              \"echo '--- Pruning old sandbox images ---'\",
+              \"sudo docker images ${IMAGE} --format '{{.Tag}}\t{{.ID}}' | grep '^sandbox-' | tail -n +4 | awk '{print \\$2}' | xargs -r sudo docker rmi -f 2>/dev/null || true\"
+            ]" \
+            --query 'Command.CommandId' \
+            --output text)
+
+          echo "command_id=$COMMAND_ID" >> $GITHUB_OUTPUT
+          echo "SSM command sent: $COMMAND_ID"
+
+      - name: Wait for SSM command to complete
+        run: |
+          COMMAND_ID=${{ steps.ssm.outputs.command_id }}
+          INSTANCE=${{ env.EC2_INSTANCE_ID }}
+
+          echo "Waiting for command $COMMAND_ID ..."
+
+          for i in $(seq 1 30); do
+            STATUS=$(aws ssm get-command-invocation \
+              --command-id "$COMMAND_ID" \
+              --instance-id "$INSTANCE" \
+              --query 'StatusDetails' \
+              --output text 2>/dev/null || echo "Pending")
+
+            echo "  [$i/30] $STATUS"
+
+            if [[ "$STATUS" == "Success" ]]; then
+              echo "Sandbox deploy succeeded."
+              break
+            elif [[ "$STATUS" == "Failed" || "$STATUS" == "TimedOut" || "$STATUS" == "Cancelled" ]]; then
+              echo "Sandbox deploy command failed: $STATUS"
+              aws ssm get-command-invocation \
+                --command-id "$COMMAND_ID" \
+                --instance-id "$INSTANCE" \
+                --query 'StandardErrorContent' \
+                --output text || true
+              exit 1
+            fi
+
+            sleep 10
+          done
+
+          if [[ "$STATUS" != "Success" ]]; then
+            echo "Timed out waiting for sandbox deploy."
+            exit 1
+          fi
+
+      - name: Show deploy output
+        if: always()
+        run: |
+          aws ssm get-command-invocation \
+            --command-id "${{ steps.ssm.outputs.command_id }}" \
+            --instance-id "${{ env.EC2_INSTANCE_ID }}" \
+            --query 'StandardOutputContent' \
+            --output text || true
+
+      - name: Open port 3001 in security group (idempotent)
+        run: |
+          SG_ID=$(aws ec2 describe-instances \
+            --instance-ids "${{ env.EC2_INSTANCE_ID }}" \
+            --query 'Reservations[0].Instances[0].SecurityGroups[0].GroupId' \
+            --output text)
+
+          # Authorize ingress on 3001 — silently ignores "already exists" error
+          aws ec2 authorize-security-group-ingress \
+            --group-id "$SG_ID" \
+            --protocol tcp \
+            --port ${{ env.SANDBOX_PORT }} \
+            --cidr 0.0.0.0/0 2>/dev/null || true
+
+          echo "Security group $SG_ID: port ${{ env.SANDBOX_PORT }} open"
+
+      - name: Health check (port 3001)
+        run: |
+          echo "Waiting 10s for sandbox container to settle..."
+          sleep 10
+
+          EC2_IP=$(aws ec2 describe-instances \
+            --instance-ids "${{ env.EC2_INSTANCE_ID }}" \
+            --query 'Reservations[0].Instances[0].PublicIpAddress' \
+            --output text)
+
+          echo "Sandbox URL: http://$EC2_IP:${{ env.SANDBOX_PORT }}"
+          echo "Checking http://$EC2_IP:${{ env.SANDBOX_PORT }}/api/articles ..."
+
+          for i in 1 2 3; do
+            STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 \
+              "http://$EC2_IP:${{ env.SANDBOX_PORT }}/api/articles" || echo "000")
+            echo "  Attempt $i: HTTP $STATUS"
+            if [[ "$STATUS" == "200" ]]; then
+              echo "Sandbox health check passed."
+              echo ""
+              echo "================================================"
+              echo "  SANDBOX LIVE: http://$EC2_IP:${{ env.SANDBOX_PORT }}"
+              echo "================================================"
+              exit 0
+            fi
+            sleep 5
+          done
+
+          echo "Sandbox health check failed after 3 attempts!"
+          exit 1
