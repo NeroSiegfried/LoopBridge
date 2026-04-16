@@ -1,5 +1,6 @@
 import { useEffect, useRef, useState, useCallback, forwardRef, useImperativeHandle } from 'react';
 import Hls from 'hls.js';
+import '../styles/adaptive-player.css';
 
 /**
  * AdaptiveVideoPlayer — HLS-capable video player with quality selection.
@@ -24,13 +25,28 @@ const AdaptiveVideoPlayer = forwardRef(function AdaptiveVideoPlayer(
   const videoRef = useRef(null);
   const containerRef = useRef(null);
   const hlsRef = useRef(null);
-  const [levels, setLevels] = useState([]); // available quality levels
+  const progressRef = useRef(null);
+  const volumeRef = useRef(null);
+  const hideControlsTimer = useRef(null);
+
+  const [levels, setLevels] = useState([]);
   const [currentLevel, setCurrentLevel] = useState(-1); // -1 = auto
-  const [showQuality, setShowQuality] = useState(false);
   const [isHLS, setIsHLS] = useState(false);
   const [buffering, setBuffering] = useState(false);
   const [currentBandwidth, setCurrentBandwidth] = useState(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+
+  // Playback state for the custom control bar
+  const [playing, setPlaying] = useState(false);
+  const [currentTime, setCurrentTime] = useState(0);
+  const [duration, setDuration] = useState(0);
+  const [volume, setVolume] = useState(1);
+  const [muted, setMuted] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
+  const [settingsPane, setSettingsPane] = useState('main'); // 'main' | 'quality' | 'speed'
+  const [playbackRate, setPlaybackRate] = useState(1);
+  const [controlsVisible, setControlsVisible] = useState(true);
+  const [seeking, setSeeking] = useState(false);
 
   // Expose both the video element AND container to parent via ref
   useImperativeHandle(ref, () => ({
@@ -162,36 +178,63 @@ const AdaptiveVideoPlayer = forwardRef(function AdaptiveVideoPlayer(
     };
   }, [src, isM3U8, autoPlay]);
 
-  // Quality selection handler
+  // Quality selection
   const setQuality = useCallback((levelIndex) => {
     if (hlsRef.current) {
-      hlsRef.current.currentLevel = levelIndex; // -1 = auto
+      hlsRef.current.currentLevel = levelIndex;
       setCurrentLevel(levelIndex);
     }
-    setShowQuality(false);
+    setShowSettings(false);
+    setSettingsPane('main');
   }, []);
 
-  // Buffering indicator
+  // Playback rate
+  const setSpeed = useCallback((rate) => {
+    if (videoRef.current) videoRef.current.playbackRate = rate;
+    setPlaybackRate(rate);
+    setShowSettings(false);
+    setSettingsPane('main');
+  }, []);
+
+  // Sync playback state from video events
   useEffect(() => {
     const video = videoRef.current;
     if (!video) return;
-
+    const onPlay    = () => setPlaying(true);
+    const onPause   = () => setPlaying(false);
+    const onEnded_  = () => setPlaying(false);
     const onWaiting = () => setBuffering(true);
     const onPlaying = () => setBuffering(false);
     const onCanPlay = () => setBuffering(false);
-
-    video.addEventListener('waiting', onWaiting);
-    video.addEventListener('playing', onPlaying);
-    video.addEventListener('canplay', onCanPlay);
-
+    const onTimeUpd = () => { if (!seeking) setCurrentTime(video.currentTime); };
+    const onDurChng = () => setDuration(video.duration || 0);
+    const onVolChng = () => { setVolume(video.volume); setMuted(video.muted); };
+    const onRateChng= () => setPlaybackRate(video.playbackRate);
+    video.addEventListener('play',        onPlay);
+    video.addEventListener('pause',       onPause);
+    video.addEventListener('ended',       onEnded_);
+    video.addEventListener('waiting',     onWaiting);
+    video.addEventListener('playing',     onPlaying);
+    video.addEventListener('canplay',     onCanPlay);
+    video.addEventListener('timeupdate',  onTimeUpd);
+    video.addEventListener('durationchange', onDurChng);
+    video.addEventListener('volumechange',onVolChng);
+    video.addEventListener('ratechange',  onRateChng);
     return () => {
-      video.removeEventListener('waiting', onWaiting);
-      video.removeEventListener('playing', onPlaying);
-      video.removeEventListener('canplay', onCanPlay);
+      video.removeEventListener('play',        onPlay);
+      video.removeEventListener('pause',       onPause);
+      video.removeEventListener('ended',       onEnded_);
+      video.removeEventListener('waiting',     onWaiting);
+      video.removeEventListener('playing',     onPlaying);
+      video.removeEventListener('canplay',     onCanPlay);
+      video.removeEventListener('timeupdate',  onTimeUpd);
+      video.removeEventListener('durationchange', onDurChng);
+      video.removeEventListener('volumechange',onVolChng);
+      video.removeEventListener('ratechange',  onRateChng);
     };
-  }, []);
+  }, [seeking]);
 
-  // Track fullscreen state so quiz overlay renders inside the fullscreen container
+  // Fullscreen tracking
   useEffect(() => {
     const onFSChange = () => {
       const fsEl = document.fullscreenElement || document.webkitFullscreenElement;
@@ -205,32 +248,28 @@ const AdaptiveVideoPlayer = forwardRef(function AdaptiveVideoPlayer(
     };
   }, []);
 
-  // Intercept the native video fullscreen and redirect to our container
-  // so that quiz overlay + quality selector remain visible
+  // Close settings when clicking outside
   useEffect(() => {
-    const video = videoRef.current;
-    const container = containerRef.current;
-    if (!video || !container) return;
-
-    const onFSChange = () => {
-      const fsEl = document.fullscreenElement || document.webkitFullscreenElement;
-      // If the VIDEO itself went fullscreen (native controls did it), swap to container
-      if (fsEl === video) {
-        (document.exitFullscreen || document.webkitExitFullscreen).call(document);
-        setTimeout(() => {
-          (container.requestFullscreen || container.webkitRequestFullscreen).call(container);
-        }, 50);
+    if (!showSettings) return;
+    const handler = (e) => {
+      if (!containerRef.current?.contains(e.target)) {
+        setShowSettings(false);
+        setSettingsPane('main');
       }
     };
-    document.addEventListener('fullscreenchange', onFSChange);
-    document.addEventListener('webkitfullscreenchange', onFSChange);
-    return () => {
-      document.removeEventListener('fullscreenchange', onFSChange);
-      document.removeEventListener('webkitfullscreenchange', onFSChange);
-    };
-  }, []);
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [showSettings]);
 
-  // Toggle fullscreen on our wrapper (not the <video>) so quality + quiz stay visible
+  // Auto-hide controls
+  const resetHideTimer = useCallback(() => {
+    setControlsVisible(true);
+    clearTimeout(hideControlsTimer.current);
+    hideControlsTimer.current = setTimeout(() => {
+      if (!showSettings) setControlsVisible(false);
+    }, 3000);
+  }, [showSettings]);
+
   const toggleFullscreen = useCallback(() => {
     const el = containerRef.current;
     if (!el) return;
@@ -241,78 +280,207 @@ const AdaptiveVideoPlayer = forwardRef(function AdaptiveVideoPlayer(
     }
   }, []);
 
+  const togglePlay = useCallback(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    v.paused ? v.play() : v.pause();
+  }, []);
+
+  const handleProgressClick = useCallback((e) => {
+    const bar = progressRef.current;
+    if (!bar || !duration) return;
+    const rect = bar.getBoundingClientRect();
+    const ratio = Math.max(0, Math.min(1, (e.clientX - rect.left) / rect.width));
+    videoRef.current.currentTime = ratio * duration;
+    setCurrentTime(ratio * duration);
+  }, [duration]);
+
+  const handleVolumeChange = useCallback((e) => {
+    const v = parseFloat(e.target.value);
+    videoRef.current.volume = v;
+    videoRef.current.muted = v === 0;
+  }, []);
+
+  const toggleMute = useCallback(() => {
+    const v = videoRef.current;
+    if (!v) return;
+    v.muted = !v.muted;
+  }, []);
+
+  const fmt = (s) => {
+    if (!isFinite(s)) return '0:00';
+    const m = Math.floor(s / 60);
+    const sec = Math.floor(s % 60);
+    return `${m}:${sec.toString().padStart(2, '0')}`;
+  };
+
+  const activeQualityLabel = currentLevel === -1
+    ? `Auto${currentBandwidth && hlsRef.current?.currentLevel >= 0 ? ` (${levelLabel(levels[hlsRef.current.currentLevel])})` : ''}`
+    : levelLabel(levels[currentLevel]);
+
+  const SPEEDS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
+  const hasQuality = isHLS && levels.length > 1;
+
   return (
-    <div ref={containerRef} className={`adaptive-player ${className} ${isFullscreen ? 'is-fullscreen' : ''}`}>
+    <div
+      ref={containerRef}
+      className={`adaptive-player ${className} ${isFullscreen ? 'is-fullscreen' : ''}`}
+      onMouseMove={resetHideTimer}
+      onMouseEnter={resetHideTimer}
+      onMouseLeave={() => { clearTimeout(hideControlsTimer.current); setControlsVisible(false); }}
+      onClick={(e) => {
+        // click on video area (not controls) = play/pause
+        if (e.target === videoRef.current || e.target === containerRef.current) togglePlay();
+      }}
+    >
       <video
         ref={videoRef}
-        controls
-        controlsList="nodownload nofullscreen"
-        disablePictureInPicture
-        onContextMenu={(e) => e.preventDefault()}
         poster={poster || undefined}
         onEnded={onEnded}
         onTimeUpdate={onTimeUpdate ? (e) => onTimeUpdate(e.target.currentTime) : undefined}
-        style={{ width: '100%', height: '100%', background: '#000' }}
+        style={{ width: '100%', height: '100%', display: 'block', background: '#000' }}
         playsInline
+        onContextMenu={(e) => e.preventDefault()}
       />
 
       {/* Buffering spinner */}
       {buffering && (
-        <div className="player-buffering">
-          <div className="buffering-spinner" />
+        <div className="vp-buffering">
+          <div className="vp-spinner" />
         </div>
       )}
 
-      {/* Custom fullscreen button (replaces the native one we disabled) */}
-      <button
-        className="player-fullscreen-btn"
-        onClick={toggleFullscreen}
-        title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}
-      >
-        <i className={`fa-solid ${isFullscreen ? 'fa-compress' : 'fa-expand'}`} />
-      </button>
+      {/* Quiz overlay */}
+      {quizOverlay}
 
-      {/* Quality selector (only for HLS with multiple levels) */}
-      {isHLS && levels.length > 1 && (
-        <div className="quality-selector">
-          <button
-            className="quality-btn"
-            onClick={() => setShowQuality(!showQuality)}
-            title="Video quality"
-          >
-            <i className="fa-solid fa-gear" />
-            <span className="quality-current">
-              {currentLevel === -1 ? 'Auto' : levelLabel(levels[currentLevel])}
-            </span>
+      {/* ── Control bar ───────────────────────────────── */}
+      <div className={`vp-controls ${controlsVisible || !playing ? 'vp-controls--visible' : ''}`}>
+
+        {/* Progress bar */}
+        <div
+          ref={progressRef}
+          className="vp-progress"
+          onClick={handleProgressClick}
+          onMouseDown={() => setSeeking(true)}
+          onMouseUp={() => setSeeking(false)}
+        >
+          <div className="vp-progress__track">
+            <div
+              className="vp-progress__fill"
+              style={{ width: `${duration ? (currentTime / duration) * 100 : 0}%` }}
+            />
+          </div>
+        </div>
+
+        {/* Buttons row */}
+        <div className="vp-bar">
+          {/* Play / Pause */}
+          <button className="vp-btn" onClick={togglePlay} title={playing ? 'Pause' : 'Play'}>
+            <i className={`fa-solid ${playing ? 'fa-pause' : 'fa-play'}`} />
           </button>
 
-          {showQuality && (
-            <div className="quality-menu">
-              <button
-                className={`quality-option ${currentLevel === -1 ? 'active' : ''}`}
-                onClick={() => setQuality(-1)}
-              >
-                Auto {currentLevel === -1 && currentBandwidth ? `(${levelLabel(levels[hlsRef.current?.currentLevel])})` : ''}
-              </button>
-              {levels.map((level, idx) => (
-                <button
-                  key={idx}
-                  className={`quality-option ${currentLevel === idx ? 'active' : ''}`}
-                  onClick={() => setQuality(idx)}
-                >
-                  {levelLabel(level)}
-                  <span className="quality-bitrate">
-                    {Math.round(level.bitrate / 1000)} kbps
-                  </span>
-                </button>
-              ))}
-            </div>
-          )}
-        </div>
-      )}
+          {/* Volume */}
+          <button className="vp-btn" onClick={toggleMute} title={muted ? 'Unmute' : 'Mute'}>
+            <i className={`fa-solid ${muted || volume === 0 ? 'fa-volume-xmark' : volume < 0.5 ? 'fa-volume-low' : 'fa-volume-high'}`} />
+          </button>
+          <input
+            ref={volumeRef}
+            className="vp-volume"
+            type="range"
+            min="0" max="1" step="0.05"
+            value={muted ? 0 : volume}
+            onChange={handleVolumeChange}
+          />
 
-      {/* Quiz overlay — rendered INSIDE the player container so it's visible in fullscreen */}
-      {quizOverlay}
+          {/* Time */}
+          <span className="vp-time">{fmt(currentTime)} / {fmt(duration)}</span>
+
+          {/* Spacer */}
+          <div className="vp-spacer" />
+
+          {/* Settings (quality + speed) */}
+          <div className="vp-settings-wrap">
+            <button
+              className="vp-btn"
+              onClick={() => { setShowSettings(s => !s); setSettingsPane('main'); }}
+              title="Settings"
+            >
+              <i className="fa-solid fa-gear" />
+            </button>
+
+            {showSettings && (
+              <div className="vp-settings-menu">
+                {settingsPane === 'main' && (
+                  <>
+                    {hasQuality && (
+                      <button className="vp-settings-row" onClick={() => setSettingsPane('quality')}>
+                        <span className="vp-settings-row__label">Quality</span>
+                        <span className="vp-settings-row__value">
+                          {activeQualityLabel} <i className="fa-solid fa-chevron-right" />
+                        </span>
+                      </button>
+                    )}
+                    <button className="vp-settings-row" onClick={() => setSettingsPane('speed')}>
+                      <span className="vp-settings-row__label">Speed</span>
+                      <span className="vp-settings-row__value">
+                        {playbackRate === 1 ? 'Normal' : `${playbackRate}×`} <i className="fa-solid fa-chevron-right" />
+                      </span>
+                    </button>
+                  </>
+                )}
+
+                {settingsPane === 'quality' && (
+                  <>
+                    <button className="vp-settings-back" onClick={() => setSettingsPane('main')}>
+                      <i className="fa-solid fa-chevron-left" /> Quality
+                    </button>
+                    <button
+                      className={`vp-settings-option ${currentLevel === -1 ? 'vp-settings-option--active' : ''}`}
+                      onClick={() => setQuality(-1)}
+                    >
+                      Auto{currentBandwidth && hlsRef.current?.currentLevel >= 0 ? ` (${levelLabel(levels[hlsRef.current.currentLevel])})` : ''}
+                    </button>
+                    {[...levels].reverse().map((level, i) => {
+                      const idx = levels.length - 1 - i;
+                      return (
+                        <button
+                          key={idx}
+                          className={`vp-settings-option ${currentLevel === idx ? 'vp-settings-option--active' : ''}`}
+                          onClick={() => setQuality(idx)}
+                        >
+                          {levelLabel(level)}
+                        </button>
+                      );
+                    })}
+                  </>
+                )}
+
+                {settingsPane === 'speed' && (
+                  <>
+                    <button className="vp-settings-back" onClick={() => setSettingsPane('main')}>
+                      <i className="fa-solid fa-chevron-left" /> Speed
+                    </button>
+                    {SPEEDS.map((s) => (
+                      <button
+                        key={s}
+                        className={`vp-settings-option ${playbackRate === s ? 'vp-settings-option--active' : ''}`}
+                        onClick={() => setSpeed(s)}
+                      >
+                        {s === 1 ? 'Normal' : `${s}×`}
+                      </button>
+                    ))}
+                  </>
+                )}
+              </div>
+            )}
+          </div>
+
+          {/* Fullscreen */}
+          <button className="vp-btn" onClick={toggleFullscreen} title={isFullscreen ? 'Exit fullscreen' : 'Fullscreen'}>
+            <i className={`fa-solid ${isFullscreen ? 'fa-compress' : 'fa-expand'}`} />
+          </button>
+        </div>
+      </div>
     </div>
   );
 });
