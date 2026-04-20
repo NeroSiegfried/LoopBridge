@@ -37,6 +37,7 @@ const AdaptiveVideoPlayer = forwardRef(function AdaptiveVideoPlayer(
   const [buffering, setBuffering] = useState(false);
   const [currentBandwidth, setCurrentBandwidth] = useState(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [videoAspectRatio, setVideoAspectRatio] = useState(null); // null = fallback to CSS 16/9
 
   // Playback state for the custom control bar
   const [playing, setPlaying] = useState(false);
@@ -261,6 +262,19 @@ const AdaptiveVideoPlayer = forwardRef(function AdaptiveVideoPlayer(
     };
   }, []);
 
+  // Detect video natural dimensions and update container aspect ratio
+  useEffect(() => {
+    const vid = videoRef.current;
+    if (!vid) return;
+    const onMeta = () => {
+      if (vid.videoWidth && vid.videoHeight) {
+        setVideoAspectRatio(`${vid.videoWidth} / ${vid.videoHeight}`);
+      }
+    };
+    vid.addEventListener('loadedmetadata', onMeta);
+    return () => vid.removeEventListener('loadedmetadata', onMeta);
+  }, [src]);
+
   // Auto-fullscreen on load
   useEffect(() => {
     if (!autoFullscreen) return;
@@ -370,6 +384,7 @@ const AdaptiveVideoPlayer = forwardRef(function AdaptiveVideoPlayer(
     <div
       ref={containerRef}
       className={`adaptive-player ${className} ${isFullscreen ? 'is-fullscreen' : ''}`}
+      style={videoAspectRatio && !isFullscreen ? { aspectRatio: videoAspectRatio } : undefined}
       onMouseMove={resetHideTimer}
       onMouseEnter={resetHideTimer}
       onMouseLeave={() => { clearTimeout(hideControlsTimer.current); setControlsVisible(false); }}

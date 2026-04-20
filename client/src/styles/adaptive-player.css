@@ -24,13 +24,16 @@
 .adaptive-player:fullscreen,
 .adaptive-player:-webkit-full-screen {
   border-radius: 0;
-  aspect-ratio: unset;
-  width: 100vw;
-  height: 100dvh;
+  aspect-ratio: unset !important;
+  width: 100vw !important;
+  height: 100dvh !important;
 }
 
 .adaptive-player.is-fullscreen {
   border-radius: 0;
+  width: 100vw !important;
+  height: 100vh !important;
+  aspect-ratio: unset !important;
 }
 
 /* ── Buffering spinner ─────────────────────────────────────── */
