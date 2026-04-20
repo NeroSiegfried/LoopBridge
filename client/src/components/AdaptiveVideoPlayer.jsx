@@ -262,17 +262,29 @@ const AdaptiveVideoPlayer = forwardRef(function AdaptiveVideoPlayer(
     };
   }, []);
 
-  // Detect video natural dimensions and update container aspect ratio
+  // Detect video natural dimensions and update container aspect ratio.
+  // For HLS streams, videoWidth/videoHeight are 0 at loadedmetadata time —
+  // they only become available after the first frame decodes. The 'resize'
+  // event fires on the <video> element specifically when dimensions change,
+  // making it the most reliable trigger. We also check loadeddata + canplay
+  // as fallbacks for plain MP4s.
   useEffect(() => {
     const vid = videoRef.current;
     if (!vid) return;
-    const onMeta = () => {
+    setVideoAspectRatio(null); // reset on src change
+    const applyDimensions = () => {
       if (vid.videoWidth && vid.videoHeight) {
         setVideoAspectRatio(`${vid.videoWidth} / ${vid.videoHeight}`);
       }
     };
-    vid.addEventListener('loadedmetadata', onMeta);
-    return () => vid.removeEventListener('loadedmetadata', onMeta);
+    vid.addEventListener('resize',       applyDimensions);
+    vid.addEventListener('loadeddata',   applyDimensions);
+    vid.addEventListener('canplay',      applyDimensions);
+    return () => {
+      vid.removeEventListener('resize',     applyDimensions);
+      vid.removeEventListener('loadeddata', applyDimensions);
+      vid.removeEventListener('canplay',    applyDimensions);
+    };
   }, [src]);
 
   // Auto-fullscreen on load
