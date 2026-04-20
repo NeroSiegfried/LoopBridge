@@ -57,3 +57,11 @@ npm-debug.log*
 logs/
 
 aws-diag.sh
+
+# Secrets & Terraform state
+secrets.env
+infrastructure/terraform/terraform.tfvars
+infrastructure/terraform/.terraform/
+infrastructure/terraform/.terraform.lock.hcl
+infrastructure/terraform/terraform.tfstate
+infrastructure/terraform/terraform.tfstate.backup

@@ -1,0 +1,19 @@
+# ─────────────────────────────────────────────────────────────────────────────
+# infrastructure/terraform/terraform.tfvars.example
+# Copy to terraform.tfvars and fill in — terraform.tfvars is gitignored
+# ─────────────────────────────────────────────────────────────────────────────
+
+aws_region        = "us-east-1"
+environment       = "production"
+instance_type     = "t2.micro"
+availability_zone = "us-east-1a"
+
+# Optional: name of an existing EC2 Key Pair if you want SSH access.
+# Leave blank to use SSM Session Manager only (recommended).
+ec2_key_pair_name = ""
+
+# Optional: restrict SSH to specific IPs. Leave empty to disable SSH rule.
+# allowed_ssh_cidrs = ["203.0.113.10/32"]
+allowed_ssh_cidrs = []
+
+github_repo = "NeroSiegfried/LoopBridge"
