@@ -184,17 +184,161 @@ async function getJobStatus(jobId) {
 }
 
 /**
+ * Local ffmpeg HLS transcoder — used when MediaConvert is not configured.
+ *
+ * Generates a multi-variant HLS manifest at:
+ *   <uploadsDir>/transcoded/<uploadId>/manifest.m3u8
+ * with per-rendition subdirectories for segments.
+ *
+ * The files are served by the existing `express.static(config.uploadsDir)`
+ * middleware at /uploads/transcoded/<uploadId>/manifest.m3u8.
+ *
+ * @param {string} uploadId   — the upload DB row id
+ * @param {string} localPath  — absolute path OR path relative to uploadsDir
+ *                              (e.g. "videos/abc.mp4" or "/abs/path/videos/abc.mp4")
+ * @returns {{ hlsUrl: string }}
+ */
+async function transcodeVideoLocally(uploadId, localPath) {
+    const ffmpeg = require('fluent-ffmpeg');
+    const fs = require('fs');
+    const path = require('path');
+
+    // Resolve input path.
+    // In local disk mode, rawRecord.path is "uploads/videos/<filename>" (relative to
+    // the project root, not to uploadsDir).  uploadsDir is "<project>/uploads", so
+    // the full path is path.join(uploadsDir, '..', relativePath).
+    // In prod, localPath is an S3 key and this function is never called.
+    const inputPath = path.isAbsolute(localPath)
+        ? localPath
+        : path.join(config.uploadsDir, '..', localPath);
+
+    const outputDir = path.join(config.uploadsDir, 'transcoded', uploadId);
+    fs.mkdirSync(outputDir, { recursive: true });
+
+    console.log(`[transcode:local] Starting local HLS transcode for upload ${uploadId}`);
+    console.log(`[transcode:local]   input:  ${inputPath}`);
+    console.log(`[transcode:local]   output: ${outputDir}`);
+
+    // Probe source to know if it's tall enough for each preset
+    const metadata = await new Promise((resolve, reject) => {
+        ffmpeg.ffprobe(inputPath, (err, data) => {
+            if (err) reject(err);
+            else resolve(data);
+        });
+    });
+
+    const videoStream = metadata.streams.find((s) => s.codec_type === 'video');
+    const srcHeight = videoStream ? (videoStream.height || 9999) : 9999;
+
+    // Only encode presets whose height is <= source height
+    const activePresets = PRESETS.filter((p) => p.height <= srcHeight);
+    if (activePresets.length === 0) {
+        // Fallback: at least encode the lowest preset
+        activePresets.push(PRESETS[PRESETS.length - 1]);
+    }
+
+    // Build per-rendition HLS streams — one ffmpeg invocation each so segment
+    // paths can be written to subdirectories cleanly
+    await Promise.all(
+        activePresets.map((preset) => {
+            const renditionDir = path.join(outputDir, preset.name);
+            fs.mkdirSync(renditionDir, { recursive: true });
+
+            return new Promise((resolve, reject) => {
+                ffmpeg(inputPath)
+                    .outputOptions([
+                        '-c:v libx264',
+                        '-preset fast',
+                        `-b:v ${preset.videoBitrate}`,
+                        `-maxrate ${Math.round(preset.videoBitrate * 1.2)}`,
+                        `-bufsize ${preset.videoBitrate * 2}`,
+                        `-vf scale=${preset.width}:${preset.height}:force_original_aspect_ratio=decrease`,
+                        '-c:a aac',
+                        `-b:a ${preset.audioBitrate}`,
+                        '-ar 48000',
+                        '-ac 2',
+                        '-hls_time 6',
+                        '-hls_list_size 0',
+                        `-hls_segment_filename ${path.join(renditionDir, 'seg%04d.ts')}`,
+                        '-f hls',
+                    ])
+                    .output(path.join(renditionDir, 'index.m3u8'))
+                    .on('start', (cmd) => console.log(`[transcode:local]   ${preset.name} → ${cmd.slice(0, 80)}…`))
+                    .on('end', () => {
+                        console.log(`[transcode:local]   ${preset.name} done`);
+                        resolve();
+                    })
+                    .on('error', (err) => {
+                        console.error(`[transcode:local]   ${preset.name} error:`, err.message);
+                        reject(err);
+                    })
+                    .run();
+            });
+        })
+    );
+
+    // Write the master manifest
+    const masterLines = ['#EXTM3U', '#EXT-X-VERSION:3', ''];
+    for (const preset of activePresets) {
+        masterLines.push(`#EXT-X-STREAM-INF:BANDWIDTH=${preset.videoBitrate},RESOLUTION=${preset.width}x${preset.height}`);
+        masterLines.push(`${preset.name}/index.m3u8`);
+    }
+    masterLines.push(''); // trailing newline
+    fs.writeFileSync(path.join(outputDir, 'manifest.m3u8'), masterLines.join('\n'));
+
+    // Capture a thumbnail at 3 s via ffmpeg
+    await new Promise((resolve) => {
+        ffmpeg(inputPath)
+            .screenshots({
+                timestamps: ['3'],
+                filename: 'thumb.jpg',
+                folder: outputDir,
+                size: '640x360',
+            })
+            .on('end', resolve)
+            .on('error', (err) => {
+                // Thumbnail failure is non-fatal
+                console.warn('[transcode:local] thumbnail error (non-fatal):', err.message);
+                resolve();
+            });
+    });
+
+    const hlsUrl = `/uploads/transcoded/${uploadId}/manifest.m3u8`;
+    const thumbnailUrl = `/uploads/transcoded/${uploadId}/thumb.jpg`;
+    console.log(`[transcode:local] Complete — ${hlsUrl}`);
+    return { hlsUrl, thumbnailUrl };
+}
+
+/**
  * Full pipeline: transcode a video upload and update the upload record.
- * Called after a video is uploaded to S3.
+ * Called after a video is uploaded to S3 (or saved to disk in local dev).
  *
  * @param {string} uploadId — the upload DB row id
- * @param {string} s3Key    — the S3 object key
+ * @param {string} s3Key    — the S3 object key (prod) OR local relative path (dev)
  */
 async function transcodeVideo(uploadId, s3Key) {
+    // ── Local dev path ──────────────────────────────────────────────────────
+    // When MediaConvert credentials are absent, fall back to local ffmpeg.
     if (!config.mediaConvertRoleArn) {
-        console.log('[transcode] MEDIACONVERT_ROLE_ARN not set — skipping transcoding');
-        return null;
+        try {
+            const { hlsUrl, thumbnailUrl } = await transcodeVideoLocally(uploadId, s3Key);
+            await uploadRepo.updateTranscodeStatus(uploadId, {
+                hlsUrl,
+                thumbnailUrl,
+                transcodeStatus: 'complete',
+            });
+            return { hlsUrl };
+        } catch (err) {
+            console.error(`[transcode:local] Failed for ${uploadId}:`, err.message);
+            await uploadRepo.updateTranscodeStatus(uploadId, {
+                transcodeStatus: 'error',
+                transcodeError: err.message,
+            });
+            return null;
+        }
     }
+
+    // ── Cloud path (AWS MediaConvert) ───────────────────────────────────────
 
     try {
         const result = await createTranscodeJob(uploadId, s3Key);

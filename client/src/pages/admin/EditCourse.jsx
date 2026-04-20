@@ -7,7 +7,7 @@ import '../../styles/edit-course.css';
 
 /* ── tiny helpers ── */
 const uid = () => Math.random().toString(36).slice(2, 9);
-const emptyQuestion = () => ({ id: uid(), question: '', options: ['', '', '', ''], correctIndex: 0 });
+const emptyQuestion = () => ({ id: uid(), question: '', options: ['', '', '', ''], optionExplanations: ['', '', '', ''], correctIndex: 0 });
 const emptySubsection = () => ({
   id: uid(),
   title: '',
@@ -203,6 +203,28 @@ export default function EditCourse() {
     updateSub(tIdx, sIdx, { uploadState: 'done' });
   };
 
+  /* ── retranscode existing upload ── */
+  const triggerRetranscode = async (tIdx, sIdx, uploadId) => {
+    updateSub(tIdx, sIdx, { uploadState: 'processing' });
+    try {
+      const resp = await fetch(`/api/transcode/${uploadId}`, {
+        method: 'POST',
+        credentials: 'include',
+      });
+      if (!resp.ok) {
+        const err = await resp.json().catch(() => ({}));
+        updateSub(tIdx, sIdx, { uploadState: 'done' });
+        setError(`Retranscode failed: ${err.error || resp.statusText}`);
+        return;
+      }
+      // Poll until complete
+      pollTranscodeStatus(tIdx, sIdx, uploadId);
+    } catch (err) {
+      updateSub(tIdx, sIdx, { uploadState: 'done' });
+      setError(`Retranscode failed: ${err.message}`);
+    }
+  };
+
   /* ── reading content blocks ── */
   const addContentBlock = (tIdx, sIdx, type) => {
     const sub = topics[tIdx].subsections[sIdx];
@@ -240,16 +262,26 @@ export default function EditCourse() {
     const options = q.options.map((o, i) => i === oIdx ? value : o);
     updateEndQuizQuestion(tIdx, sIdx, qIdx, { options });
   };
+  const updateEndQuizExplanation = (tIdx, sIdx, qIdx, oIdx, value) => {
+    const sub = topics[tIdx].subsections[sIdx];
+    const q = sub.endQuiz[qIdx];
+    const optionExplanations = (q.optionExplanations || q.options.map(() => '')).map((e, i) => i === oIdx ? value : e);
+    updateEndQuizQuestion(tIdx, sIdx, qIdx, { optionExplanations });
+  };
   const addEndQuizOption = (tIdx, sIdx, qIdx) => {
     const sub = topics[tIdx].subsections[sIdx];
     const q = sub.endQuiz[qIdx];
-    updateEndQuizQuestion(tIdx, sIdx, qIdx, { options: [...q.options, ''] });
+    updateEndQuizQuestion(tIdx, sIdx, qIdx, {
+      options: [...q.options, ''],
+      optionExplanations: [...(q.optionExplanations || q.options.map(() => '')), ''],
+    });
   };
   const removeEndQuizOption = (tIdx, sIdx, qIdx, oIdx) => {
     const sub = topics[tIdx].subsections[sIdx];
     const q = sub.endQuiz[qIdx];
     updateEndQuizQuestion(tIdx, sIdx, qIdx, {
       options: q.options.filter((_, i) => i !== oIdx),
+      optionExplanations: (q.optionExplanations || q.options.map(() => '')).filter((_, i) => i !== oIdx),
       correctIndex: q.correctIndex >= oIdx && q.correctIndex > 0 ? q.correctIndex - 1 : q.correctIndex,
     });
   };
@@ -301,16 +333,26 @@ export default function EditCourse() {
     const q = sub.quizPoints[pIdx].questions[qIdx];
     updateQuizPointQuestion(tIdx, sIdx, pIdx, qIdx, { options: q.options.map((o, i) => i === oIdx ? value : o) });
   };
+  const updateQPExplanation = (tIdx, sIdx, pIdx, qIdx, oIdx, value) => {
+    const sub = topics[tIdx].subsections[sIdx];
+    const q = sub.quizPoints[pIdx].questions[qIdx];
+    const optionExplanations = (q.optionExplanations || q.options.map(() => '')).map((e, i) => i === oIdx ? value : e);
+    updateQuizPointQuestion(tIdx, sIdx, pIdx, qIdx, { optionExplanations });
+  };
   const addQPOption = (tIdx, sIdx, pIdx, qIdx) => {
     const sub = topics[tIdx].subsections[sIdx];
     const q = sub.quizPoints[pIdx].questions[qIdx];
-    updateQuizPointQuestion(tIdx, sIdx, pIdx, qIdx, { options: [...q.options, ''] });
+    updateQuizPointQuestion(tIdx, sIdx, pIdx, qIdx, {
+      options: [...q.options, ''],
+      optionExplanations: [...(q.optionExplanations || q.options.map(() => '')), ''],
+    });
   };
   const removeQPOption = (tIdx, sIdx, pIdx, qIdx, oIdx) => {
     const sub = topics[tIdx].subsections[sIdx];
     const q = sub.quizPoints[pIdx].questions[qIdx];
     updateQuizPointQuestion(tIdx, sIdx, pIdx, qIdx, {
       options: q.options.filter((_, i) => i !== oIdx),
+      optionExplanations: (q.optionExplanations || q.options.map(() => '')).filter((_, i) => i !== oIdx),
       correctIndex: q.correctIndex >= oIdx && q.correctIndex > 0 ? q.correctIndex - 1 : q.correctIndex,
     });
   };
@@ -365,6 +407,7 @@ export default function EditCourse() {
                 questions: qp.questions.map(q => ({
                   question: q.question,
                   options: q.options,
+                  optionExplanations: q.optionExplanations || q.options.map(() => ''),
                   correctIndex: q.correctIndex,
                 })),
               }));
@@ -374,6 +417,7 @@ export default function EditCourse() {
               out.endQuiz = s.endQuiz.map(q => ({
                 question: q.question,
                 options: q.options,
+                optionExplanations: q.optionExplanations || q.options.map(() => ''),
                 correctIndex: q.correctIndex,
               }));
             }
@@ -579,7 +623,15 @@ export default function EditCourse() {
                                   {sub.uploadState === 'done' && sub.videoUrl && (
                                     <div className="upload-done">
                                       <i className="fa-solid fa-check-circle" style={{ color: 'var(--lb-green)' }} /> Video uploaded
-                                      {sub.hlsUrl && <span style={{ marginLeft: '0.5rem' }}><i className="fa-solid fa-film" /> Adaptive streaming ready</span>}
+                                      {sub.hlsUrl
+                                        ? <span style={{ marginLeft: '0.5rem' }}><i className="fa-solid fa-film" /> Adaptive streaming ready</span>
+                                        : sub.uploadId && (
+                                          <button type="button" className="btn btn-sm btn-ghost" style={{ marginLeft: '0.5rem', fontSize: '0.7rem', color: 'var(--lb-blue)' }}
+                                            onClick={() => triggerRetranscode(tIdx, sIdx, sub.uploadId)}>
+                                            <i className="fa-solid fa-film" /> Generate HLS
+                                          </button>
+                                        )
+                                      }
                                       <button type="button" className="btn btn-sm btn-ghost" style={{ marginLeft: 'auto', fontSize: '0.7rem' }}
                                         onClick={() => updateSub(tIdx, sIdx, { videoUrl: '', hlsUrl: '', thumbnailUrl: '', uploadState: null, uploadProgress: 0 })}>
                                         <i className="fa-solid fa-rotate-left" /> Replace
@@ -696,6 +748,7 @@ export default function EditCourse() {
                                               <div className="quiz-option" key={oIdx}>
                                                 <input type="radio" name={`qp-${sub.id}-${pIdx}-${qIdx}`} checked={q.correctIndex === oIdx} onChange={() => updateQuizPointQuestion(tIdx, sIdx, pIdx, qIdx, { correctIndex: oIdx })} />
                                                 <input className="input" type="text" value={opt} onChange={(e) => updateQPOption(tIdx, sIdx, pIdx, qIdx, oIdx, e.target.value)} placeholder={`Option ${oIdx + 1}`} />
+                                                <input className="input" type="text" value={(q.optionExplanations || [])[oIdx] || ''} onChange={(e) => updateQPExplanation(tIdx, sIdx, pIdx, qIdx, oIdx, e.target.value)} placeholder="Explanation (optional)" style={{ fontSize: '0.75rem', color: 'var(--black-mid)', marginTop: '0.15rem' }} />
                                                 <button type="button" className="remove-option" onClick={() => removeQPOption(tIdx, sIdx, pIdx, qIdx, oIdx)}><i className="fa-solid fa-xmark" /></button>
                                               </div>
                                             ))}
@@ -748,6 +801,14 @@ export default function EditCourse() {
                                               value={opt}
                                               onChange={(e) => updateEndQuizOption(tIdx, sIdx, qIdx, oIdx, e.target.value)}
                                               placeholder={`Option ${oIdx + 1}`}
+                                            />
+                                            <input
+                                              className="input"
+                                              type="text"
+                                              value={(q.optionExplanations || [])[oIdx] || ''}
+                                              onChange={(e) => updateEndQuizExplanation(tIdx, sIdx, qIdx, oIdx, e.target.value)}
+                                              placeholder="Explanation (optional)"
+                                              style={{ fontSize: '0.75rem', color: 'var(--black-mid)', marginTop: '0.15rem' }}
                                             />
                                             <button type="button" className="remove-option" onClick={() => removeEndQuizOption(tIdx, sIdx, qIdx, oIdx)} title="Remove option">
                                               <i className="fa-solid fa-xmark" />

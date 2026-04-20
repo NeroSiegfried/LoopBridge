@@ -1,0 +1,25 @@
+# Litestream configuration
+# Continuously replicates the SQLite database to S3.
+# On container start, the DB is restored from S3 before the app boots.
+# This lets you shrink EBS to the OS minimum (~8 GB) since all durable
+# data lives in S3. To revert: remove the LITESTREAM_* env vars and the
+# start.sh CMD; the DB file on EBS will still be valid.
+#
+# Required env vars (set in docker run / deploy.yml):
+#   LITESTREAM_ACCESS_KEY_ID      — AWS access key (can reuse existing)
+#   LITESTREAM_SECRET_ACCESS_KEY  — AWS secret key
+#   LITESTREAM_S3_PATH            — e.g. s3://loopbridge-uploads-680128294518/litestream/loopbridge.db
+
+dbs:
+  - path: ${DB_PATH}
+    replicas:
+      - url: ${LITESTREAM_S3_PATH}
+        access-key-id: ${LITESTREAM_ACCESS_KEY_ID}
+        secret-access-key: ${LITESTREAM_SECRET_ACCESS_KEY}
+        region: ${S3_REGION}
+        # Sync every 1 s — low latency, negligible S3 cost
+        sync-interval: 1s
+        # Keep 7 days of WAL frames for point-in-time restore
+        retention: 168h
+        retention-check-interval: 1h
+        snapshot-interval: 6h

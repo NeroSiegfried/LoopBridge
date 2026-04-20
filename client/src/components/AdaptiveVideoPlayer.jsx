@@ -93,25 +93,22 @@ const AdaptiveVideoPlayer = forwardRef(function AdaptiveVideoPlayer(
       return;
     }
 
-    // Check for native HLS support (Safari / iOS)
-    if (video.canPlayType('application/vnd.apple.mpegurl')) {
+    // Use hls.js when available (Chrome, Firefox, etc.) — always preferred
+    // so we get quality level data. Only fall back to native HLS if MSE is
+    // not supported (e.g. older iOS Safari without MSE).
+    if (Hls.isSupported()) {
+      initHls(Hls, video);
+    } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
+      // Native HLS (Safari / iOS without MSE) — no quality switching available
       video.src = src;
       setIsHLS(true);
-      // Safari handles quality internally, no hls.js needed
-      return;
+    } else {
+      // No HLS support at all — try playing directly anyway
+      video.src = src;
     }
 
-    // Use hls.js for browsers that don't support HLS natively
-    initHls(Hls, video);
-
-    function initHls(Hls, videoEl) {
-      if (!Hls.isSupported()) {
-        // Browser doesn't support MSE either — fallback
-        videoEl.src = src;
-        return;
-      }
-
-      const hls = new Hls({
+    function initHls(HlsClass, videoEl) {
+      const hls = new HlsClass({
         startLevel: -1, // auto
         capLevelToPlayerSize: false,  // let ABR use bandwidth, not player size
         abrEwmaDefaultEstimate: 500000, // start with 500kbps estimate
@@ -319,7 +316,7 @@ const AdaptiveVideoPlayer = forwardRef(function AdaptiveVideoPlayer(
     : levelLabel(levels[currentLevel]);
 
   const SPEEDS = [0.25, 0.5, 0.75, 1, 1.25, 1.5, 1.75, 2];
-  const hasQuality = isHLS && levels.length > 1;
+  const hasQuality = isHLS && (levels.length > 1 || !hlsRef.current);
 
   return (
     <div
@@ -434,24 +431,32 @@ const AdaptiveVideoPlayer = forwardRef(function AdaptiveVideoPlayer(
                     <button className="vp-settings-back" onClick={() => setSettingsPane('main')}>
                       <i className="fa-solid fa-chevron-left" /> Quality
                     </button>
-                    <button
-                      className={`vp-settings-option ${currentLevel === -1 ? 'vp-settings-option--active' : ''}`}
-                      onClick={() => setQuality(-1)}
-                    >
-                      Auto{currentBandwidth && hlsRef.current?.currentLevel >= 0 ? ` (${levelLabel(levels[hlsRef.current.currentLevel])})` : ''}
-                    </button>
-                    {[...levels].reverse().map((level, i) => {
-                      const idx = levels.length - 1 - i;
-                      return (
+                    {!hlsRef.current ? (
+                      <button className="vp-settings-option vp-settings-option--active" disabled>
+                        Auto (managed by browser)
+                      </button>
+                    ) : (
+                      <>
                         <button
-                          key={idx}
-                          className={`vp-settings-option ${currentLevel === idx ? 'vp-settings-option--active' : ''}`}
-                          onClick={() => setQuality(idx)}
+                          className={`vp-settings-option ${currentLevel === -1 ? 'vp-settings-option--active' : ''}`}
+                          onClick={() => setQuality(-1)}
                         >
-                          {levelLabel(level)}
+                          Auto{currentBandwidth && hlsRef.current?.currentLevel >= 0 ? ` (${levelLabel(levels[hlsRef.current.currentLevel])})` : ''}
                         </button>
-                      );
-                    })}
+                        {[...levels].reverse().map((level, i) => {
+                          const idx = levels.length - 1 - i;
+                          return (
+                            <button
+                              key={idx}
+                              className={`vp-settings-option ${currentLevel === idx ? 'vp-settings-option--active' : ''}`}
+                              onClick={() => setQuality(idx)}
+                            >
+                              {levelLabel(level)}
+                            </button>
+                          );
+                        })}
+                      </>
+                    )}
                   </>
                 )}
 
