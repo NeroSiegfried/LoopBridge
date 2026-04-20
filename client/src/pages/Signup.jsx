@@ -48,8 +48,10 @@ export default function Signup() {
     if (!email.trim()) { setError('Please enter your email address.'); return; }
     setLoading(true);
     try {
-      // Send OTP to both channels
-      const emailResult = await authApi.sendOtp(phone.trim(), 'email');
+      // Send OTP to email address (delivers HTML email via SMTP/SES)
+      const emailResult = await authApi.sendOtp(email.trim(), 'email');
+      // Send OTP to WhatsApp/SMS using phone number with the same code
+      // The server stores the OTP keyed to the email; phone is linked on verify
       await authApi.sendOtp(phone.trim(), 'whatsapp');
       setOtpSent(true);
       if (emailResult.code) setDevCode(emailResult.code);
@@ -67,8 +69,10 @@ export default function Signup() {
     if (!otpCode.trim()) { setError('Please enter the OTP code.'); return; }
     setLoading(true);
     try {
+      // Use email as the lookup key when channel is 'email', phone when 'whatsapp'
+      const lookupTarget = channel === 'email' ? (email.trim() || phone.trim()) : phone.trim();
       await otpLogin({
-        phone: phone.trim(),
+        phone: lookupTarget,
         code: otpCode.trim(),
         channel,
         displayName: displayName.trim() || undefined,

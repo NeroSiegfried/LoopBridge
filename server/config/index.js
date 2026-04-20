@@ -67,6 +67,12 @@ const config = {
     newsletterFromEmail: process.env.NEWSLETTER_FROM_EMAIL || 'newsletter@loopbridge.network',
     newsletterFromName: process.env.NEWSLETTER_FROM_NAME || 'LoopBridge',
 
+    // ─── Twilio (WhatsApp / SMS OTP) ─────────────────────
+    twilioAccountSid:      process.env.TWILIO_ACCOUNT_SID  || null,
+    twilioAuthToken:       process.env.TWILIO_AUTH_TOKEN   || null,
+    twilioWhatsAppFrom:    process.env.TWILIO_WHATSAPP_FROM || null,  // e.g. whatsapp:+14155238886
+    twilioSmsSenderNumber: process.env.TWILIO_SMS_FROM      || null,  // E.164 fallback for SMS
+
     // ─── CORS ────────────────────────────────────────────
     corsOrigin: process.env.CORS_ORIGIN || true,                 // true = reflect
 

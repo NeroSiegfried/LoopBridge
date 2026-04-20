@@ -137,9 +137,8 @@ jobs:
               \"aws ecr get-login-password --region us-east-1 | sudo docker login --username AWS --password-stdin 680128294518.dkr.ecr.us-east-1.amazonaws.com\",
               \"echo '--- Pulling sandbox image ---'\",
               \"sudo docker pull ${IMAGE}:sandbox-${SHA}\",
-              \"echo '--- Stopping old sandbox container ---'\",
-              \"sudo docker stop ${{ env.CONTAINER_NAME }} 2>/dev/null || true\",
-              \"sudo docker rm   ${{ env.CONTAINER_NAME }} 2>/dev/null || true\",
+              "echo '--- Stopping old sandbox container ---'",
+              "sudo docker rm -f ${{ env.CONTAINER_NAME }} 2>/dev/null || true",
               \"echo '--- Checkpointing prod WAL so snapshot is complete ---'\",
               \"sudo docker exec -w /app/server loopbridge node -e \\\"const db=require('better-sqlite3')(process.env.DB_PATH);db.pragma('wal_checkpoint(TRUNCATE)');db.close();console.log('WAL checkpoint done')\\\" || echo 'WARNING: checkpoint failed, snapshot may be incomplete'\",
               \"echo '--- Snapshotting prod DB into sandbox DB ---'\",
@@ -151,7 +150,7 @@ jobs:
               \"echo '--- Last 10 log lines ---'\",
               \"sudo docker logs ${{ env.CONTAINER_NAME }} --tail 10\",
               \"echo '--- Pruning old sandbox images ---'\",
-              \"sudo docker images ${IMAGE} --format '{{.Tag}}\t{{.ID}}' | grep '^sandbox-' | tail -n +4 | awk '{print \\$2}' | xargs -r sudo docker rmi -f 2>/dev/null || true\"
+              "sudo docker images ${IMAGE} --format '{{.Tag}} {{.ID}}' | grep '^sandbox-' | tail -n +4 | awk '{print $2}' | xargs -r sudo docker rmi -f 2>/dev/null || true"
             ]" \
             --query 'Command.CommandId' \
             --output text)

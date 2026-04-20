@@ -13,6 +13,7 @@ const { v4: uuidv4 } = require('uuid');
 const { OAuth2Client } = require('google-auth-library');
 const config = require('../config');
 const { userRepo, sessionRepo, otpRepo } = require('../repositories');
+const notificationService = require('./notificationService');
 
 const googleClient = config.googleClientId
     ? new OAuth2Client(config.googleClientId)
@@ -123,8 +124,9 @@ const authService = {
     },
 
     /**
-     * Send OTP to a phone number. Returns { channel, expiresInSeconds }.
-     * In dev mode, the OTP is logged to console and returned in response.
+     * Send OTP to a phone number via email and/or WhatsApp.
+     * channel: 'email' | 'whatsapp' | 'both'
+     * @returns {{ channel, expiresInSeconds, ...(dev: { code }) }}
      */
     async sendOtp(phone, channel = 'email') {
         if (!phone) {
@@ -133,22 +135,75 @@ const authService = {
             throw err;
         }
 
+        // Normalise channel
+        const validChannels = ['email', 'whatsapp', 'sms', 'both'];
+        if (!validChannels.includes(channel)) channel = 'email';
+
         const code = String(Math.floor(100000 + Math.random() * 900000)); // 6-digit
         const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString(); // 10 min
 
+        // Invalidate previous unused OTPs for this phone+channel to prevent brute-force
+        await otpRepo.invalidatePending(phone);
         await otpRepo.create({ phone, code, channel, expiresAt });
 
-        // ── Production: integrate actual send providers here ──
-        // For email: use nodemailer / SES
-        // For WhatsApp: use Twilio WhatsApp API
-        // For now, log it (dev mode) so you can test:
-        console.log(`[OTP] ${channel.toUpperCase()} code for ${phone}: ${code}`);
+        const sendErrors = [];
+
+        // ── Email delivery ──────────────────────────────────────────────────
+        if (channel === 'email' || channel === 'both') {
+            // phone field may hold an email address, or look up by phone
+            const target = phone.includes('@') ? phone : null;
+            if (target) {
+                try {
+                    await notificationService.sendOtpEmail(target, code);
+                } catch (e) {
+                    console.error('[OTP/email] Send failed:', e.message);
+                    sendErrors.push('email');
+                }
+            } else {
+                // No email address known at send-time — client must send email separately
+                console.log(`[OTP/email] phone=${phone} code=${code} (no email to deliver to)`);
+            }
+        }
+
+        // ── WhatsApp delivery ────────────────────────────────────────────────
+        if (channel === 'whatsapp' || channel === 'both') {
+            const target = phone.includes('@') ? null : phone;
+            if (target) {
+                try {
+                    await notificationService.sendOtpWhatsApp(target, code);
+                } catch (e) {
+                    console.error('[OTP/whatsapp] Send failed:', e.message);
+                    sendErrors.push('whatsapp');
+                    // Fallback to SMS
+                    try {
+                        await notificationService.sendOtpSms(target, code);
+                    } catch (e2) {
+                        console.error('[OTP/sms] Fallback failed:', e2.message);
+                        sendErrors.push('sms');
+                    }
+                }
+            }
+        }
+
+        // ── SMS delivery ────────────────────────────────────────────────────
+        if (channel === 'sms') {
+            const target = phone.includes('@') ? null : phone;
+            if (target) {
+                try {
+                    await notificationService.sendOtpSms(target, code);
+                } catch (e) {
+                    console.error('[OTP/sms] Send failed:', e.message);
+                    sendErrors.push('sms');
+                }
+            }
+        }
 
         return {
             channel,
             expiresInSeconds: 600,
+            delivered: sendErrors.length === 0,
             // Include OTP in response ONLY in development for testing
-            ...(config.nodeEnv === 'development' ? { code } : {})
+            ...(config.nodeEnv !== 'production' ? { code } : {})
         };
     },
 

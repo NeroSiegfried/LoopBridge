@@ -4,10 +4,11 @@
 'use strict';
 
 module.exports = {
-    authService:    require('./authService'),
-    articleService: require('./articleService'),
-    courseService:  require('./courseService'),
-    storageService: require('./storageService'),
+    authService:          require('./authService'),
+    articleService:       require('./articleService'),
+    courseService:        require('./courseService'),
+    storageService:       require('./storageService'),
+    notificationService:  require('./notificationService'),
     categorizationService: require('./categorizationService'),
     recommendationService: require('./recommendationService'),
     transcodingService: require('./transcodingService'),
