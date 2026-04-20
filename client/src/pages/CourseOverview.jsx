@@ -90,9 +90,17 @@ export default function CourseOverview() {
 
       <section className="course-hero">
         <div className="section-container">
-          <Link to="/courses" className="back-to-courses">
+          <Link
+            to={course.track ? `/courses/${course.track}` : '/courses'}
+            className="back-to-courses"
+          >
             <i className="fa-solid fa-angle-left" />
-            <span>Back to all courses</span>
+            <span>
+              Back to {course.track
+                ? `${course.track.charAt(0).toUpperCase() + course.track.slice(1)} Track`
+                : 'All Courses'
+              }
+            </span>
           </Link>
           <div className="banner">
             <div className="body">

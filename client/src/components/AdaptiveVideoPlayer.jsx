@@ -11,15 +11,17 @@ import '../styles/adaptive-player.css';
  * or for plain .mp4 URLs.
  *
  * Props:
- *   src           — video URL (.mp4 or .m3u8 HLS manifest)
- *   poster        — optional poster/thumbnail image
- *   onEnded       — callback when video ends
- *   onTimeUpdate  — callback with current time (for quiz pause-points)
- *   className     — CSS class for the container
- *   autoPlay      — boolean
+ *   src              — video URL (.mp4 or .m3u8 HLS manifest)
+ *   poster           — optional poster/thumbnail image
+ *   onEnded          — callback when video ends
+ *   onTimeUpdate     — callback with current time (for quiz pause-points)
+ *   className        — CSS class for the container
+ *   autoPlay         — boolean: start playing immediately
+ *   autoFullscreen   — boolean: enter fullscreen as soon as video is ready
+ *   quizOverlay      — overlay element rendered inside the player
  */
 const AdaptiveVideoPlayer = forwardRef(function AdaptiveVideoPlayer(
-  { src, poster, onEnded, onTimeUpdate, className = '', autoPlay = false, quizOverlay = null },
+  { src, poster, onEnded, onTimeUpdate, className = '', autoPlay = false, autoFullscreen = false, quizOverlay = null },
   ref
 ) {
   const videoRef = useRef(null);
@@ -231,19 +233,51 @@ const AdaptiveVideoPlayer = forwardRef(function AdaptiveVideoPlayer(
     };
   }, [seeking]);
 
-  // Fullscreen tracking
+  // Fullscreen tracking (desktop + iOS Safari)
   useEffect(() => {
     const onFSChange = () => {
       const fsEl = document.fullscreenElement || document.webkitFullscreenElement;
       setIsFullscreen(fsEl === containerRef.current);
     };
+    // iOS Safari fires these on the <video> element, not the document
+    const onIOSEnter = () => setIsFullscreen(true);
+    const onIOSExit  = () => setIsFullscreen(false);
+
     document.addEventListener('fullscreenchange', onFSChange);
     document.addEventListener('webkitfullscreenchange', onFSChange);
+
+    const vid = videoRef.current;
+    if (vid) {
+      vid.addEventListener('webkitbeginfullscreen', onIOSEnter);
+      vid.addEventListener('webkitendfullscreen', onIOSExit);
+    }
     return () => {
       document.removeEventListener('fullscreenchange', onFSChange);
       document.removeEventListener('webkitfullscreenchange', onFSChange);
+      if (vid) {
+        vid.removeEventListener('webkitbeginfullscreen', onIOSEnter);
+        vid.removeEventListener('webkitendfullscreen', onIOSExit);
+      }
     };
   }, []);
+
+  // Auto-fullscreen on load
+  useEffect(() => {
+    if (!autoFullscreen) return;
+    const vid = videoRef.current;
+    if (!vid) return;
+    const onReady = () => {
+      // Use a tiny timeout so the browser doesn't block the gesture requirement
+      setTimeout(() => {
+        const el = containerRef.current;
+        if (vid.webkitEnterFullscreen) vid.webkitEnterFullscreen();
+        else if (el?.requestFullscreen) el.requestFullscreen();
+        else if (el?.webkitRequestFullscreen) el.webkitRequestFullscreen();
+      }, 100);
+    };
+    vid.addEventListener('loadedmetadata', onReady, { once: true });
+    return () => vid.removeEventListener('loadedmetadata', onReady);
+  }, [autoFullscreen]);
 
   // Close settings when clicking outside
   useEffect(() => {
@@ -269,11 +303,25 @@ const AdaptiveVideoPlayer = forwardRef(function AdaptiveVideoPlayer(
 
   const toggleFullscreen = useCallback(() => {
     const el = containerRef.current;
+    const vid = videoRef.current;
     if (!el) return;
-    if (document.fullscreenElement || document.webkitFullscreenElement) {
-      (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+
+    const isInFS = document.fullscreenElement || document.webkitFullscreenElement
+      || (vid && vid.webkitDisplayingFullscreen);
+
+    if (isInFS) {
+      if (document.exitFullscreen) document.exitFullscreen();
+      else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+      else if (vid?.webkitExitFullscreen) vid.webkitExitFullscreen();
     } else {
-      (el.requestFullscreen || el.webkitRequestFullscreen).call(el);
+      // iOS Safari only supports fullscreen on the <video> element itself
+      if (vid && vid.webkitEnterFullscreen) {
+        vid.webkitEnterFullscreen();
+      } else if (el.requestFullscreen) {
+        el.requestFullscreen();
+      } else if (el.webkitRequestFullscreen) {
+        el.webkitRequestFullscreen();
+      }
     }
   }, []);
 
