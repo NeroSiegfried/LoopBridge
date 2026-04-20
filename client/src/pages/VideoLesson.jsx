@@ -34,6 +34,8 @@ export default function VideoLesson() {
   const [activeQuiz, setActiveQuiz] = useState(null); // { questions, atSeconds, pointIdx }
   const [answers, setAnswers] = useState({});
   const [quizResult, setQuizResult] = useState(null); // { score, passed }
+  const [shuffledMaps, setShuffledMaps] = useState({}); // { [qIdx]: number[] } — shuffled original-indices
+  const [endShuffledMaps, setEndShuffledMaps] = useState({});
   const [completedQuizPoints, setCompletedQuizPoints] = useState(new Set());
   const [showEndQuiz, setShowEndQuiz] = useState(false);
   const [endQuizAnswers, setEndQuizAnswers] = useState({});
@@ -41,6 +43,20 @@ export default function VideoLesson() {
   const [lessonComplete, setLessonComplete] = useState(false);
 
   const videoRef = useRef(null);
+
+  /** Fisher-Yates shuffle — returns an array of original indices in new display order */
+  const buildShuffleMaps = (questions) => {
+    const maps = {};
+    questions.forEach((q, i) => {
+      const indices = q.options.map((_, j) => j);
+      for (let k = indices.length - 1; k > 0; k--) {
+        const r = Math.floor(Math.random() * (k + 1));
+        [indices[k], indices[r]] = [indices[r], indices[k]];
+      }
+      maps[i] = indices;
+    });
+    return maps;
+  };
 
   useEffect(() => {
     setLoading(true);
@@ -121,6 +137,7 @@ export default function VideoLesson() {
   const handleRetryQuiz = () => {
     setAnswers({});
     setQuizResult(null);
+    if (activeQuiz) setShuffledMaps(buildShuffleMaps(activeQuiz.questions));
     trackEvent('quiz_retry', {
       courseId,
       quizId: `${courseId}-${topicIdx}-${subIdx}-qp${activeQuiz?.pointIdx}`,
@@ -132,6 +149,7 @@ export default function VideoLesson() {
     setActiveQuiz(null);
     setQuizResult(null);
     setAnswers({});
+    setShuffledMaps({});
     videoRef.current?.play();
   };
 
@@ -169,6 +187,7 @@ export default function VideoLesson() {
   const handleRetryEndQuiz = () => {
     setEndQuizAnswers({});
     setEndQuizResult(null);
+    if (sub?.endQuiz) setEndShuffledMaps(buildShuffleMaps(sub.endQuiz));
   };
 
   const handleVideoEnd = () => {
@@ -182,6 +201,7 @@ export default function VideoLesson() {
     const endQuiz = sub?.endQuiz || [];
     if (endQuiz.length > 0 && !lessonComplete) {
       setShowEndQuiz(true);
+      setEndShuffledMaps(buildShuffleMaps(endQuiz));
       return;
     }
 
@@ -262,7 +282,6 @@ export default function VideoLesson() {
         <div className="lesson-container">
           {/* Video player */}
           <div className="video-quiz-container">
-            <div className="video-wrapper">
               {(sub.hlsUrl || sub.videoUrl) ? (
                 <AdaptiveVideoPlayer
                   ref={videoRef}
@@ -282,6 +301,7 @@ export default function VideoLesson() {
                         setActiveQuiz({ ...point, pointIdx: i });
                         setAnswers({});
                         setQuizResult(null);
+                        setShuffledMaps(buildShuffleMaps(point.questions));
                         trackEvent('quiz_start', {
                           courseId,
                           quizId: `${courseId}-${topicIdx}-${subIdx}-qp${i}`,
@@ -292,6 +312,99 @@ export default function VideoLesson() {
                     }
                   }}
                   className="lesson-video"
+                  quizOverlay={activeQuiz ? (
+                    <div className="quiz-overlay">
+                      <div className="quiz-card">
+                        <div className="quiz-header">
+                          <i className="fa-solid fa-clipboard-list" />
+                          <h3>Quick Check</h3>
+                          <p>Answer correctly to continue (70% to pass)</p>
+                        </div>
+
+                        {!quizResult ? (
+                          <div className="quiz-body">
+                            {activeQuiz.questions.map((q, qIdx) => {
+                              const order = shuffledMaps[qIdx] || q.options.map((_, i) => i);
+                              return (
+                                <div className="quiz-question" key={qIdx}>
+                                  <p className="question-text">{qIdx + 1}. {q.question}</p>
+                                  <div className="question-options">
+                                    {order.map((origIdx, displayIdx) => (
+                                      <button
+                                        key={origIdx}
+                                        className={`option-btn${answers[qIdx] === origIdx ? ' selected' : ''}`}
+                                        onClick={() => handleAnswer(qIdx, origIdx)}
+                                      >
+                                        <span className="option-letter">{String.fromCharCode(65 + displayIdx)}</span>
+                                        {q.options[origIdx]}
+                                      </button>
+                                    ))}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                            <button
+                              className="quiz-submit-btn"
+                              onClick={handleSubmitQuiz}
+                              disabled={Object.keys(answers).length < activeQuiz.questions.length}
+                            >
+                              Submit Answers
+                            </button>
+                          </div>
+                        ) : (
+                          <div className="quiz-result">
+                            <div className={`result-badge ${quizResult.passed ? 'passed' : 'failed'}`}>
+                              <i className={`fa-solid ${quizResult.passed ? 'fa-circle-check' : 'fa-circle-xmark'}`} />
+                              <span>{quizResult.score}%</span>
+                            </div>
+                            <p className="result-text">
+                              {quizResult.passed
+                                ? `Great job! You got ${quizResult.correct}/${quizResult.total} correct.`
+                                : `You got ${quizResult.correct}/${quizResult.total}. You need 70% to continue.`}
+                            </p>
+                            {/* Per-option explanations */}
+                            {activeQuiz.questions.some(q => q.optionExplanations?.some(Boolean)) && (
+                              <div className="quiz-explanations">
+                                {activeQuiz.questions.map((q, qIdx) => (
+                                  <div className="explanation-block" key={qIdx}>
+                                    <p className="explanation-question">{qIdx + 1}. {q.question}</p>
+                                    {q.options.map((opt, origIdx) => {
+                                      const isCorrect = origIdx === (q.correctIndex ?? q.correct);
+                                      const isSelected = answers[qIdx] === origIdx;
+                                      const expl = q.optionExplanations?.[origIdx];
+                                      return (
+                                        <div
+                                          key={origIdx}
+                                          className={`explanation-option${isCorrect ? ' expl-correct' : ''}${isSelected && !isCorrect ? ' expl-wrong' : ''}`}
+                                        >
+                                          <span className="expl-indicator">
+                                            <i className={`fa-solid ${isCorrect ? 'fa-check' : isSelected ? 'fa-xmark' : 'fa-minus'}`} />
+                                          </span>
+                                          <span className="expl-text">
+                                            <strong>{opt}</strong>
+                                            {expl && <span className="expl-detail"> — {expl}</span>}
+                                          </span>
+                                        </div>
+                                      );
+                                    })}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                            {quizResult.passed ? (
+                              <button className="quiz-continue-btn" onClick={handleContinueAfterQuiz}>
+                                Continue Video <i className="fa-solid fa-arrow-right" />
+                              </button>
+                            ) : (
+                              <button className="quiz-retry-btn" onClick={handleRetryQuiz}>
+                                <i className="fa-solid fa-rotate-left" /> Try Again
+                              </button>
+                            )}
+                          </div>
+                        )}
+                      </div>
+                    </div>
+                  ) : null}
                 />
               ) : (
                 <div className="video-placeholder">
@@ -300,70 +413,6 @@ export default function VideoLesson() {
                   <p className="placeholder-sub">This lesson's video content is being prepared.</p>
                 </div>
               )}
-            </div>
-
-            {/* Quiz overlay — outside video-wrapper to avoid overflow:hidden clipping */}
-            {activeQuiz && (
-              <div className="quiz-overlay">
-                <div className="quiz-card">
-                  <div className="quiz-header">
-                    <i className="fa-solid fa-clipboard-list" />
-                    <h3>Quick Check</h3>
-                    <p>Answer correctly to continue (70% to pass)</p>
-                  </div>
-
-                  {!quizResult ? (
-                    <div className="quiz-body">
-                      {activeQuiz.questions.map((q, qIdx) => (
-                        <div className="quiz-question" key={qIdx}>
-                          <p className="question-text">{qIdx + 1}. {q.question}</p>
-                          <div className="question-options">
-                            {q.options.map((opt, oIdx) => (
-                              <button
-                                key={oIdx}
-                                className={`option-btn${answers[qIdx] === oIdx ? ' selected' : ''}`}
-                                onClick={() => handleAnswer(qIdx, oIdx)}
-                              >
-                                <span className="option-letter">{String.fromCharCode(65 + oIdx)}</span>
-                                {opt}
-                              </button>
-                            ))}
-                          </div>
-                        </div>
-                      ))}
-                      <button
-                        className="quiz-submit-btn"
-                        onClick={handleSubmitQuiz}
-                        disabled={Object.keys(answers).length < activeQuiz.questions.length}
-                      >
-                        Submit Answers
-                      </button>
-                    </div>
-                  ) : (
-                    <div className="quiz-result">
-                      <div className={`result-badge ${quizResult.passed ? 'passed' : 'failed'}`}>
-                        <i className={`fa-solid ${quizResult.passed ? 'fa-circle-check' : 'fa-circle-xmark'}`} />
-                        <span>{quizResult.score}%</span>
-                      </div>
-                      <p className="result-text">
-                        {quizResult.passed
-                          ? `Great job! You got ${quizResult.correct}/${quizResult.total} correct.`
-                          : `You got ${quizResult.correct}/${quizResult.total}. You need 70% to continue.`}
-                      </p>
-                      {quizResult.passed ? (
-                        <button className="quiz-continue-btn" onClick={handleContinueAfterQuiz}>
-                          Continue Video <i className="fa-solid fa-arrow-right" />
-                        </button>
-                      ) : (
-                        <button className="quiz-retry-btn" onClick={handleRetryQuiz}>
-                          <i className="fa-solid fa-rotate-left" /> Try Again
-                        </button>
-                      )}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
           </div>
 
           {/* Lesson info */}
@@ -424,23 +473,26 @@ export default function VideoLesson() {
 
                 {!endQuizResult ? (
                   <div className="quiz-body">
-                    {sub.endQuiz.map((q, qIdx) => (
-                      <div className="quiz-question" key={qIdx}>
-                        <p className="question-text">{qIdx + 1}. {q.question}</p>
-                        <div className="question-options">
-                          {q.options.map((opt, oIdx) => (
-                            <button
-                              key={oIdx}
-                              className={`option-btn${endQuizAnswers[qIdx] === oIdx ? ' selected' : ''}`}
-                              onClick={() => handleEndQuizAnswer(qIdx, oIdx)}
-                            >
-                              <span className="option-letter">{String.fromCharCode(65 + oIdx)}</span>
-                              {opt}
-                            </button>
-                          ))}
+                    {sub.endQuiz.map((q, qIdx) => {
+                      const order = endShuffledMaps[qIdx] || q.options.map((_, i) => i);
+                      return (
+                        <div className="quiz-question" key={qIdx}>
+                          <p className="question-text">{qIdx + 1}. {q.question}</p>
+                          <div className="question-options">
+                            {order.map((origIdx, displayIdx) => (
+                              <button
+                                key={origIdx}
+                                className={`option-btn${endQuizAnswers[qIdx] === origIdx ? ' selected' : ''}`}
+                                onClick={() => handleEndQuizAnswer(qIdx, origIdx)}
+                              >
+                                <span className="option-letter">{String.fromCharCode(65 + displayIdx)}</span>
+                                {q.options[origIdx]}
+                              </button>
+                            ))}
+                          </div>
                         </div>
-                      </div>
-                    ))}
+                      );
+                    })}
                     <button
                       className="quiz-submit-btn"
                       onClick={handleSubmitEndQuiz}
@@ -460,6 +512,35 @@ export default function VideoLesson() {
                         ? `Great job! You got ${endQuizResult.correct}/${endQuizResult.total} correct.`
                         : `You got ${endQuizResult.correct}/${endQuizResult.total}. You need 70% to continue.`}
                     </p>
+                    {/* Per-option explanations */}
+                    {sub.endQuiz.some(q => q.optionExplanations?.some(Boolean)) && (
+                      <div className="quiz-explanations">
+                        {sub.endQuiz.map((q, qIdx) => (
+                          <div className="explanation-block" key={qIdx}>
+                            <p className="explanation-question">{qIdx + 1}. {q.question}</p>
+                            {q.options.map((opt, origIdx) => {
+                              const isCorrect = origIdx === (q.correctIndex ?? q.correct);
+                              const isSelected = endQuizAnswers[qIdx] === origIdx;
+                              const expl = q.optionExplanations?.[origIdx];
+                              return (
+                                <div
+                                  key={origIdx}
+                                  className={`explanation-option${isCorrect ? ' expl-correct' : ''}${isSelected && !isCorrect ? ' expl-wrong' : ''}`}
+                                >
+                                  <span className="expl-indicator">
+                                    <i className={`fa-solid ${isCorrect ? 'fa-check' : isSelected ? 'fa-xmark' : 'fa-minus'}`} />
+                                  </span>
+                                  <span className="expl-text">
+                                    <strong>{opt}</strong>
+                                    {expl && <span className="expl-detail"> — {expl}</span>}
+                                  </span>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        ))}
+                      </div>
+                    )}
                     {!endQuizResult.passed && (
                       <button className="quiz-retry-btn" onClick={handleRetryEndQuiz}>
                         <i className="fa-solid fa-rotate-left" /> Try Again

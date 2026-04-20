@@ -3,7 +3,10 @@ import { Link } from 'react-router-dom';
 import SEO from '../components/SEO';
 import Newsletter from '../components/Newsletter';
 import { articlesApi } from '../api';
+import { readingTime } from '../utils';
 import '../styles/blog.css';
+
+const DEFAULT_COVER = '/images/article-pic.jpg';
 
 const CATEGORIES = ['All', 'Learning', 'News', 'Markets', 'Community', 'Airdrops', 'Culture', 'Project Watch'];
 
@@ -92,11 +95,11 @@ export default function Blog() {
               featured.map((a) => (
                 <Link to={`/articles/${a.id}`} key={a.id}>
                   <div className="article-card">
-                    <div className="article-image" style={a.image ? { backgroundImage: `url(${a.image})` } : {}}>
+                    <div className="article-image" style={{ backgroundImage: `url(${a.image || DEFAULT_COVER})` }}>
                     </div>
                     <div className="article-category">{a.category || 'Category Name'}</div>
                     <h3 className="article-title">{a.title}</h3>
-                    <p className="article-description">5 min read</p>
+                    <p className="article-description">{readingTime(a.content)}</p>
                   </div>
                 </Link>
               ))
@@ -142,11 +145,11 @@ export default function Blog() {
               <div className="article-container" key={a.id}>
                 <Link to={`/articles/${a.id}`}>
                   <div className="article-card">
-                    <div className="article-image" style={a.image ? { backgroundImage: `url(${a.image})` } : {}}>
+                    <div className="article-image" style={{ backgroundImage: `url(${a.image || DEFAULT_COVER})` }}>
                     </div>
                     <div className="article-category">{a.category || 'Category Name'}</div>
                     <h3 className="article-title">{a.title}</h3>
-                    <p className="article-description">By {typeof a.author === 'object' ? a.author?.name : a.author || 'LoopBridge Team'}</p>
+                    <p className="article-description">By {typeof a.author === 'object' ? a.author?.name : a.author || 'LoopBridge Team'} · {readingTime(a.content)}</p>
                   </div>
                 </Link>
               </div>

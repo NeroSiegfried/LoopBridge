@@ -298,17 +298,17 @@
 }
 
 /* ─── Quiz Overlay (video pause-points) ──────── */
+/* Rendered inside .adaptive-player via quizOverlay prop */
 
 .quiz-overlay {
     position: absolute;
     inset: 0;
-    background-color: rgba(0, 0, 0, 0.85);
+    background-color: rgba(0, 0, 0, 0.88);
     display: flex;
     align-items: center;
     justify-content: center;
-    z-index: 20;
+    z-index: 50;
     padding: 1.5rem;
-    border-radius: 1rem;
     overflow-y: auto;
 }
 
@@ -318,7 +318,7 @@
     padding: 2rem;
     max-width: 600px;
     width: 100%;
-    max-height: 80vh;
+    max-height: 85%;
     overflow-y: auto;
 }
 
@@ -553,6 +553,98 @@
 
 .quiz-retry-btn:hover {
     background-color: var(--gray-dark);
+}
+
+/* ─── Quiz Overlay: polish ───────────────────── */
+
+/* Ensure the overlay scrolls cleanly in fullscreen too */
+.adaptive-player.is-fullscreen .quiz-overlay {
+    position: fixed;
+    z-index: 100;
+}
+
+/* Option states after submission */
+.option-btn.correct-answer {
+    border-color: #1b8a3d;
+    background-color: #e6f9ee;
+}
+
+.option-btn.wrong-answer {
+    border-color: #d32f2f;
+    background-color: #ffeaec;
+}
+
+.option-btn.correct-answer .option-letter {
+    background-color: #1b8a3d;
+    color: white;
+}
+
+.option-btn.wrong-answer .option-letter {
+    background-color: #d32f2f;
+    color: white;
+}
+
+/* ─── Per-option Explanations ────────────────── */
+
+.quiz-explanations {
+    text-align: left;
+    margin: 1rem 0 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.25rem;
+}
+
+.explanation-block {
+    font-family: 'Schibsted Grotesk', sans-serif;
+}
+
+.explanation-question {
+    font-weight: 600;
+    font-size: 0.9375rem;
+    color: var(--lb-blue-text);
+    margin-bottom: 0.5rem;
+}
+
+.explanation-option {
+    display: flex;
+    align-items: flex-start;
+    gap: 0.625rem;
+    padding: 0.5rem 0.75rem;
+    border-radius: 0.5rem;
+    margin-bottom: 0.375rem;
+    font-size: 0.875rem;
+    background-color: var(--gray-mid, #f2f4f6);
+    color: var(--black-mid);
+}
+
+.explanation-option.expl-correct {
+    background-color: #e6f9ee;
+    color: #1b5e20;
+}
+
+.explanation-option.expl-wrong {
+    background-color: #ffeaec;
+    color: #b71c1c;
+}
+
+.expl-indicator {
+    flex-shrink: 0;
+    width: 1.25rem;
+    text-align: center;
+    font-size: 0.8125rem;
+    margin-top: 0.1rem;
+}
+
+.explanation-option.expl-correct .expl-indicator { color: #1b8a3d; }
+.explanation-option.expl-wrong   .expl-indicator { color: #d32f2f; }
+
+.expl-text {
+    line-height: 1.5;
+}
+
+.expl-detail {
+    font-weight: 300;
+    opacity: 0.85;
 }
 
 /* ─── Lesson Complete Badge ──────────────────── */

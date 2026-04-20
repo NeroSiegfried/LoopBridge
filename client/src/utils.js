@@ -30,8 +30,12 @@ export function readingTime(content) {
   const text = Array.isArray(content)
     ? content.map((b) => b.text || b.value || '').join(' ')
     : String(content);
-  const words = text.split(/\s+/).length;
+  const words = text.split(/\s+/).filter(Boolean).length;
   const mins = Math.max(1, Math.ceil(words / 200));
+  if (mins >= 60) {
+    const hrs = (mins / 60).toFixed(1).replace(/\.0$/, '');
+    return `${hrs} hr read`;
+  }
   return `${mins} min read`;
 }
 

@@ -29,7 +29,7 @@ router.post('/:uploadId', requireAuthor, async (req, res) => {
 
         const result = await transcodingService.transcodeVideo(upload.id, upload.path);
         if (!result) {
-            return res.status(503).json({ error: 'Transcoding not configured. Set MEDIACONVERT_ROLE_ARN and MEDIACONVERT_ENDPOINT.' });
+            return res.status(503).json({ error: 'Transcoding failed to start. Check server logs for details.' });
         }
 
         return res.json(result);
