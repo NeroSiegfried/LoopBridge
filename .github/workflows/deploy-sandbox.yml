@@ -120,61 +120,19 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region:            ${{ env.AWS_REGION }}
 
+      - name: Checkout scripts
+        uses: actions/checkout@v4
+
       - name: Send sandbox deploy command via SSM
         id: ssm
         run: |
-          python3 - > /tmp/ssm-sandbox.json << 'INNERPY'
-import json, os
-image    = os.environ['IMAGE']
-sha      = os.environ['SHA']
-instance = os.environ['INSTANCE']
-container= os.environ['CONTAINER']
-port     = os.environ['PORT']
-db       = os.environ['DBPATH']
-bucket   = os.environ['BUCKET']
-region   = os.environ['REGION']
-registry = '680128294518.dkr.ecr.us-east-1.amazonaws.com'
-mc_role  = 'arn:aws:iam::680128294518:role/loopbridge-mediaconvert-role'
-
-cmds = [
-  'set -euo pipefail',
-  'echo "--- Authenticating with ECR ---"',
-  f'aws ecr get-login-password --region {region} | sudo docker login --username AWS --password-stdin {registry}',
-  f'echo "--- Pulling {image}:sandbox-{sha} ---"',
-  f'sudo docker pull {image}:sandbox-{sha}',
-  'echo "--- Stopping old sandbox container ---"',
-  f'sudo docker rm -f {container} 2>/dev/null || true',
-  'echo "--- Checkpointing prod WAL ---"',
-  "sudo docker exec -w /app/server loopbridge node -e \"const db=require(\'better-sqlite3\')(process.env.DB_PATH);db.pragma(\'wal_checkpoint(TRUNCATE)\');db.close();\" || echo \'WARNING: checkpoint failed\'",
-  'echo "--- Snapshotting prod DB ---"',
-  f'sudo cp /data/loopbridge.db {db} && sudo rm -f {db}-wal {db}-shm && echo "DB snapshot done" || echo "WARNING: prod DB not found, starting fresh"',
-  f'echo "--- Starting sandbox on port {port} ---"',
-  f'sudo docker run -d --name {container} --restart unless-stopped -p {port}:3000 -v /data:/data -e NODE_ENV=production -e DB_TYPE=sqlite -e DB_PATH={db} -e STORAGE_DRIVER=s3 -e S3_BUCKET={bucket} -e S3_REGION={region} -e S3_PREFIX=sandbox/ -e MEDIACONVERT_ENDPOINT=https://mediaconvert.{region}.amazonaws.com -e MEDIACONVERT_ROLE_ARN={mc_role} -e COOKIE_SECURE=false -e CORS_ORIGIN=true {image}:sandbox-{sha}',
-  'echo "--- Container status ---"',
-  f'sleep 5 && sudo docker ps --filter name={container} --format "table {{{{.Names}}}}\\t{{{{.Status}}}}\\t{{{{.Ports}}}}"',
-  'echo "--- Last 10 log lines ---"',
-  f'sudo docker logs {container} --tail 10',
-  'echo "--- Pruning old sandbox images ---"',
-  f"sudo docker images {image} --format \'{{{{.Tag}}}} {{{{.ID}}}}\' | grep '^sandbox-' | tail -n +4 | awk \'{{print $2}}\' | xargs -r sudo docker rmi -f 2>/dev/null || true",
-]
-
-print(json.dumps({
-  'InstanceIds': [instance],
-  'DocumentName': 'AWS-RunShellScript',
-  'Comment': f'Sandbox deploy {sha}',
-  'TimeoutSeconds': 300,
-  'Parameters': {'commands': cmds},
-}, indent=2))
-INNERPY
-
+          python3 .github/scripts/build-ssm-sandbox-payload.py > /tmp/ssm-sandbox.json
           echo "--- SSM payload ---"
           cat /tmp/ssm-sandbox.json
-
           COMMAND_ID=$(aws ssm send-command \
             --cli-input-json file:///tmp/ssm-sandbox.json \
             --query 'Command.CommandId' \
             --output text)
-
           echo "command_id=$COMMAND_ID" >> $GITHUB_OUTPUT
           echo "SSM command sent: $COMMAND_ID"
         env:
