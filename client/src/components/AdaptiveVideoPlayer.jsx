@@ -135,7 +135,7 @@ const AdaptiveVideoPlayer = forwardRef(function AdaptiveVideoPlayer(
         const lvls = data.levels || [];
         setLevels(lvls);
         setIsHLS(true);
-        // Set aspect ratio from manifest — available immediately, before any frame decodes
+        // Try manifest RESOLUTION first (present if MediaConvert includes it)
         const l = lvls[0];
         if (l?.width && l?.height) {
           setVideoAspectRatio(`${l.width} / ${l.height}`);
@@ -143,15 +143,23 @@ const AdaptiveVideoPlayer = forwardRef(function AdaptiveVideoPlayer(
         if (autoPlay) videoEl.play().catch(() => {});
       });
 
-      hls.on(Hls.Events.LEVEL_SWITCHED, (_, data) => {
-        setCurrentLevel(data.level);
-      });
-
+      // FRAG_BUFFERED fires after each fragment is appended to the SourceBuffer.
+      // By the first fragment, videoEl.videoWidth/videoHeight are always set —
+      // this is the most reliable fallback when the manifest has no RESOLUTION.
+      let dimensionsSet = false;
       hls.on(Hls.Events.FRAG_BUFFERED, (_, data) => {
+        if (!dimensionsSet && videoEl.videoWidth && videoEl.videoHeight) {
+          dimensionsSet = true;
+          setVideoAspectRatio(`${videoEl.videoWidth} / ${videoEl.videoHeight}`);
+        }
         if (data.stats) {
           const bw = Math.round(data.stats.bwEstimate / 1000); // kbps
           setCurrentBandwidth(bw);
         }
+      });
+
+      hls.on(Hls.Events.LEVEL_SWITCHED, (_, data) => {
+        setCurrentLevel(data.level);
       });
 
       hls.on(Hls.Events.ERROR, (_, data) => {
@@ -268,8 +276,9 @@ const AdaptiveVideoPlayer = forwardRef(function AdaptiveVideoPlayer(
     };
   }, []);
 
-  // For native HLS (Safari) and plain MP4: detect dimensions via DOM events.
-  // For hls.js streams, dimensions are set directly from MANIFEST_PARSED above.
+  // Detect video dimensions for correct aspect ratio.
+  // 'playing' is the most reliable DOM fallback — fires when the video
+  // actually starts playing, by which point videoWidth/videoHeight are always set.
   useEffect(() => {
     const vid = videoRef.current;
     if (!vid) return;
@@ -279,12 +288,13 @@ const AdaptiveVideoPlayer = forwardRef(function AdaptiveVideoPlayer(
         setVideoAspectRatio(`${vid.videoWidth} / ${vid.videoHeight}`);
       }
     };
-    // 'resize' fires on <video> whenever intrinsic dimensions change
-    vid.addEventListener('resize',      applyDimensions);
-    vid.addEventListener('loadeddata',  applyDimensions);
+    vid.addEventListener('resize',     applyDimensions); // fires when intrinsic size changes
+    vid.addEventListener('loadeddata', applyDimensions); // after first frame decoded
+    vid.addEventListener('playing',    applyDimensions); // guaranteed to have dimensions
     return () => {
       vid.removeEventListener('resize',     applyDimensions);
       vid.removeEventListener('loadeddata', applyDimensions);
+      vid.removeEventListener('playing',    applyDimensions);
     };
   }, [src]);
 
