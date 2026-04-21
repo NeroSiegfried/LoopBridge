@@ -23,14 +23,10 @@ export default function Signup() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
-  const [googleClientId, setGoogleClientId] = useState(
-    import.meta.env.VITE_GOOGLE_CLIENT_ID || null
-  );
-  const [gsiReady, setGsiReady] = useState(false);
+  const [googleClientId, setGoogleClientId] = useState(null);
 
-  // Only fetch from server if not in build env
+  // Read Google Client ID from server
   useEffect(() => {
-    if (googleClientId) return;
     authApi.getGoogleClientId()
       .then((data) => { if (data.clientId) setGoogleClientId(data.clientId); })
       .catch(() => {});
@@ -62,7 +58,6 @@ export default function Signup() {
           theme: 'outline', size: 'large', width: '100%', text: 'continue_with',
         });
       }
-      setGsiReady(true);
     };
     if (window.google?.accounts?.id) { init(); return; }
     const script = document.createElement('script');
@@ -191,21 +186,12 @@ export default function Signup() {
 
                 {error && <div className="login-error visible">{error}</div>}
 
-                <div className="social-login" style={{ marginTop: 0, marginBottom: '1.25rem' }}>
-                  <div id="google-signup-btn" className="google-btn-wrapper" />
-                  {!gsiReady && (
-                    <button
-                      type="button"
-                      className="btn-phone-signup"
-                      style={{ gap: '0.6rem' }}
-                      onClick={() => setError('Google Sign-In is not configured yet. Use phone \u0026 email below.')}
-                    >
-                      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="" style={{ width: 18, height: 18 }} />
-                      Continue with Google
-                    </button>
-                  )}
-                  <div className="divider"><span>or sign up with phone &amp; email</span></div>
-                </div>
+                {googleClientId && (
+                  <div className="social-login" style={{ marginTop: 0, marginBottom: '1.25rem' }}>
+                    <div id="google-signup-btn" className="google-btn-wrapper" />
+                    <div className="divider"><span>or sign up with phone &amp; email</span></div>
+                  </div>
+                )}
 
                 <form onSubmit={handleSendBothChannels}>
                   <div className="form-group">

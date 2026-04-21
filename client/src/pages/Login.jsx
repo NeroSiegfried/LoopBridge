@@ -13,15 +13,10 @@ export default function Login() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  // Read from Vite build env first, fall back to server fetch
-  const [googleClientId, setGoogleClientId] = useState(
-    import.meta.env.VITE_GOOGLE_CLIENT_ID || null
-  );
-  const [gsiReady, setGsiReady] = useState(false);
+  const [googleClientId, setGoogleClientId] = useState(null);
 
-  // Only fetch from server if not already in build env
+  // Read Google Client ID from server (server reads GOOGLE_CLIENT_ID env var)
   useEffect(() => {
-    if (googleClientId) return;
     authApi.getGoogleClientId()
       .then((data) => { if (data.clientId) setGoogleClientId(data.clientId); })
       .catch(() => {});
@@ -41,7 +36,7 @@ export default function Login() {
     }
   }, [googleLogin, navigate]);
 
-  // Load + initialize Google GSI script
+  // Load + initialize Google GSI script once clientId is available
   useEffect(() => {
     if (!googleClientId) return;
     const initGsi = () => {
@@ -55,7 +50,6 @@ export default function Login() {
           theme: 'outline', size: 'large', width: '100%', text: 'continue_with',
         });
       }
-      setGsiReady(true);
     };
     if (window.google?.accounts?.id) { initGsi(); return; }
     const script = document.createElement('script');
@@ -155,23 +149,12 @@ export default function Login() {
             </form>
 
             {/* ─── Google SSO ─── */}
-            <div className="social-login">
-              <div className="divider"><span>or</span></div>
-              {/* GSI renders into this div when googleClientId is available */}
-              <div id="google-signin-btn" className="google-btn-wrapper" />
-              {/* Fallback: show a styled button if GSI hasn't loaded yet */}
-              {!gsiReady && (
-                <button
-                  type="button"
-                  className="btn-phone-signup"
-                  style={{ gap: '0.6rem' }}
-                  onClick={() => setError('Google Sign-In is not configured yet. Use phone/email signup below.')}
-                >
-                  <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="" style={{ width: 18, height: 18 }} />
-                  Continue with Google
-                </button>
-              )}
-            </div>
+            {googleClientId && (
+              <div className="social-login">
+                <div className="divider"><span>or</span></div>
+                <div id="google-signin-btn" className="google-btn-wrapper" />
+              </div>
+            )}
 
             {/* ─── Phone / Email OTP Signup ─── */}
             <div className="social-login">
