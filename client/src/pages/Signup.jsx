@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { authApi } from '../api';
@@ -10,7 +10,7 @@ import '../styles/signup.css';
 const STEPS = { PHONE: 'phone', VERIFY: 'verify', PROFILE: 'profile' };
 
 export default function Signup() {
-  const { otpLogin } = useAuth();
+  const { otpLogin, googleLogin } = useAuth();
   const navigate = useNavigate();
 
   const [step, setStep] = useState(STEPS.PHONE);
@@ -23,6 +23,55 @@ export default function Signup() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
+  const [googleClientId, setGoogleClientId] = useState(
+    import.meta.env.VITE_GOOGLE_CLIENT_ID || null
+  );
+  const [gsiReady, setGsiReady] = useState(false);
+
+  // Only fetch from server if not in build env
+  useEffect(() => {
+    if (googleClientId) return;
+    authApi.getGoogleClientId()
+      .then((data) => { if (data.clientId) setGoogleClientId(data.clientId); })
+      .catch(() => {});
+  }, []);
+
+  const handleGoogleResponse = useCallback(async (response) => {
+    setError('');
+    setLoading(true);
+    try {
+      await googleLogin(response.credential);
+      navigate('/');
+    } catch (err) {
+      setError(err.message || 'Google sign-in failed.');
+    } finally {
+      setLoading(false);
+    }
+  }, [googleLogin, navigate]);
+
+  useEffect(() => {
+    if (!googleClientId) return;
+    const init = () => {
+      window.google.accounts.id.initialize({
+        client_id: googleClientId,
+        callback: handleGoogleResponse,
+      });
+      const el = document.getElementById('google-signup-btn');
+      if (el) {
+        window.google.accounts.id.renderButton(el, {
+          theme: 'outline', size: 'large', width: '100%', text: 'continue_with',
+        });
+      }
+      setGsiReady(true);
+    };
+    if (window.google?.accounts?.id) { init(); return; }
+    const script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true; script.defer = true;
+    script.onload = init;
+    document.head.appendChild(script);
+    return () => { if (script.parentNode) script.parentNode.removeChild(script); };
+  }, [googleClientId, handleGoogleResponse]);
 
   const handleSendOtp = async (e) => {
     e.preventDefault();
@@ -141,6 +190,22 @@ export default function Signup() {
                 <p className="subtitle">We'll send a verification code to your email and WhatsApp</p>
 
                 {error && <div className="login-error visible">{error}</div>}
+
+                <div className="social-login" style={{ marginTop: 0, marginBottom: '1.25rem' }}>
+                  <div id="google-signup-btn" className="google-btn-wrapper" />
+                  {!gsiReady && (
+                    <button
+                      type="button"
+                      className="btn-phone-signup"
+                      style={{ gap: '0.6rem' }}
+                      onClick={() => setError('Google Sign-In is not configured yet. Use phone \u0026 email below.')}
+                    >
+                      <img src="https://www.gstatic.com/firebasejs/ui/2.0.0/images/auth/google.svg" alt="" style={{ width: 18, height: 18 }} />
+                      Continue with Google
+                    </button>
+                  )}
+                  <div className="divider"><span>or sign up with phone &amp; email</span></div>
+                </div>
 
                 <form onSubmit={handleSendBothChannels}>
                   <div className="form-group">

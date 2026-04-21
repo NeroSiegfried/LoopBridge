@@ -132,8 +132,14 @@ const AdaptiveVideoPlayer = forwardRef(function AdaptiveVideoPlayer(
       hls.attachMedia(videoEl);
 
       hls.on(Hls.Events.MANIFEST_PARSED, (_, data) => {
-        setLevels(data.levels || []);
+        const lvls = data.levels || [];
+        setLevels(lvls);
         setIsHLS(true);
+        // Set aspect ratio from manifest — available immediately, before any frame decodes
+        const l = lvls[0];
+        if (l?.width && l?.height) {
+          setVideoAspectRatio(`${l.width} / ${l.height}`);
+        }
         if (autoPlay) videoEl.play().catch(() => {});
       });
 
@@ -262,12 +268,8 @@ const AdaptiveVideoPlayer = forwardRef(function AdaptiveVideoPlayer(
     };
   }, []);
 
-  // Detect video natural dimensions and update container aspect ratio.
-  // For HLS streams, videoWidth/videoHeight are 0 at loadedmetadata time —
-  // they only become available after the first frame decodes. The 'resize'
-  // event fires on the <video> element specifically when dimensions change,
-  // making it the most reliable trigger. We also check loadeddata + canplay
-  // as fallbacks for plain MP4s.
+  // For native HLS (Safari) and plain MP4: detect dimensions via DOM events.
+  // For hls.js streams, dimensions are set directly from MANIFEST_PARSED above.
   useEffect(() => {
     const vid = videoRef.current;
     if (!vid) return;
@@ -277,13 +279,12 @@ const AdaptiveVideoPlayer = forwardRef(function AdaptiveVideoPlayer(
         setVideoAspectRatio(`${vid.videoWidth} / ${vid.videoHeight}`);
       }
     };
-    vid.addEventListener('resize',       applyDimensions);
-    vid.addEventListener('loadeddata',   applyDimensions);
-    vid.addEventListener('canplay',      applyDimensions);
+    // 'resize' fires on <video> whenever intrinsic dimensions change
+    vid.addEventListener('resize',      applyDimensions);
+    vid.addEventListener('loadeddata',  applyDimensions);
     return () => {
       vid.removeEventListener('resize',     applyDimensions);
       vid.removeEventListener('loadeddata', applyDimensions);
-      vid.removeEventListener('canplay',    applyDimensions);
     };
   }, [src]);
 
