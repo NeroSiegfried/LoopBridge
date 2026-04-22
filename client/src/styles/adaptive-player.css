@@ -15,10 +15,21 @@
 }
 
 .adaptive-player video {
+  /* Fill the 16:9 container; object-fit:contain letterboxes portrait content */
   width: 100%;
   height: 100%;
   display: block;
+  background: #000;
   object-fit: contain;
+}
+
+/* Portrait videos: let the video element size to its natural aspect ratio
+   so the browser uses the correct shape for Picture-in-Picture windows */
+.adaptive-player.is-portrait video {
+  width: auto;
+  height: 100%;
+  max-width: 100%;
+  margin: 0 auto;
 }
 
 .adaptive-player:fullscreen,
@@ -27,13 +38,47 @@
   aspect-ratio: unset !important;
   width: 100vw !important;
   height: 100dvh !important;
+  background: #000;
+}
+
+/* In fullscreen, landscape video spans full width; portrait spans full height */
+.adaptive-player:fullscreen video,
+.adaptive-player:-webkit-full-screen video {
+  width: 100vw;
+  height: 100dvh;
+  object-fit: contain;
+  border-radius: 0;
+}
+
+/* Portrait: size by height so the video column is narrow — not stretched to landscape */
+.adaptive-player:fullscreen.is-portrait video,
+.adaptive-player:-webkit-full-screen.is-portrait video {
+  width: auto;
+  height: 100dvh;
+  max-width: 100vw;
+  margin: 0 auto;
 }
 
 .adaptive-player.is-fullscreen {
   border-radius: 0;
   width: 100vw !important;
-  height: 100vh !important;
+  height: 100dvh !important;
   aspect-ratio: unset !important;
+  background: #000;
+}
+
+.adaptive-player.is-fullscreen video {
+  width: 100vw;
+  height: 100dvh;
+  object-fit: contain;
+  border-radius: 0;
+}
+
+.adaptive-player.is-fullscreen.is-portrait video {
+  width: auto;
+  height: 100dvh;
+  max-width: 100vw;
+  margin: 0 auto;
 }
 
 /* ── Buffering spinner ─────────────────────────────────────── */
@@ -258,31 +303,7 @@
 }
 
 
-.adaptive-player video {
-  width: 100%;
-  height: 100%;
-  object-fit: contain;
-  border-radius: 0.75rem;
-}
 
-/* Fullscreen: fill the screen, keep controls visible */
-.adaptive-player:fullscreen,
-.adaptive-player:-webkit-full-screen {
-  border-radius: 0;
-  background: #000;
-}
-
-.adaptive-player:fullscreen video,
-.adaptive-player:-webkit-full-screen video {
-  border-radius: 0;
-}
-
-.adaptive-player:fullscreen .quality-selector,
-.adaptive-player:-webkit-full-screen .quality-selector {
-  bottom: 60px;
-  right: 16px;
-  z-index: 2147483647;
-}
 
 /* ─── Buffering Spinner ─────────────────────── */
 
@@ -345,17 +366,7 @@
   background: rgba(0, 0, 0, 0.9);
 }
 
-/* In fullscreen mode, fill the screen */
-.adaptive-player.is-fullscreen {
-  width: 100vw !important;
-  height: 100vh !important;
-  aspect-ratio: unset;
-  border-radius: 0;
-}
 
-.adaptive-player.is-fullscreen video {
-  border-radius: 0;
-}
 
 .quality-btn {
   display: flex;

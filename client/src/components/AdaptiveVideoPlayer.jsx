@@ -48,6 +48,7 @@ const AdaptiveVideoPlayer = forwardRef(function AdaptiveVideoPlayer(
   const [playbackRate, setPlaybackRate] = useState(1);
   const [controlsVisible, setControlsVisible] = useState(true);
   const [seeking, setSeeking] = useState(false);
+  const [isPortrait, setIsPortrait] = useState(false);
 
   // Expose both the video element AND container to parent via ref
   useImperativeHandle(ref, () => ({
@@ -210,27 +211,30 @@ const AdaptiveVideoPlayer = forwardRef(function AdaptiveVideoPlayer(
     const onDurChng = () => setDuration(video.duration || 0);
     const onVolChng = () => { setVolume(video.volume); setMuted(video.muted); };
     const onRateChng= () => setPlaybackRate(video.playbackRate);
-    video.addEventListener('play',        onPlay);
-    video.addEventListener('pause',       onPause);
-    video.addEventListener('ended',       onEnded_);
-    video.addEventListener('waiting',     onWaiting);
-    video.addEventListener('playing',     onPlaying);
-    video.addEventListener('canplay',     onCanPlay);
-    video.addEventListener('timeupdate',  onTimeUpd);
+    const onMeta    = () => setIsPortrait(video.videoHeight > video.videoWidth);
+    video.addEventListener('play',           onPlay);
+    video.addEventListener('pause',          onPause);
+    video.addEventListener('ended',          onEnded_);
+    video.addEventListener('waiting',        onWaiting);
+    video.addEventListener('playing',        onPlaying);
+    video.addEventListener('canplay',        onCanPlay);
+    video.addEventListener('timeupdate',     onTimeUpd);
     video.addEventListener('durationchange', onDurChng);
-    video.addEventListener('volumechange',onVolChng);
-    video.addEventListener('ratechange',  onRateChng);
+    video.addEventListener('volumechange',   onVolChng);
+    video.addEventListener('ratechange',     onRateChng);
+    video.addEventListener('loadedmetadata', onMeta);
     return () => {
-      video.removeEventListener('play',        onPlay);
-      video.removeEventListener('pause',       onPause);
-      video.removeEventListener('ended',       onEnded_);
-      video.removeEventListener('waiting',     onWaiting);
-      video.removeEventListener('playing',     onPlaying);
-      video.removeEventListener('canplay',     onCanPlay);
-      video.removeEventListener('timeupdate',  onTimeUpd);
+      video.removeEventListener('play',           onPlay);
+      video.removeEventListener('pause',          onPause);
+      video.removeEventListener('ended',          onEnded_);
+      video.removeEventListener('waiting',        onWaiting);
+      video.removeEventListener('playing',        onPlaying);
+      video.removeEventListener('canplay',        onCanPlay);
+      video.removeEventListener('timeupdate',     onTimeUpd);
       video.removeEventListener('durationchange', onDurChng);
-      video.removeEventListener('volumechange',onVolChng);
-      video.removeEventListener('ratechange',  onRateChng);
+      video.removeEventListener('volumechange',   onVolChng);
+      video.removeEventListener('ratechange',     onRateChng);
+      video.removeEventListener('loadedmetadata', onMeta);
     };
   }, [seeking]);
 
@@ -370,7 +374,7 @@ const AdaptiveVideoPlayer = forwardRef(function AdaptiveVideoPlayer(
   return (
     <div
       ref={containerRef}
-      className={`adaptive-player ${className} ${isFullscreen ? 'is-fullscreen' : ''}`}
+      className={`adaptive-player ${className} ${isFullscreen ? 'is-fullscreen' : ''} ${isPortrait ? 'is-portrait' : ''}`}
       onMouseMove={resetHideTimer}
       onMouseEnter={resetHideTimer}
       onMouseLeave={() => { clearTimeout(hideControlsTimer.current); setControlsVisible(false); }}
@@ -384,7 +388,7 @@ const AdaptiveVideoPlayer = forwardRef(function AdaptiveVideoPlayer(
         poster={poster || undefined}
         onEnded={onEnded}
         onTimeUpdate={onTimeUpdate ? (e) => onTimeUpdate(e.target.currentTime) : undefined}
-        style={{ width: '100%', height: '100%', display: 'block', background: '#000' }}
+        style={{ display: 'block' }}
         playsInline
         onContextMenu={(e) => e.preventDefault()}
       />
