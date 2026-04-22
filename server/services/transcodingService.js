@@ -307,14 +307,17 @@ async function transcodeVideoLocally(uploadId, localPath) {
     masterLines.push(''); // trailing newline
     fs.writeFileSync(path.join(outputDir, 'manifest.m3u8'), masterLines.join('\n'));
 
-    // Capture a thumbnail at 3 s via ffmpeg
+    // Capture a thumbnail at 3 s via ffmpeg.
+    // Use '?x360' for landscape (auto-width, max 360 height) or '360x?' for portrait
+    // to preserve aspect ratio — fluent-ffmpeg's fixed '640x360' squashes portrait video.
+    const thumbSize = (displayHeight && displayWidth && displayHeight > displayWidth) ? '360x?' : '?x360';
     await new Promise((resolve) => {
         ffmpeg(inputPath)
             .screenshots({
                 timestamps: ['3'],
                 filename: 'thumb.jpg',
                 folder: outputDir,
-                size: '640x360',
+                size: thumbSize,
             })
             .on('end', resolve)
             .on('error', (err) => {
