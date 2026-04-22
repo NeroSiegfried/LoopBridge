@@ -150,6 +150,11 @@ async function createTranscodeJob(uploadId, s3Key) {
         },
         UserMetadata: {
             uploadId,
+            // Lambda reads these and POSTs to the correct server instance.
+            // Allows prod and sandbox to coexist on the same EC2 with different ports.
+            callbackUrl: config.transcodeWebhookUrl || '',
+            callbackSecret: config.transcodeWebhookSecret || 'loopbridge-transcode-callback',
+            s3Prefix: config.s3Prefix || '',
         },
         StatusUpdateInterval: 'SECONDS_30',
     };

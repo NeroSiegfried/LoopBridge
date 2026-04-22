@@ -44,6 +44,10 @@ const config = {
     // ─── Video Transcoding (AWS MediaConvert) ────────────
     mediaConvertEndpoint: process.env.MEDIACONVERT_ENDPOINT || null,
     mediaConvertRoleArn: process.env.MEDIACONVERT_ROLE_ARN || null,
+    // Webhook the lambda will call back when a job completes.
+    // Must be reachable from Lambda (public IP/hostname of this server).
+    transcodeWebhookUrl: process.env.TRANSCODE_WEBHOOK_URL || null,
+    transcodeWebhookSecret: process.env.TRANSCODE_WEBHOOK_SECRET || 'loopbridge-transcode-callback',
 
     // ─── Social Media Links ─────────────────────────────────
     socialTelegram: process.env.SOCIAL_TELEGRAM || '',

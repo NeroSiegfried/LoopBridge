@@ -27,9 +27,15 @@ export const handler = async (event) => {
 
   const s3Bucket = process.env.S3_BUCKET || 'loopbridge-uploads-680128294518';
   const s3Region = process.env.S3_REGION || 'us-east-1';
-  const s3Prefix = process.env.S3_PREFIX || '';
-  const webhookUrl = process.env.WEBHOOK_URL || 'http://44.197.184.251/api/transcode/webhook';
-  const webhookSecret = process.env.WEBHOOK_SECRET || 'loopbridge-transcode-callback';
+
+  // Prefer the callback URL embedded in the job's UserMetadata (set per-environment by the server).
+  // Fall back to the Lambda env var for jobs created before this change.
+  const webhookUrl = userMetadata.callbackUrl || process.env.WEBHOOK_URL || 'http://44.197.184.251/api/transcode/webhook';
+  const webhookSecret = userMetadata.callbackSecret || process.env.WEBHOOK_SECRET || 'loopbridge-transcode-callback';
+
+  // S3 prefix: prefer the one embedded in job metadata (matches server's S3_PREFIX at submit time).
+  // The prefix is already baked into the output path by the server; we just reconstruct the URL.
+  const s3Prefix = userMetadata.s3Prefix || process.env.S3_PREFIX || '';
 
   // Construct the HLS URL from the known output path convention
   const hlsUrl = `https://${s3Bucket}.s3.${s3Region}.amazonaws.com/${s3Prefix}transcoded/${uploadId}/stream.m3u8`;

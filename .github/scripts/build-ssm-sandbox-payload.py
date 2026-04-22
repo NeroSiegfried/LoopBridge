@@ -18,6 +18,7 @@ bucket   = os.environ['BUCKET']
 region   = os.environ['REGION']
 registry = '680128294518.dkr.ecr.us-east-1.amazonaws.com'
 mc_role  = 'arn:aws:iam::680128294518:role/loopbridge-mediaconvert-role'
+ec2_ip   = os.environ.get('EC2_IP', '44.197.184.251')
 
 cmds = [
     'set -euo pipefail',
@@ -45,6 +46,7 @@ cmds = [
         f' -e STORAGE_DRIVER=s3 -e S3_BUCKET={bucket} -e S3_REGION={region} -e S3_PREFIX=sandbox/'
         f' -e MEDIACONVERT_ENDPOINT=https://mediaconvert.{region}.amazonaws.com'
         f' -e MEDIACONVERT_ROLE_ARN={mc_role}'
+        f' -e TRANSCODE_WEBHOOK_URL=http://{ec2_ip}:{port}/api/transcode/webhook'
         f' -e COOKIE_SECURE=false -e CORS_ORIGIN=true'
         f' {image}:sandbox-{sha}'
     ),
