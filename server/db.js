@@ -340,7 +340,9 @@ CREATE TABLE IF NOT EXISTS uploads (
     thumbnail_url    TEXT,
     transcode_job_id TEXT,
     transcode_status TEXT DEFAULT 'none',
-    transcode_error  TEXT
+    transcode_error  TEXT,
+    video_width      INTEGER,
+    video_height     INTEGER
 );
 CREATE TABLE IF NOT EXISTS analytics_events (
     id           SERIAL PRIMARY KEY,
@@ -512,7 +514,9 @@ const SQLITE_SCHEMA = `
         thumbnail_url    TEXT,
         transcode_job_id TEXT,
         transcode_status TEXT DEFAULT 'none',
-        transcode_error  TEXT
+        transcode_error  TEXT,
+        video_width      INTEGER,
+        video_height     INTEGER
     );
     CREATE TABLE IF NOT EXISTS analytics_events (
         id           INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -596,6 +600,8 @@ async function runMigrations() {
         { table: 'uploads',   column: 'transcode_job_id', type: 'TEXT',                          pgType: 'TEXT' },
         { table: 'uploads',   column: 'transcode_status', type: "TEXT DEFAULT 'none'",           pgType: "TEXT DEFAULT 'none'" },
         { table: 'uploads',   column: 'transcode_error',  type: 'TEXT',                          pgType: 'TEXT' },
+        { table: 'uploads',   column: 'video_width',       type: 'INTEGER',                       pgType: 'INTEGER' },
+        { table: 'uploads',   column: 'video_height',      type: 'INTEGER',                       pgType: 'INTEGER' },
         // users
         { table: 'users',     column: 'is_root',          type: 'INTEGER NOT NULL DEFAULT 0',    pgType: 'INTEGER NOT NULL DEFAULT 0' },
         // articles

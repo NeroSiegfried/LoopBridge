@@ -20,6 +20,8 @@ const emptySubsection = () => ({
   uploadId: '',
   hlsUrl: '',
   thumbnailUrl: '',
+  videoWidth: null,
+  videoHeight: null,
   content: [],           // content blocks — available for ALL lesson types
   quizPoints: [],        // inline quiz pause-points: [{ atSeconds, questions }]
   endQuiz: [],           // end-of-lesson quiz questions
@@ -159,6 +161,8 @@ export default function EditCourse() {
         hlsUrl: data.hlsUrl || '',
         thumbnailUrl: data.thumbnailUrl || '',
         uploadId: data.id || '',
+        videoWidth: data.videoWidth || null,
+        videoHeight: data.videoHeight || null,
         uploadState: data.hlsUrl ? 'done' : 'processing',
         uploadProgress: 100,
       });
@@ -189,6 +193,8 @@ export default function EditCourse() {
           updateSub(tIdx, sIdx, {
             hlsUrl: status.hlsUrl || '',
             thumbnailUrl: status.thumbnailUrl || '',
+            videoWidth: status.videoWidth || null,
+            videoHeight: status.videoHeight || null,
             uploadState: 'done',
           });
           return;
@@ -398,6 +404,8 @@ export default function EditCourse() {
               out.hlsUrl = s.hlsUrl;
               out.thumbnailUrl = s.thumbnailUrl;
               out.uploadId = s.uploadId;
+              if (s.videoWidth)  out.videoWidth  = s.videoWidth;
+              if (s.videoHeight) out.videoHeight = s.videoHeight;
             }
             // Inline quiz pause-points (video only)
             if (s.quizPoints?.length > 0) {

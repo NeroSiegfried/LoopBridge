@@ -52,10 +52,40 @@ router.post('/', requireAuthor, upload.array('files', config.maxFiles), async (r
         return res.status(400).json({ error: 'No files uploaded.' });
     }
 
+    // Probe video dimensions BEFORE saveFiles (S3 driver deletes temp file after upload)
+    const ffmpeg = require('fluent-ffmpeg');
+    const probedDimensions = await Promise.all(req.files.map(async (file) => {
+        if (!file.mimetype.startsWith('video/')) return null;
+        try {
+            const meta = await new Promise((resolve, reject) => {
+                ffmpeg.ffprobe(file.path, (err, data) => err ? reject(err) : resolve(data));
+            });
+            const vs = meta.streams.find(s => s.codec_type === 'video');
+            if (!vs) return null;
+            // Account for rotation metadata (e.g. portrait phone videos encoded as 1920x1080 + rotate:90)
+            const rotate = parseInt(vs.tags?.rotate || vs.rotation || '0', 10);
+            const swapped = Math.abs(rotate) === 90 || Math.abs(rotate) === 270;
+            return swapped
+                ? { width: vs.height, height: vs.width }
+                : { width: vs.width, height: vs.height };
+        } catch (e) {
+            console.warn('[uploads] ffprobe failed for', file.originalname, e.message);
+            return null;
+        }
+    }));
+
     const results = await storageService.saveFiles(req.files, req.user ? req.user.id : null);
 
-    // Auto-trigger transcoding for video uploads (non-blocking)
-    for (const result of results) {
+    // Store dimensions and auto-trigger transcoding for video uploads (non-blocking)
+    const { uploadRepo } = require('../repositories');
+    for (let i = 0; i < results.length; i++) {
+        const result = results[i];
+        const dims = probedDimensions[i];
+        if (dims) {
+            await uploadRepo.updateDimensions(result.id, dims.width, dims.height);
+            result.videoWidth = dims.width;
+            result.videoHeight = dims.height;
+        }
         if (result.mimeType && result.mimeType.startsWith('video/')) {
             // Fire and forget — don't block the upload response
             const rawRecord = await storageService.getRawById(result.id);

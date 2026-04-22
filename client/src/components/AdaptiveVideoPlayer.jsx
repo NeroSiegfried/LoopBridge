@@ -21,7 +21,7 @@ import '../styles/adaptive-player.css';
  *   quizOverlay      — overlay element rendered inside the player
  */
 const AdaptiveVideoPlayer = forwardRef(function AdaptiveVideoPlayer(
-  { src, poster, onEnded, onTimeUpdate, className = '', autoPlay = false, autoFullscreen = false, quizOverlay = null },
+  { src, poster, onEnded, onTimeUpdate, className = '', autoPlay = false, autoFullscreen = false, quizOverlay = null, isPortraitHint = false },
   ref
 ) {
   const videoRef = useRef(null);
@@ -48,7 +48,7 @@ const AdaptiveVideoPlayer = forwardRef(function AdaptiveVideoPlayer(
   const [playbackRate, setPlaybackRate] = useState(1);
   const [controlsVisible, setControlsVisible] = useState(true);
   const [seeking, setSeeking] = useState(false);
-  const [isPortrait, setIsPortrait] = useState(false);
+  const [isPortrait, setIsPortrait] = useState(isPortraitHint);
 
   // Expose both the video element AND container to parent via ref
   useImperativeHandle(ref, () => ({

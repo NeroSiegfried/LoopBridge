@@ -54,6 +54,8 @@ router.get('/:uploadId/status', requireAuthor, async (req, res) => {
                     ...status,
                     hlsUrl: upload.hls_url,
                     thumbnailUrl: upload.thumbnail_url,
+                    videoWidth: upload.video_width || null,
+                    videoHeight: upload.video_height || null,
                 });
             } catch (err) {
                 return res.json({
@@ -61,6 +63,8 @@ router.get('/:uploadId/status', requireAuthor, async (req, res) => {
                     status: upload.transcode_status || 'unknown',
                     hlsUrl: upload.hls_url,
                     thumbnailUrl: upload.thumbnail_url,
+                    videoWidth: upload.video_width || null,
+                    videoHeight: upload.video_height || null,
                 });
             }
         }
@@ -70,6 +74,8 @@ router.get('/:uploadId/status', requireAuthor, async (req, res) => {
             status: upload.transcode_status || 'none',
             hlsUrl: upload.hls_url || null,
             thumbnailUrl: upload.thumbnail_url || null,
+            videoWidth: upload.video_width || null,
+            videoHeight: upload.video_height || null,
         });
     } catch (err) {
         console.error('[transcode status]', err.message);

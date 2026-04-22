@@ -235,6 +235,11 @@ async function transcodeVideoLocally(uploadId, localPath) {
 
     const videoStream = metadata.streams.find((s) => s.codec_type === 'video');
     const srcHeight = videoStream ? (videoStream.height || 9999) : 9999;
+    // Capture display dimensions (accounting for rotation metadata)
+    const rotate = parseInt(videoStream?.tags?.rotate || videoStream?.rotation || '0', 10);
+    const swapped = Math.abs(rotate) === 90 || Math.abs(rotate) === 270;
+    const displayWidth  = videoStream ? (swapped ? videoStream.height : videoStream.width)  : null;
+    const displayHeight = videoStream ? (swapped ? videoStream.width  : videoStream.height) : null;
 
     // Only encode presets whose height is <= source height
     let activePresets = PRESETS.filter((p) => p.height <= srcHeight);
@@ -318,7 +323,7 @@ async function transcodeVideoLocally(uploadId, localPath) {
     const hlsUrl = `/uploads/transcoded/${uploadId}/manifest.m3u8`;
     const thumbnailUrl = `/uploads/transcoded/${uploadId}/thumb.jpg`;
     console.log(`[transcode:local] Complete — ${hlsUrl}`);
-    return { hlsUrl, thumbnailUrl };
+    return { hlsUrl, thumbnailUrl, videoWidth: displayWidth, videoHeight: displayHeight };
 }
 
 /**
@@ -333,12 +338,15 @@ async function transcodeVideo(uploadId, s3Key) {
     // When MediaConvert credentials are absent, fall back to local ffmpeg.
     if (!config.mediaConvertRoleArn) {
         try {
-            const { hlsUrl, thumbnailUrl } = await transcodeVideoLocally(uploadId, s3Key);
+            const { hlsUrl, thumbnailUrl, videoWidth, videoHeight } = await transcodeVideoLocally(uploadId, s3Key);
             await uploadRepo.updateTranscodeStatus(uploadId, {
                 hlsUrl,
                 thumbnailUrl,
                 transcodeStatus: 'complete',
             });
+            if (videoWidth && videoHeight) {
+                await uploadRepo.updateDimensions(uploadId, videoWidth, videoHeight);
+            }
             return { hlsUrl };
         } catch (err) {
             console.error(`[transcode:local] Failed for ${uploadId}:`, err.message);
