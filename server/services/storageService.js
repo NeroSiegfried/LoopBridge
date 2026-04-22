@@ -120,7 +120,9 @@ const s3Driver = {
                 Body: fileBuffer,
                 ContentType: file.mimetype,
                 ContentDisposition: 'inline',
-                ACL: 'public-read',
+                // Public read is granted via bucket policy, not per-object ACL.
+                // (Per-object ACL requires "Block Public Access" to be fully disabled,
+                //  which is off by default and unsafe. Use the bucket policy below instead.)
             }));
 
             // Clean up temp file left by multer
