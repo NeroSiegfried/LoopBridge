@@ -134,6 +134,10 @@ const AdaptiveVideoPlayer = forwardRef(function AdaptiveVideoPlayer(
         const lvls = data.levels || [];
         setLevels(lvls);
         setIsHLS(true);
+        // Use level dimensions as an early portrait hint before any segment decodes
+        if (lvls.length > 0 && lvls[0].width > 0) {
+          setIsPortrait(lvls[0].height > lvls[0].width);
+        }
         if (autoPlay) videoEl.play().catch(() => {});
       });
 
@@ -211,7 +215,8 @@ const AdaptiveVideoPlayer = forwardRef(function AdaptiveVideoPlayer(
     const onDurChng = () => setDuration(video.duration || 0);
     const onVolChng = () => { setVolume(video.volume); setMuted(video.muted); };
     const onRateChng= () => setPlaybackRate(video.playbackRate);
-    const onMeta    = () => setIsPortrait(video.videoHeight > video.videoWidth);
+    const onMeta    = () => { if (video.videoWidth > 0) setIsPortrait(video.videoHeight > video.videoWidth); };
+    const onResize   = () => { if (video.videoWidth > 0) setIsPortrait(video.videoHeight > video.videoWidth); };
     video.addEventListener('play',           onPlay);
     video.addEventListener('pause',          onPause);
     video.addEventListener('ended',          onEnded_);
@@ -223,6 +228,7 @@ const AdaptiveVideoPlayer = forwardRef(function AdaptiveVideoPlayer(
     video.addEventListener('volumechange',   onVolChng);
     video.addEventListener('ratechange',     onRateChng);
     video.addEventListener('loadedmetadata', onMeta);
+    video.addEventListener('resize',         onResize);
     return () => {
       video.removeEventListener('play',           onPlay);
       video.removeEventListener('pause',          onPause);
@@ -235,6 +241,7 @@ const AdaptiveVideoPlayer = forwardRef(function AdaptiveVideoPlayer(
       video.removeEventListener('volumechange',   onVolChng);
       video.removeEventListener('ratechange',     onRateChng);
       video.removeEventListener('loadedmetadata', onMeta);
+      video.removeEventListener('resize',         onResize);
     };
   }, [seeking]);
 
