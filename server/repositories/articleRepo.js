@@ -16,6 +16,7 @@ function rowToArticle(row) {
         description: row.description,
         category: row.category,
         image: row.image,
+        authorId: row.author_id || null,
         author: {
             name: row.author_name || 'LoopBridge Team',
             avatar: row.author_avatar || null
@@ -25,6 +26,8 @@ function rowToArticle(row) {
         updatedAt: row.updated_at,
         createdAt: row.created_at,
         featured: !!row.featured,
+        hidden: !!row.hidden,
+        approved: !!row.approved,
         deleted: !!row.deleted,
         deletedAt: row.deleted_at,
         content: JSON.parse(row.content || '[]'),
@@ -43,14 +46,15 @@ const articleRepo = {
         return rowToArticle(await this.findById(id));
     },
 
-    async list({ category, featured, includeDeleted } = {}) {
+    async list({ category, featured, includeDeleted, includeHidden, includeUnapproved } = {}) {
         let sql = 'SELECT * FROM articles';
         const conditions = [];
         const params = {};
 
-        if (!includeDeleted) {
-            conditions.push('deleted = 0');
-        }
+        if (!includeDeleted)    conditions.push('deleted = 0');
+        if (!includeHidden)     conditions.push('hidden = 0');
+        if (!includeUnapproved) conditions.push('approved = 1');
+
         if (category && category !== 'All') {
             conditions.push('category = @category');
             params.category = category;
@@ -72,12 +76,12 @@ const articleRepo = {
         await db.runNamed(`
             INSERT INTO articles
                 (id, title, slug, description, category, image,
-                 author_name, author_avatar, read_time,
-                 published_at, updated_at, created_at, featured, content)
+                 author_id, author_name, author_avatar, read_time,
+                 published_at, updated_at, created_at, featured, hidden, approved, content)
             VALUES
                 (@id, @title, @slug, @description, @category, @image,
-                 @author_name, @author_avatar, @read_time,
-                 @published_at, @updated_at, @created_at, @featured, @content)
+                 @author_id, @author_name, @author_avatar, @read_time,
+                 @published_at, @updated_at, @created_at, @featured, @hidden, @approved, @content)
         `, {
             id: data.id,
             title: data.title || 'Untitled',
@@ -85,6 +89,7 @@ const articleRepo = {
             description: data.description || null,
             category: data.category || null,
             image: data.image || null,
+            author_id: data.authorId || null,
             author_name: data.authorName,
             author_avatar: data.authorAvatar || null,
             read_time: data.readTime || null,
@@ -92,6 +97,8 @@ const articleRepo = {
             updated_at: now,
             created_at: now,
             featured: data.featured ? 1 : 0,
+            hidden: data.hidden ? 1 : 0,
+            approved: data.approved ? 1 : 0,
             content: JSON.stringify(data.content || [])
         });
         return this.findByIdFormatted(data.id);
@@ -128,9 +135,21 @@ const articleRepo = {
         return this.findByIdFormatted(id);
     },
 
+    async setApproved(id, approved) {
+        await db.run('UPDATE articles SET approved = ? WHERE id = ?', [approved ? 1 : 0, id]);
+    },
+
+    async setHidden(id, hidden) {
+        await db.run('UPDATE articles SET hidden = ? WHERE id = ?', [hidden ? 1 : 0, id]);
+    },
+
     async softDelete(id) {
         const now = new Date().toISOString();
         await db.run('UPDATE articles SET deleted = 1, deleted_at = ? WHERE id = ?', [now, id]);
+    },
+
+    async hardDelete(id) {
+        await db.run('DELETE FROM articles WHERE id = ?', [id]);
     },
 
     async restore(id) {
@@ -142,6 +161,12 @@ const articleRepo = {
         await db.run('UPDATE articles SET views = views + 1 WHERE id = ?', [id]);
     },
 
+    async listByAuthorId(authorId) {
+        const { rows } = await db.query(
+            'SELECT * FROM articles WHERE author_id = ? ORDER BY published_at DESC', [authorId]);
+        return rows.map(rowToArticle);
+    },
+
     async listByAuthorIds(articleIds) {
         if (!articleIds || articleIds.length === 0) return [];
         const placeholders = articleIds.map(() => '?').join(',');
@@ -151,9 +176,9 @@ const articleRepo = {
     },
 
     async listByAuthorName(authorName) {
+        if (!authorName) return [];
         const { rows } = await db.query(
-            'SELECT * FROM articles WHERE author_name = ? ORDER BY published_at DESC',
-            [authorName]);
+            'SELECT * FROM articles WHERE author_name = ? ORDER BY published_at DESC', [authorName]);
         return rows.map(rowToArticle);
     }
 };

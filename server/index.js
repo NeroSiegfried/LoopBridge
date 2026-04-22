@@ -21,6 +21,9 @@
  */
 'use strict';
 
+// Load .env before any config/service modules read process.env
+require('dotenv').config();
+
 const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
@@ -40,6 +43,8 @@ const dashboardRoutes = require('./routes/dashboard');
 const analyticsRoutes = require('./routes/analytics');
 const recommendationsRoutes = require('./routes/recommendations');
 const transcodeRoutes = require('./routes/transcode');
+const adminUserRoutes = require('./routes/admin-users');
+const paymentRoutes   = require('./routes/payments');
 
 // ─── Create Express App ─────────────────────────────────
 const app = express();
@@ -107,6 +112,8 @@ app.use('/api/dashboard', rateLimit(RATE_WINDOW_MS, RATE_MAX_GENERAL), dashboard
 app.use('/api/analytics', rateLimit(RATE_WINDOW_MS, RATE_MAX_GENERAL), analyticsRoutes);
 app.use('/api/recommendations', rateLimit(RATE_WINDOW_MS, RATE_MAX_GENERAL), recommendationsRoutes);
 app.use('/api/transcode', rateLimit(RATE_WINDOW_MS, RATE_MAX_GENERAL), transcodeRoutes);
+app.use('/api/admin',    rateLimit(RATE_WINDOW_MS, RATE_MAX_GENERAL), adminUserRoutes);
+app.use('/api/payments', rateLimit(RATE_WINDOW_MS, RATE_MAX_GENERAL), paymentRoutes);
 app.use('/api', miscRoutes);
 
 // ─── Uploaded files (served at /uploads/*) ──────────────

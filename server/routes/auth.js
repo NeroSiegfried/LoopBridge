@@ -12,7 +12,7 @@
 'use strict';
 
 const express    = require('express');
-const rateLimit  = require('express-rate-limit');
+const { rateLimit, ipKeyGenerator } = require('express-rate-limit');
 const config     = require('../config');
 const { authService } = require('../services');
 
@@ -23,7 +23,7 @@ const router = express.Router();
 const otpSendLimiter = rateLimit({
     windowMs: 10 * 60 * 1000, // 10 min
     max: 5,
-    keyGenerator: (req) => `${req.ip}:${(req.body?.phone || '').replace(/\s/g, '')}`,
+    keyGenerator: (req) => `${ipKeyGenerator(req)}:${(req.body?.phone || '').replace(/\s/g, '')}`,
     handler: (req, res) => res.status(429).json({
         error: 'Too many OTP requests. Please wait 10 minutes before trying again.'
     }),
@@ -35,7 +35,7 @@ const otpSendLimiter = rateLimit({
 const otpVerifyLimiter = rateLimit({
     windowMs: 10 * 60 * 1000,
     max: 10,
-    keyGenerator: (req) => `${req.ip}:${(req.body?.phone || '').replace(/\s/g, '')}`,
+    keyGenerator: (req) => `${ipKeyGenerator(req)}:${(req.body?.phone || '').replace(/\s/g, '')}`,
     handler: (req, res) => res.status(429).json({
         error: 'Too many verification attempts. Please wait 10 minutes.'
     }),

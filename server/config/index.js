@@ -86,6 +86,20 @@ const config = {
     maxFileSize: parseInt(process.env.MAX_FILE_SIZE, 10) || 50 * 1024 * 1024,
     maxFiles: parseInt(process.env.MAX_FILES, 10) || 10,
     jsonBodyLimit: process.env.JSON_BODY_LIMIT || '50mb',
+
+    // ─── Payment Gateways ────────────────────────────────
+    // Paystack (Nigerian cards, bank transfers, USSD)
+    paystackSecretKey:  process.env.PAYSTACK_SECRET_KEY  || null,
+    paystackPublicKey:  process.env.PAYSTACK_PUBLIC_KEY  || null,
+    // Flutterwave (Nigerian + international)
+    flutterwaveSecretKey:  process.env.FLW_SECRET_KEY   || null,
+    flutterwavePublicKey:  process.env.FLW_PUBLIC_KEY   || null,
+    flutterwaveEncKey:     process.env.FLW_ENCRYPTION_KEY || null,
+    // NOWPayments (crypto — BTC, ETH, USDT, etc.)
+    nowpaymentsApiKey:  process.env.NOWPAYMENTS_API_KEY  || null,
+    nowpaymentsIpnSecret: process.env.NOWPAYMENTS_IPN_SECRET || null,
+    // App base URL (used for payment callbacks)
+    appBaseUrl: process.env.APP_BASE_URL || 'http://localhost:3000',
 };
 
 module.exports = config;

@@ -30,14 +30,16 @@ const userRepo = {
     },
 
     async getAll() {
-        const { rows } = await db.query('SELECT id, username, display_name, email, role, avatar, author_of, created_at FROM users ORDER BY created_at DESC');
+        const { rows } = await db.query(
+            'SELECT id, username, display_name, email, role, is_root, avatar, author_of, created_at FROM users ORDER BY created_at ASC'
+        );
         return rows;
     },
 
-    async create({ id, username, passwordHash, displayName, email, role, avatar, authorOf, googleId, phone }) {
+    async create({ id, username, passwordHash, displayName, email, role, isRoot, avatar, authorOf, googleId, phone }) {
         await db.runNamed(`
-            INSERT INTO users (id, username, password_hash, display_name, email, role, avatar, author_of, google_id, phone)
-            VALUES (@id, @username, @password_hash, @display_name, @email, @role, @avatar, @author_of, @google_id, @phone)
+            INSERT INTO users (id, username, password_hash, display_name, email, role, is_root, avatar, author_of, google_id, phone)
+            VALUES (@id, @username, @password_hash, @display_name, @email, @role, @is_root, @avatar, @author_of, @google_id, @phone)
         `, {
             id,
             username,
@@ -45,6 +47,7 @@ const userRepo = {
             display_name: displayName || '',
             email,
             role: role || 'user',
+            is_root: isRoot ? 1 : 0,
             avatar: avatar || null,
             author_of: JSON.stringify(authorOf || []),
             google_id: googleId || null,
@@ -70,6 +73,15 @@ const userRepo = {
             WHERE id = @id
         `, { id, ...merged });
 
+        return this.findById(id);
+    },
+
+    /** Promote or demote a user's role. Root-only action gated in service. */
+    async setRole(id, role) {
+        await db.run(
+            "UPDATE users SET role = ?, updated_at = datetime('now') WHERE id = ?",
+            [role, id]
+        );
         return this.findById(id);
     },
 

@@ -29,6 +29,7 @@ export default function VideoLesson() {
 
   const [course, setCourse] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [accessDenied, setAccessDenied] = useState(false);
 
   // Quiz state
   const [activeQuiz, setActiveQuiz] = useState(null); // { questions, atSeconds, pointIdx }
@@ -60,11 +61,30 @@ export default function VideoLesson() {
 
   useEffect(() => {
     setLoading(true);
+    setAccessDenied(false);
     coursesApi.get(courseId)
-      .then(setCourse)
+      .then((c) => {
+        setCourse(c);
+        // Only check access for paid courses (price > 0)
+        if (c.price > 0) {
+          return coursesApi.checkAccess(courseId)
+            .then(({ canAccess }) => { if (!canAccess) setAccessDenied(true); })
+            .catch((err) => {
+              // 401 = not logged in, 403 = no access — either way, block
+              if (err.status === 401 || err.status === 403) setAccessDenied(true);
+            });
+        }
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [courseId]);
+
+  // Redirect when access is denied (payment required)
+  useEffect(() => {
+    if (accessDenied) {
+      navigate(`/courses/${courseId}`, { replace: true, state: { paymentRequired: true } });
+    }
+  }, [accessDenied, courseId, navigate]);
 
   // Reset all quiz/lesson state when navigating between lessons
   useEffect(() => {
@@ -247,6 +267,8 @@ export default function VideoLesson() {
       </section>
     );
   }
+
+  if (accessDenied) return null; // useEffect below handles redirect
 
   if (!course || !topic || !sub) {
     return (

@@ -1,80 +1,100 @@
 /**
- * LoopBridge — Articles Routes (thin controller)
+ * LoopBridge — Articles Routes
  *
- * GET    /api/articles            — list articles
- * GET    /api/articles/:id        — single article
- * POST   /api/articles            — create article   (auth: author+)
- * PUT    /api/articles/:id        — update article    (auth: owner / admin)
- * DELETE /api/articles/:id        — soft-delete        (auth: owner / admin)
- * POST   /api/articles/:id/restore — restore           (auth: admin)
+ * GET    /api/articles                   — list (public: approved + not hidden + not deleted)
+ * GET    /api/articles/:id               — single article
+ * POST   /api/articles                   — create        (author+)
+ * PUT    /api/articles/:id               — edit          (author-owner or admin)
+ * DELETE /api/articles/:id               — soft-delete   (author-owner or admin)
+ * POST   /api/articles/:id/restore       — restore       (admin)
+ * POST   /api/articles/:id/approve       — approve       (admin)
+ * POST   /api/articles/:id/unapprove     — unapprove/take-down  (admin)
+ * POST   /api/articles/:id/hide          — hide          (author-owner or admin)
+ * POST   /api/articles/:id/unhide        — unhide        (author-owner or admin)
+ * DELETE /api/articles/:id/hard          — hard-delete   (root only)
  */
 'use strict';
 
 const express = require('express');
-const { requireAuth, requireAuthor } = require('../middleware/auth');
+const { requireAuth, requireAuthor, requireAdmin, requireRoot } = require('../middleware/auth');
 const { articleService } = require('../services');
 const { categorise, getCategories } = require('../services/categorizationService');
 
 const router = express.Router();
 
-// ─── Helpers ────────────────────────────────────────────
 function sendResult(res, result, successStatus = 200) {
-    if (result && result.error) {
-        return res.status(result.status || 500).json({ error: result.error });
-    }
+    if (result && result.error) return res.status(result.status || 500).json({ error: result.error });
     return res.status(successStatus).json(result);
 }
 
-// ─── GET /api/articles ──────────────────────────────────
+// ─── Public reads ────────────────────────────────────────
 router.get('/', async (req, res) => {
     const { category, featured, includeDeleted } = req.query;
-    const canSeeDeleted = includeDeleted && req.user && req.user.role === 'admin';
-    const articles = await articleService.list({ category, featured, includeDeleted: canSeeDeleted });
+    const isAdmin = req.user?.role === 'admin';
+    const articles = await articleService.list({
+        category, featured,
+        includeDeleted:    isAdmin && includeDeleted,
+        includeHidden:     isAdmin,
+        includeUnapproved: isAdmin
+    });
     return res.json(articles);
 });
 
-// ─── GET /api/articles/:id ──────────────────────────────
+router.get('/categories', (req, res) => res.json(getCategories()));
+
 router.get('/:id', async (req, res) => {
     const article = await articleService.getById(req.params.id);
     if (!article) return res.status(404).json({ error: 'Article not found.' });
+    // Non-admins cannot see deleted/hidden/unapproved articles
+    if (!req.user || req.user.role !== 'admin') {
+        if (article.deleted || article.hidden || !article.approved) {
+            return res.status(404).json({ error: 'Article not found.' });
+        }
+    }
     return res.json(article);
 });
 
-// ─── POST /api/articles ─────────────────────────────────
+// ─── Mutating ────────────────────────────────────────────
 router.post('/', requireAuthor, async (req, res) => {
     const article = await articleService.create(req.body, req.user);
     return res.status(201).json(article);
 });
 
-// ─── PUT /api/articles/:id ──────────────────────────────
-router.put('/:id', requireAuth, async (req, res) => {
-    const result = await articleService.update(req.params.id, req.body, req.user);
-    sendResult(res, result);
-});
-
-// ─── DELETE /api/articles/:id ───────────────────────────
-router.delete('/:id', requireAuth, async (req, res) => {
-    const result = await articleService.delete(req.params.id, req.user);
-    sendResult(res, result);
-});
-
-// ─── POST /api/articles/:id/restore ─────────────────────
-router.post('/:id/restore', requireAuth, async (req, res) => {
-    const result = await articleService.restore(req.params.id, req.user);
-    sendResult(res, result);
-});
-
-// ─── POST /api/articles/categorise ──────────────────────
-// Accepts { title, description, content } and returns AI-suggested category
 router.post('/categorise', (req, res) => {
-    const { title, description, content } = req.body;
-    const result = categorise({ title, description, content });
+    const result = categorise(req.body);
     return res.json(result);
 });
 
-// ─── GET /api/articles/categories ───────────────────────
-router.get('/categories', (req, res) => {
-    return res.json(getCategories());
+router.put('/:id', requireAuth, async (req, res) => {
+    sendResult(res, await articleService.update(req.params.id, req.body, req.user));
+});
+
+router.delete('/:id', requireAuth, async (req, res) => {
+    sendResult(res, await articleService.delete(req.params.id, req.user));
+});
+
+// ─── Admin moderation ────────────────────────────────────
+router.post('/:id/restore',  requireAdmin, async (req, res) => {
+    sendResult(res, await articleService.restore(req.params.id, req.user));
+});
+router.post('/:id/approve',  requireAdmin, async (req, res) => {
+    sendResult(res, await articleService.approve(req.params.id, req.user));
+});
+router.post('/:id/unapprove', requireAdmin, async (req, res) => {
+    sendResult(res, await articleService.unapprove(req.params.id, req.user));
+});
+
+// ─── Hide/Unhide (author-owner or admin) ─────────────────
+router.post('/:id/hide',   requireAuth, async (req, res) => {
+    sendResult(res, await articleService.hide(req.params.id, req.user));
+});
+router.post('/:id/unhide', requireAuth, async (req, res) => {
+    sendResult(res, await articleService.unhide(req.params.id, req.user));
+});
+
+// ─── Hard delete (root only) ─────────────────────────────
+router.delete('/:id/hard', requireRoot, async (req, res) => {
+    sendResult(res, await articleService.hardDelete(req.params.id, req.user));
 });
 
 module.exports = router;

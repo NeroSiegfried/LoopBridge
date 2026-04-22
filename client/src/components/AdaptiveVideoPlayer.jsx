@@ -37,8 +37,6 @@ const AdaptiveVideoPlayer = forwardRef(function AdaptiveVideoPlayer(
   const [buffering, setBuffering] = useState(false);
   const [currentBandwidth, setCurrentBandwidth] = useState(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
-  const [videoAspectRatio, setVideoAspectRatio] = useState(null); // null = fallback to CSS 16/9
-
   // Playback state for the custom control bar
   const [playing, setPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -135,23 +133,11 @@ const AdaptiveVideoPlayer = forwardRef(function AdaptiveVideoPlayer(
         const lvls = data.levels || [];
         setLevels(lvls);
         setIsHLS(true);
-        // Try manifest RESOLUTION first (present if MediaConvert includes it)
-        const l = lvls[0];
-        if (l?.width && l?.height) {
-          setVideoAspectRatio(`${l.width} / ${l.height}`);
-        }
         if (autoPlay) videoEl.play().catch(() => {});
       });
 
-      // FRAG_BUFFERED fires after each fragment is appended to the SourceBuffer.
-      // By the first fragment, videoEl.videoWidth/videoHeight are always set —
-      // this is the most reliable fallback when the manifest has no RESOLUTION.
-      let dimensionsSet = false;
+      // FRAG_BUFFERED: track bandwidth estimate
       hls.on(Hls.Events.FRAG_BUFFERED, (_, data) => {
-        if (!dimensionsSet && videoEl.videoWidth && videoEl.videoHeight) {
-          dimensionsSet = true;
-          setVideoAspectRatio(`${videoEl.videoWidth} / ${videoEl.videoHeight}`);
-        }
         if (data.stats) {
           const bw = Math.round(data.stats.bwEstimate / 1000); // kbps
           setCurrentBandwidth(bw);
@@ -276,28 +262,6 @@ const AdaptiveVideoPlayer = forwardRef(function AdaptiveVideoPlayer(
     };
   }, []);
 
-  // Detect video dimensions for correct aspect ratio.
-  // 'playing' is the most reliable DOM fallback — fires when the video
-  // actually starts playing, by which point videoWidth/videoHeight are always set.
-  useEffect(() => {
-    const vid = videoRef.current;
-    if (!vid) return;
-    setVideoAspectRatio(null); // reset on src change
-    const applyDimensions = () => {
-      if (vid.videoWidth && vid.videoHeight) {
-        setVideoAspectRatio(`${vid.videoWidth} / ${vid.videoHeight}`);
-      }
-    };
-    vid.addEventListener('resize',     applyDimensions); // fires when intrinsic size changes
-    vid.addEventListener('loadeddata', applyDimensions); // after first frame decoded
-    vid.addEventListener('playing',    applyDimensions); // guaranteed to have dimensions
-    return () => {
-      vid.removeEventListener('resize',     applyDimensions);
-      vid.removeEventListener('loadeddata', applyDimensions);
-      vid.removeEventListener('playing',    applyDimensions);
-    };
-  }, [src]);
-
   // Auto-fullscreen on load
   useEffect(() => {
     if (!autoFullscreen) return;
@@ -407,7 +371,6 @@ const AdaptiveVideoPlayer = forwardRef(function AdaptiveVideoPlayer(
     <div
       ref={containerRef}
       className={`adaptive-player ${className} ${isFullscreen ? 'is-fullscreen' : ''}`}
-      style={videoAspectRatio && !isFullscreen ? { aspectRatio: videoAspectRatio } : undefined}
       onMouseMove={resetHideTimer}
       onMouseEnter={resetHideTimer}
       onMouseLeave={() => { clearTimeout(hideControlsTimer.current); setControlsVisible(false); }}

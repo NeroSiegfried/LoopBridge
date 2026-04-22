@@ -26,6 +26,7 @@ function sanitiseUser(row) {
         displayName: row.display_name,
         email: row.email,
         role: row.role,
+        isRoot: !!row.is_root,
         avatar: row.avatar,
         authorOf: JSON.parse(row.author_of || '[]')
     };

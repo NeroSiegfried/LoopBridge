@@ -21,6 +21,9 @@ import Disclaimer from './pages/Disclaimer';
 import Dashboard from './pages/admin/Dashboard';
 import EditArticle from './pages/admin/EditArticle';
 import EditCourse from './pages/admin/EditCourse';
+import CoursePay from './pages/CoursePay';
+import PaymentSuccess from './pages/PaymentSuccess';
+import PaymentCancel from './pages/PaymentCancel';
 import NotFound from './pages/NotFound';
 
 export default function App() {
@@ -36,6 +39,9 @@ export default function App() {
         <Route path="courses" element={<Courses />} />
         <Route path="courses/:id" element={<CourseOverview />} />
         <Route path="courses/:courseId/lessons/:topicIdx/:subIdx" element={<LessonRouter />} />
+        <Route path="courses/:id/pay" element={<CoursePay />} />
+        <Route path="payment/success" element={<PaymentSuccess />} />
+        <Route path="payment/cancel" element={<PaymentCancel />} />
         <Route path="exchange" element={<Exchange />} />
         <Route path="faqs" element={<Faqs />} />
         <Route path="beginner" element={<LearningTrack track="beginner" />} />
