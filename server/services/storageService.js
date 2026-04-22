@@ -120,6 +120,7 @@ const s3Driver = {
                 Body: fileBuffer,
                 ContentType: file.mimetype,
                 ContentDisposition: 'inline',
+                ACL: 'public-read',
             }));
 
             // Clean up temp file left by multer

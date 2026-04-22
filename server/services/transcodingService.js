@@ -62,9 +62,10 @@ async function createTranscodeJob(uploadId, s3Key) {
 
     const bucket = config.s3Bucket;
     const inputUri = `s3://${bucket}/${s3Key}`;
-    const outputPrefix = `transcoded/${uploadId}/`;
+    const s3Prefix = config.s3Prefix || '';
+    const outputPrefix = `${s3Prefix}transcoded/${uploadId}/`;
     // Destination must include base filename — MediaConvert appends NameModifier + .m3u8
-    // e.g. s3://bucket/transcoded/<id>/stream  →  stream.m3u8 (master), stream_1080p.m3u8, etc.
+    // e.g. s3://bucket/sandbox/transcoded/<id>/stream  →  stream.m3u8 (master), stream_1080p.m3u8, etc.
     const hlsDestination = `s3://${bucket}/${outputPrefix}stream`;
     const thumbDestination = `s3://${bucket}/${outputPrefix}`;
 
@@ -231,10 +232,16 @@ async function transcodeVideoLocally(uploadId, localPath) {
     const srcHeight = videoStream ? (videoStream.height || 9999) : 9999;
 
     // Only encode presets whose height is <= source height
-    const activePresets = PRESETS.filter((p) => p.height <= srcHeight);
+    let activePresets = PRESETS.filter((p) => p.height <= srcHeight);
     if (activePresets.length === 0) {
         // Fallback: at least encode the lowest preset
-        activePresets.push(PRESETS[PRESETS.length - 1]);
+        activePresets = [PRESETS[PRESETS.length - 1]];
+    }
+    // Always generate at least 2 quality levels so the quality selector appears
+    if (activePresets.length < 2) {
+        // Add the next-lowest preset that isn't already included (ffmpeg will scale down gracefully)
+        const missing = PRESETS.filter((p) => !activePresets.includes(p));
+        if (missing.length > 0) activePresets = [...activePresets, missing[missing.length - 1]];
     }
 
     // Build per-rendition HLS streams — one ffmpeg invocation each so segment
