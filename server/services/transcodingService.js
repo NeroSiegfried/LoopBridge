@@ -269,7 +269,11 @@ async function transcodeVideoLocally(uploadId, localPath) {
                         `-b:v ${preset.videoBitrate}`,
                         `-maxrate ${Math.round(preset.videoBitrate * 1.2)}`,
                         `-bufsize ${preset.videoBitrate * 2}`,
-                        `-vf scale=${preset.width}:${preset.height}:force_original_aspect_ratio=decrease`,
+                        // force_original_aspect_ratio=decrease keeps aspect ratio, then
+                        // trunc(w/2)*2:trunc(h/2)*2 ensures both dimensions are even
+                        // (libx264 requires even width/height; odd values occur with portrait
+                        //  sources like 576x1024 scaled to fit a 640x360 box → 203x360)
+                        `-vf scale=${preset.width}:${preset.height}:force_original_aspect_ratio=decrease,scale=trunc(iw/2)*2:trunc(ih/2)*2`,
                         '-c:a aac',
                         `-b:a ${preset.audioBitrate}`,
                         '-ar 48000',
