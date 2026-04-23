@@ -18,6 +18,23 @@ const transcodingService = require('../services/transcodingService');
 
 const router = express.Router();
 
+function toPositiveInt(value) {
+    const parsed = Number.parseInt(value, 10);
+    return Number.isFinite(parsed) && parsed > 0 ? parsed : null;
+}
+
+function getClientProvidedDimensions(body, index) {
+    if (!body) return null;
+
+    const rawWidth = Array.isArray(body.videoWidth) ? body.videoWidth[index] : body.videoWidth;
+    const rawHeight = Array.isArray(body.videoHeight) ? body.videoHeight[index] : body.videoHeight;
+    const width = toPositiveInt(rawWidth);
+    const height = toPositiveInt(rawHeight);
+
+    if (!width || !height) return null;
+    return { width, height };
+}
+
 // ─── Multer config (disk storage — used for both disk and S3 drivers) ───
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
@@ -74,13 +91,15 @@ router.post('/', requireAuthor, upload.array('files', config.maxFiles), async (r
         }
     }));
 
+    const clientProvidedDimensions = req.files.map((_, index) => getClientProvidedDimensions(req.body, index));
+
     const results = await storageService.saveFiles(req.files, req.user ? req.user.id : null);
 
     // Store dimensions and auto-trigger transcoding for video uploads (non-blocking)
     const { uploadRepo } = require('../repositories');
     for (let i = 0; i < results.length; i++) {
         const result = results[i];
-        const dims = probedDimensions[i];
+        const dims = probedDimensions[i] || clientProvidedDimensions[i];
         if (dims) {
             await uploadRepo.updateDimensions(result.id, dims.width, dims.height);
             result.videoWidth = dims.width;

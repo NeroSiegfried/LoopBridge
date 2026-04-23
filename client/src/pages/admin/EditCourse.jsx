@@ -122,6 +122,33 @@ export default function EditCourse() {
     if (expandedSub === `${tIdx}-${sIdx}`) setExpandedSub(null);
   };
 
+  const probeVideoDimensions = (file) => new Promise((resolve) => {
+    const url = URL.createObjectURL(file);
+    const video = document.createElement('video');
+    video.preload = 'metadata';
+    video.muted = true;
+
+    const cleanup = () => {
+      URL.revokeObjectURL(url);
+      video.removeAttribute('src');
+    };
+
+    video.onloadedmetadata = () => {
+      const width = Number(video.videoWidth) || null;
+      const height = Number(video.videoHeight) || null;
+      cleanup();
+      if (width && height) resolve({ width, height });
+      else resolve(null);
+    };
+
+    video.onerror = () => {
+      cleanup();
+      resolve(null);
+    };
+
+    video.src = url;
+  });
+
   /* ── video upload with progress ── */
   const handleVideoUpload = async (tIdx, sIdx, file) => {
     setUploadingCount(c => c + 1);
@@ -129,6 +156,12 @@ export default function EditCourse() {
 
     const fd = new FormData();
     fd.append('files', file);
+
+    const clientDims = await probeVideoDimensions(file);
+    if (clientDims?.width && clientDims?.height) {
+      fd.append('videoWidth', String(clientDims.width));
+      fd.append('videoHeight', String(clientDims.height));
+    }
 
     try {
       // Use XMLHttpRequest for upload progress
@@ -161,8 +194,8 @@ export default function EditCourse() {
         hlsUrl: data.hlsUrl || '',
         thumbnailUrl: data.thumbnailUrl || '',
         uploadId: data.id || '',
-        videoWidth: data.videoWidth || null,
-        videoHeight: data.videoHeight || null,
+        videoWidth: data.videoWidth || clientDims?.width || null,
+        videoHeight: data.videoHeight || clientDims?.height || null,
         uploadState: data.hlsUrl ? 'done' : 'processing',
         uploadProgress: 100,
       });
