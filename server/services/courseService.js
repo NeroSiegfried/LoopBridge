@@ -35,7 +35,8 @@ const courseService = {
         if (course.topics) {
             for (const topic of course.topics) {
                 for (const sub of (topic.subsections || [])) {
-                    if (sub.hlsUrl) continue;
+                    // Skip if we already have everything we need
+                    if (sub.hlsUrl && sub.videoWidth && sub.videoHeight) continue;
                     let upload = null;
                     try {
                         if (sub.uploadId) {
@@ -48,6 +49,8 @@ const courseService = {
                         if (upload.hlsUrl)      sub.hlsUrl = upload.hlsUrl;
                         if (upload.thumbnailUrl) sub.thumbnailUrl = upload.thumbnailUrl;
                         if (!sub.uploadId)       sub.uploadId = upload.id;
+                        if (upload.videoWidth && !sub.videoWidth)  sub.videoWidth  = upload.videoWidth;
+                        if (upload.videoHeight && !sub.videoHeight) sub.videoHeight = upload.videoHeight;
                     }
                 }
             }
