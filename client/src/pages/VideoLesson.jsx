@@ -309,7 +309,7 @@ export default function VideoLesson() {
                   ref={videoRef}
                   src={sub.hlsUrl || sub.videoUrl}
                   poster={sub.thumbnailUrl}
-                  isPortraitHint={!!(sub.videoWidth && sub.videoHeight > sub.videoWidth)}
+                  isPortraitHint={sub.videoWidth && sub.videoHeight ? sub.videoHeight > sub.videoWidth : null}
                   onEnded={handleVideoEnd}
                   onTimeUpdate={(currentTime) => {
                     // Quiz pause-point monitoring

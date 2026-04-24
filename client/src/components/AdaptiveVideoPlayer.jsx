@@ -21,7 +21,7 @@ import '../styles/adaptive-player.css';
  *   quizOverlay      — overlay element rendered inside the player
  */
 const AdaptiveVideoPlayer = forwardRef(function AdaptiveVideoPlayer(
-  { src, poster, onEnded, onTimeUpdate, className = '', autoPlay = false, autoFullscreen = false, quizOverlay = null, isPortraitHint = false },
+  { src, poster, onEnded, onTimeUpdate, className = '', autoPlay = false, autoFullscreen = false, quizOverlay = null, isPortraitHint = null },
   ref
 ) {
   const videoRef = useRef(null);
@@ -48,7 +48,12 @@ const AdaptiveVideoPlayer = forwardRef(function AdaptiveVideoPlayer(
   const [playbackRate, setPlaybackRate] = useState(1);
   const [controlsVisible, setControlsVisible] = useState(true);
   const [seeking, setSeeking] = useState(false);
-  const [isPortrait, setIsPortrait] = useState(isPortraitHint);
+  const hasPortraitHint = isPortraitHint !== null && isPortraitHint !== undefined;
+  const [isPortrait, setIsPortrait] = useState(hasPortraitHint ? isPortraitHint : false);
+
+  useEffect(() => {
+    if (hasPortraitHint) setIsPortrait(isPortraitHint);
+  }, [hasPortraitHint, isPortraitHint]);
 
   // Expose both the video element AND container to parent via ref
   useImperativeHandle(ref, () => ({
@@ -135,7 +140,7 @@ const AdaptiveVideoPlayer = forwardRef(function AdaptiveVideoPlayer(
         setLevels(lvls);
         setIsHLS(true);
         // Use level dimensions as an early portrait hint before any segment decodes
-        if (lvls.length > 0 && lvls[0].width > 0) {
+        if (!hasPortraitHint && lvls.length > 0 && lvls[0].width > 0) {
           setIsPortrait(lvls[0].height > lvls[0].width);
         }
         if (autoPlay) videoEl.play().catch(() => {});
@@ -181,7 +186,7 @@ const AdaptiveVideoPlayer = forwardRef(function AdaptiveVideoPlayer(
         hlsRef.current = null;
       }
     };
-  }, [src, isM3U8, autoPlay]);
+  }, [src, isM3U8, autoPlay, hasPortraitHint]);
 
   // Quality selection
   const setQuality = useCallback((levelIndex) => {
@@ -215,8 +220,14 @@ const AdaptiveVideoPlayer = forwardRef(function AdaptiveVideoPlayer(
     const onDurChng = () => setDuration(video.duration || 0);
     const onVolChng = () => { setVolume(video.volume); setMuted(video.muted); };
     const onRateChng= () => setPlaybackRate(video.playbackRate);
-    const onMeta    = () => { if (video.videoWidth > 0) setIsPortrait(video.videoHeight > video.videoWidth); };
-    const onResize   = () => { if (video.videoWidth > 0) setIsPortrait(video.videoHeight > video.videoWidth); };
+    const onMeta    = () => {
+      if (hasPortraitHint) return;
+      if (video.videoWidth > 0) setIsPortrait(video.videoHeight > video.videoWidth);
+    };
+    const onResize   = () => {
+      if (hasPortraitHint) return;
+      if (video.videoWidth > 0) setIsPortrait(video.videoHeight > video.videoWidth);
+    };
     video.addEventListener('play',           onPlay);
     video.addEventListener('pause',          onPause);
     video.addEventListener('ended',          onEnded_);
@@ -243,7 +254,7 @@ const AdaptiveVideoPlayer = forwardRef(function AdaptiveVideoPlayer(
       video.removeEventListener('loadedmetadata', onMeta);
       video.removeEventListener('resize',         onResize);
     };
-  }, [seeking]);
+  }, [seeking, hasPortraitHint]);
 
   // Fullscreen tracking (desktop + iOS Safari)
   useEffect(() => {
