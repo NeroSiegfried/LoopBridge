@@ -38,6 +38,31 @@ const PRESETS = [
 
 let mcClient = null;
 
+function toEven(value) {
+    const safe = Number.isFinite(value) ? value : 2;
+    return Math.max(2, Math.floor(safe / 2) * 2);
+}
+
+function fitWithinBox(targetWidth, targetHeight, srcWidth, srcHeight) {
+    if (!srcWidth || !srcHeight) {
+        return { width: targetWidth, height: targetHeight };
+    }
+
+    const ratio = srcWidth / srcHeight;
+    let width = targetWidth;
+    let height = Math.round(width / ratio);
+
+    if (height > targetHeight) {
+        height = targetHeight;
+        width = Math.round(height * ratio);
+    }
+
+    return {
+        width: toEven(width),
+        height: toEven(height),
+    };
+}
+
 function getClient() {
     if (!mcClient) {
         const { MediaConvertClient } = require('@aws-sdk/client-mediaconvert');
@@ -69,12 +94,27 @@ async function createTranscodeJob(uploadId, s3Key) {
     const hlsDestination = `s3://${bucket}/${outputPrefix}stream`;
     const thumbDestination = `s3://${bucket}/${outputPrefix}`;
 
+    // Preserve source aspect ratio in cloud transcodes (same behavior as local ffmpeg path).
+    // Without this, MediaConvert can force all renditions into fixed landscape boxes,
+    // making portrait uploads look wrong in sandbox/prod.
+    let sourceWidth = null;
+    let sourceHeight = null;
+    try {
+        const uploadRow = await uploadRepo.findById(uploadId);
+        sourceWidth = Number(uploadRow?.video_width) || null;
+        sourceHeight = Number(uploadRow?.video_height) || null;
+    } catch (_) {
+        // Keep defaults if upload lookup fails.
+    }
+
     const outputs = PRESETS.map((p) => ({
         NameModifier: `_${p.name}`,
         ContainerSettings: { Container: 'M3U8' },
         VideoDescription: {
-            Width: p.width,
-            Height: p.height,
+            ...(() => {
+                const fitted = fitWithinBox(p.width, p.height, sourceWidth, sourceHeight);
+                return { Width: fitted.width, Height: fitted.height };
+            })(),
             CodecSettings: {
                 Codec: 'H_264',
                 H264Settings: {
@@ -132,8 +172,10 @@ async function createTranscodeJob(uploadId, s3Key) {
                         NameModifier: '_thumb',
                         ContainerSettings: { Container: 'RAW' },
                         VideoDescription: {
-                            Width: 640,
-                            Height: 360,
+                            ...(() => {
+                                const fittedThumb = fitWithinBox(640, 360, sourceWidth, sourceHeight);
+                                return { Width: fittedThumb.width, Height: fittedThumb.height };
+                            })(),
                             CodecSettings: {
                                 Codec: 'FRAME_CAPTURE',
                                 FrameCaptureSettings: {
