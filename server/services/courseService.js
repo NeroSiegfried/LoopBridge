@@ -22,6 +22,18 @@ function generateId() {
     return `course-${ts}-${rand}`;
 }
 
+function extractUploadIdFromMediaUrl(url) {
+    if (!url || typeof url !== 'string') return null;
+    const normalized = url.trim();
+    if (!normalized) return null;
+
+    // Matches both:
+    //  - .../transcoded/<uploadId>/stream.m3u8 (AWS)
+    //  - .../transcoded/<uploadId>/manifest.m3u8 (local)
+    const match = normalized.match(/\/transcoded\/([^/]+)\/(?:stream|manifest)\.m3u8/i);
+    return match ? match[1] : null;
+}
+
 const courseService = {
     async list(filters) {
         return courseRepo.list(filters);
@@ -39,10 +51,20 @@ const courseService = {
                     if (sub.hlsUrl && sub.videoWidth && sub.videoHeight) continue;
                     let upload = null;
                     try {
-                        if (sub.uploadId) {
-                            upload = await uploadRepo.findByIdFormatted(sub.uploadId);
-                        } else if (sub.videoUrl) {
+                        const recoveredUploadId = sub.uploadId
+                            || extractUploadIdFromMediaUrl(sub.hlsUrl)
+                            || extractUploadIdFromMediaUrl(sub.videoUrl);
+
+                        if (recoveredUploadId) {
+                            upload = await uploadRepo.findByIdFormatted(recoveredUploadId);
+                        }
+
+                        if (!upload && sub.videoUrl) {
                             upload = await uploadRepo.findByUrl(sub.videoUrl);
+                        }
+
+                        if (!upload && sub.hlsUrl) {
+                            upload = await uploadRepo.findByUrl(sub.hlsUrl);
                         }
                     } catch (_) { /* ignore */ }
                     if (upload) {
