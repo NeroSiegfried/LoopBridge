@@ -42,11 +42,17 @@ export function AuthProvider({ children }) {
     setUser(null);
   }, []);
 
+  const refreshSession = useCallback(async () => {
+    const data = await authApi.me();
+    setUser(data.user || null);
+    return data.user || null;
+  }, []);
+
   const isAdmin = user?.role === 'admin';
   const isAuthor = user?.role === 'admin' || user?.role === 'author';
 
   return (
-    <AuthContext.Provider value={{ user, loading, login, googleLogin, otpLogin, logout, isAdmin, isAuthor }}>
+    <AuthContext.Provider value={{ user, loading, login, googleLogin, otpLogin, logout, refreshSession, isAdmin, isAuthor }}>
       {children}
     </AuthContext.Provider>
   );

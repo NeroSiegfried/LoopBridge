@@ -3,7 +3,7 @@ import { Link, NavLink, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import '../styles/navbar.css';
 
-export default function Navbar() {
+export default function Navbar({ onOpenMessages, unreadCount = 0 }) {
   const { user, logout, isAuthor } = useAuth();
   const [menuOpen, setMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
@@ -156,6 +156,10 @@ export default function Navbar() {
                 {isAuthor && <Link to="/admin/dashboard" className="mobile-auth-link">Dashboard</Link>}
                 {isAuthor && <Link to="/admin/edit-article" className="mobile-auth-link">New Article</Link>}
                 {isAuthor && <Link to="/admin/edit-course" className="mobile-auth-link">New Course</Link>}
+                <Link to="/profile" className="mobile-auth-link">Profile</Link>
+                <button className="mobile-auth-link" onClick={() => { onOpenMessages?.(); setMenuOpen(false); }}>
+                  Messages{unreadCount > 0 ? ` (${unreadCount})` : ''}
+                </button>
                 <button className="mobile-auth-link mobile-auth-logout" onClick={() => { logout(); setMenuOpen(false); }}>Log out</button>
               </>
             )}
@@ -163,6 +167,10 @@ export default function Navbar() {
 
           {user && (
             <div className="nav-user" ref={dropdownRef}>
+              <button className="nav-message-btn" onClick={() => onOpenMessages?.()} aria-label="Open messages">
+                <i className="fa-regular fa-envelope" />
+                {unreadCount > 0 && <span className="nav-message-badge">{unreadCount > 99 ? '99+' : unreadCount}</span>}
+              </button>
               <div className="auth-user-info" onClick={(e) => { e.stopPropagation(); setDropdownOpen((v) => !v); }}>
                 <div className="auth-avatar">{initials}</div>
               </div>
@@ -171,6 +179,10 @@ export default function Navbar() {
                 {isAuthor && <Link to="/admin/dashboard" onClick={() => setDropdownOpen(false)}>Dashboard</Link>}
                 {isAuthor && <Link to="/admin/edit-article" onClick={() => setDropdownOpen(false)}>New Article</Link>}
                 {isAuthor && <Link to="/admin/edit-course" onClick={() => setDropdownOpen(false)}>New Course</Link>}
+                <Link to="/profile" onClick={() => setDropdownOpen(false)}>Profile</Link>
+                <button className="logout-btn" onClick={() => { onOpenMessages?.(); setDropdownOpen(false); }}>
+                  Messages{unreadCount > 0 ? ` (${unreadCount})` : ''}
+                </button>
                 <button className="logout-btn" onClick={() => { logout(); setDropdownOpen(false); }}>Log out</button>
               </div>
             </div>

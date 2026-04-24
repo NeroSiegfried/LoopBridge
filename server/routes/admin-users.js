@@ -19,6 +19,7 @@ const express = require('express');
 const { v4: uuidv4 } = require('uuid');
 const { requireAdmin, requireRoot } = require('../middleware/auth');
 const { userRepo, promotionRepo } = require('../repositories');
+const { messageService } = require('../services');
 
 const router = express.Router();
 
@@ -85,6 +86,15 @@ router.post('/promotion-requests', requireAdmin, async (req, res) => {
         requestedRole: requestedRole || 'admin',
         note
     });
+
+    await messageService.notifyRoots({
+        type: 'promotion_request',
+        title: 'Promotion request submitted',
+        body: `${req.user.displayName || req.user.username} requested ${target.username} be promoted to ${request.requestedRole}.`,
+        link: '/admin/dashboard',
+        metadata: { requestId: request.id, targetUserId: target.id, requesterId: req.user.id },
+    });
+
     return res.status(201).json(request);
 });
 
@@ -104,6 +114,15 @@ router.post('/promotion-requests/:id/approve', requireRoot, async (req, res) => 
 
     await userRepo.setRole(promo.targetUserId, promo.requestedRole);
     const updated = await promotionRepo.review(promo.id, 'approved', req.user.id);
+
+    await messageService.notifyUser(promo.requesterId, {
+        type: 'promotion_request_approved',
+        title: 'Promotion request approved',
+        body: `Your promotion request for user ${promo.targetUserId} was approved.`,
+        link: '/admin/dashboard',
+        metadata: { requestId: promo.id },
+    });
+
     return res.json(updated);
 });
 
@@ -114,6 +133,15 @@ router.post('/promotion-requests/:id/reject', requireRoot, async (req, res) => {
     if (promo.status !== 'pending') return res.status(400).json({ error: 'Request already reviewed.' });
 
     const updated = await promotionRepo.review(promo.id, 'rejected', req.user.id);
+
+    await messageService.notifyUser(promo.requesterId, {
+        type: 'promotion_request_rejected',
+        title: 'Promotion request rejected',
+        body: `Your promotion request for user ${promo.targetUserId} was rejected.`,
+        link: '/admin/dashboard',
+        metadata: { requestId: promo.id },
+    });
+
     return res.json(updated);
 });
 

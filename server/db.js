@@ -386,6 +386,33 @@ CREATE TABLE IF NOT EXISTS subscribers (
     unsubscribed_at TIMESTAMPTZ
 );
 CREATE INDEX IF NOT EXISTS idx_subscribers_email ON subscribers(email);
+CREATE TABLE IF NOT EXISTS messages (
+    id           TEXT PRIMARY KEY,
+    recipient_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    type         TEXT NOT NULL DEFAULT 'system',
+    title        TEXT NOT NULL,
+    body         TEXT NOT NULL,
+    link         TEXT,
+    metadata     TEXT DEFAULT '{}',
+    read         INTEGER NOT NULL DEFAULT 0,
+    read_at      TIMESTAMPTZ,
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_messages_recipient_created ON messages(recipient_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_messages_unread ON messages(recipient_id, read);
+CREATE TABLE IF NOT EXISTS profile_change_requests (
+    id         TEXT PRIMARY KEY,
+    user_id    TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    field      TEXT NOT NULL,
+    new_value  TEXT NOT NULL,
+    target     TEXT NOT NULL,
+    channel    TEXT NOT NULL,
+    code       TEXT NOT NULL,
+    expires_at TIMESTAMPTZ NOT NULL,
+    used       INTEGER NOT NULL DEFAULT 0,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_profile_change_user ON profile_change_requests(user_id, created_at DESC);
 `;
 
 const SQLITE_SCHEMA = `
@@ -560,6 +587,33 @@ const SQLITE_SCHEMA = `
         unsubscribed_at TEXT
     );
     CREATE INDEX IF NOT EXISTS idx_subscribers_email ON subscribers(email);
+    CREATE TABLE IF NOT EXISTS messages (
+        id           TEXT PRIMARY KEY,
+        recipient_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        type         TEXT NOT NULL DEFAULT 'system',
+        title        TEXT NOT NULL,
+        body         TEXT NOT NULL,
+        link         TEXT,
+        metadata     TEXT DEFAULT '{}',
+        read         INTEGER NOT NULL DEFAULT 0,
+        read_at      TEXT,
+        created_at   TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_messages_recipient_created ON messages(recipient_id, created_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_messages_unread ON messages(recipient_id, read);
+    CREATE TABLE IF NOT EXISTS profile_change_requests (
+        id         TEXT PRIMARY KEY,
+        user_id    TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        field      TEXT NOT NULL,
+        new_value  TEXT NOT NULL,
+        target     TEXT NOT NULL,
+        channel    TEXT NOT NULL,
+        code       TEXT NOT NULL,
+        expires_at TEXT NOT NULL,
+        used       INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_profile_change_user ON profile_change_requests(user_id, created_at DESC);
 `;
 
 /* ================================================================
@@ -664,6 +718,26 @@ async function runTableMigrations() {
         requested_role TEXT NOT NULL DEFAULT 'admin', status TEXT NOT NULL DEFAULT 'pending',
         note TEXT, reviewed_by TEXT REFERENCES users(id) ON DELETE SET NULL,
         reviewed_at TEXT, created_at TEXT NOT NULL DEFAULT (datetime('now')))`;
+    const pgMessages = `CREATE TABLE IF NOT EXISTS messages (
+        id TEXT PRIMARY KEY, recipient_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        type TEXT NOT NULL DEFAULT 'system', title TEXT NOT NULL, body TEXT NOT NULL,
+        link TEXT, metadata TEXT DEFAULT '{}', read INTEGER NOT NULL DEFAULT 0,
+        read_at TIMESTAMPTZ, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`;
+    const sqliteMessages = `CREATE TABLE IF NOT EXISTS messages (
+        id TEXT PRIMARY KEY, recipient_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        type TEXT NOT NULL DEFAULT 'system', title TEXT NOT NULL, body TEXT NOT NULL,
+        link TEXT, metadata TEXT DEFAULT '{}', read INTEGER NOT NULL DEFAULT 0,
+        read_at TEXT, created_at TEXT NOT NULL DEFAULT (datetime('now')))`;
+    const pgProfileChange = `CREATE TABLE IF NOT EXISTS profile_change_requests (
+        id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        field TEXT NOT NULL, new_value TEXT NOT NULL, target TEXT NOT NULL,
+        channel TEXT NOT NULL, code TEXT NOT NULL, expires_at TIMESTAMPTZ NOT NULL,
+        used INTEGER NOT NULL DEFAULT 0, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`;
+    const sqliteProfileChange = `CREATE TABLE IF NOT EXISTS profile_change_requests (
+        id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        field TEXT NOT NULL, new_value TEXT NOT NULL, target TEXT NOT NULL,
+        channel TEXT NOT NULL, code TEXT NOT NULL, expires_at TEXT NOT NULL,
+        used INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL DEFAULT (datetime('now')))`;
 
     try {
         await db.exec(isPg ? pgPayments : sqlitePayments);
@@ -671,6 +745,11 @@ async function runTableMigrations() {
             ? `CREATE INDEX IF NOT EXISTS idx_payments_user ON payments(user_id)`
             : `CREATE INDEX IF NOT EXISTS idx_payments_user ON payments(user_id)`);
         await db.exec(isPg ? pgPromo : sqlitePromo);
+        await db.exec(isPg ? pgMessages : sqliteMessages);
+        await db.exec('CREATE INDEX IF NOT EXISTS idx_messages_recipient_created ON messages(recipient_id, created_at DESC)');
+        await db.exec('CREATE INDEX IF NOT EXISTS idx_messages_unread ON messages(recipient_id, read)');
+        await db.exec(isPg ? pgProfileChange : sqliteProfileChange);
+        await db.exec('CREATE INDEX IF NOT EXISTS idx_profile_change_user ON profile_change_requests(user_id, created_at DESC)');
         console.log('[db] payments + promotion_requests tables ready.');
     } catch (err) {
         console.error('[db] table migration warning:', err.message);

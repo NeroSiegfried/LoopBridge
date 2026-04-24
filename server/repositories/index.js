@@ -15,4 +15,6 @@ module.exports = {
     subscriberRepo:  require('./subscriberRepo'),
     paymentRepo:     require('./paymentRepo'),
     promotionRepo:   require('./promotionRepo'),
+    messageRepo:     require('./messageRepo'),
+    profileChangeRepo: require('./profileChangeRepo'),
 };

@@ -45,6 +45,8 @@ const recommendationsRoutes = require('./routes/recommendations');
 const transcodeRoutes = require('./routes/transcode');
 const adminUserRoutes = require('./routes/admin-users');
 const paymentRoutes   = require('./routes/payments');
+const profileRoutes   = require('./routes/profile');
+const messagesRoutes  = require('./routes/messages');
 
 // ─── Create Express App ─────────────────────────────────
 const app = express();
@@ -114,6 +116,8 @@ app.use('/api/recommendations', rateLimit(RATE_WINDOW_MS, RATE_MAX_GENERAL), rec
 app.use('/api/transcode', rateLimit(RATE_WINDOW_MS, RATE_MAX_GENERAL), transcodeRoutes);
 app.use('/api/admin',    rateLimit(RATE_WINDOW_MS, RATE_MAX_GENERAL), adminUserRoutes);
 app.use('/api/payments', rateLimit(RATE_WINDOW_MS, RATE_MAX_GENERAL), paymentRoutes);
+app.use('/api/profile',  rateLimit(RATE_WINDOW_MS, RATE_MAX_GENERAL), profileRoutes);
+app.use('/api/messages', rateLimit(RATE_WINDOW_MS, RATE_MAX_GENERAL), messagesRoutes);
 app.use('/api', miscRoutes);
 
 // ─── Uploaded files (served at /uploads/*) ──────────────

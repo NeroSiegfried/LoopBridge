@@ -24,6 +24,7 @@ import EditCourse from './pages/admin/EditCourse';
 import CoursePay from './pages/CoursePay';
 import PaymentSuccess from './pages/PaymentSuccess';
 import PaymentCancel from './pages/PaymentCancel';
+import Profile from './pages/Profile';
 import NotFound from './pages/NotFound';
 
 export default function App() {
@@ -53,6 +54,7 @@ export default function App() {
         <Route path="disclaimer" element={<Disclaimer />} />
         <Route path="login" element={<Login />} />
         <Route path="signup" element={<Signup />} />
+        <Route path="profile" element={<Profile />} />
       </Route>
       <Route element={<Layout />}>
         <Route path="admin/dashboard" element={<Dashboard />} />

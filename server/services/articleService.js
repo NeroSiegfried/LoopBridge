@@ -14,6 +14,7 @@
 'use strict';
 
 const { articleRepo, userRepo } = require('../repositories');
+const messageService = require('./messageService');
 const { categorise } = require('./categorizationService');
 
 function generateId() {
@@ -45,7 +46,7 @@ const articleService = {
         // Admins' articles go live immediately; authors need admin approval
         const approved = (user.role === 'admin') ? true : false;
 
-        return articleRepo.create({
+        const created = await articleRepo.create({
             id,
             title: data.title,
             slug: data.slug,
@@ -62,6 +63,18 @@ const articleService = {
             approved,
             content: data.content
         });
+
+        if (!approved) {
+            await messageService.notifyAdmins({
+                type: 'article_approval',
+                title: 'Article pending approval',
+                body: `${authorName} submitted “${created.title}” for review.`,
+                link: '/admin/dashboard',
+                metadata: { articleId: created.id, authorId: user.id },
+            });
+        }
+
+        return created;
     },
 
     async update(id, data, user) {

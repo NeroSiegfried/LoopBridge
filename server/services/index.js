@@ -10,6 +10,7 @@ module.exports = {
     paymentService:       require('./paymentService'),
     storageService:       require('./storageService'),
     notificationService:  require('./notificationService'),
+    messageService:       require('./messageService'),
     categorizationService: require('./categorizationService'),
     recommendationService: require('./recommendationService'),
     transcodingService:   require('./transcodingService'),

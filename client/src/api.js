@@ -30,6 +30,22 @@ export const authApi = {
   me: () => request('/auth/session'),
 };
 
+// ─── Profile ─────────────────────────────────────────────
+export const profileApi = {
+  get: () => request('/profile'),
+  requestChangeOtp: ({ field, value, channel }) =>
+    request('/profile/request-change-otp', { method: 'POST', body: JSON.stringify({ field, value, channel }) }),
+  verifyChangeOtp: ({ requestId, code }) =>
+    request('/profile/verify-change-otp', { method: 'POST', body: JSON.stringify({ requestId, code }) }),
+};
+
+// ─── Messages ────────────────────────────────────────────
+export const messagesApi = {
+  list: (limit = 40) => request(`/messages?limit=${limit}`),
+  markRead: (id) => request(`/messages/${id}/read`, { method: 'POST' }),
+  markAllRead: () => request('/messages/read-all', { method: 'POST' }),
+};
+
 // ─── Articles ────────────────────────────────────────────
 export const articlesApi = {
   list: (params = {}) => {
