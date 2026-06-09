@@ -31,11 +31,24 @@ export default function Exchange() {
   const [activeStep, setActiveStep] = useState(0);
   const [whatsappLink, setWhatsappLink] = useState('#');
   const timerRef = useRef(null);
+  const videoRef = useRef(null);
+  const lastStepDurRef = useRef(STEP_DURATIONS[3]);
 
   useEffect(() => {
     miscApi.siteConfig()
       .then((cfg) => { if (cfg.socials?.whatsapp) setWhatsappLink(cfg.socials.whatsapp); })
       .catch(() => {});
+  }, []);
+
+  useEffect(() => {
+    const video = videoRef.current;
+    if (!video) return;
+    const compute = () => {
+      const firstThree = STEP_DURATIONS[0] + STEP_DURATIONS[1] + STEP_DURATIONS[2];
+      lastStepDurRef.current = Math.max(video.duration * 1000 - firstThree, 500);
+    };
+    if (video.readyState >= 1) compute();
+    else video.addEventListener('loadedmetadata', compute, { once: true });
   }, []);
 
   useEffect(() => {
@@ -48,7 +61,12 @@ export default function Exchange() {
   const goToStep = useCallback((idx) => {
     setActiveStep(idx);
     clearTimeout(timerRef.current);
-    timerRef.current = setTimeout(() => goToStep((idx + 1) % 4), STEP_DURATIONS[idx]);
+    if (idx === 0 && videoRef.current) {
+      videoRef.current.currentTime = 0;
+      videoRef.current.play();
+    }
+    const dur = idx === 3 ? lastStepDurRef.current : STEP_DURATIONS[idx];
+    timerRef.current = setTimeout(() => goToStep((idx + 1) % 4), dur);
   }, []);
 
   useEffect(() => {
@@ -163,7 +181,10 @@ export default function Exchange() {
               </div>
             </div>
             <div className="gif">
-              Apparently there's a GIF here
+              <video ref={videoRef} autoPlay muted playsInline>
+                <source src="/images/exchange-gif.webm" type="video/webm" />
+                <source src="/images/exchange-gif.mp4" type="video/mp4" />
+              </video>
             </div>
           </div>
         </div>

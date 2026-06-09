@@ -66,4 +66,7 @@ infrastructure/terraform/.terraform.lock.hcl
 infrastructure/terraform/terraform.tfstate
 infrastructure/terraform/terraform.tfstate.backup
 
-*.md
+*.md*.original.png
+*.original.jpg
+*.original.jpeg
+*.original.webp

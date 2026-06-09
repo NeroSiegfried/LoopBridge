@@ -24,7 +24,7 @@
 
 .hero .hero-body h1 {
     font-family: CabinetGrotesk-Bold, sans-serif;
-    font-size: 4.75rem;
+    font-size: clamp(38px, 6vw, 76px);
     color: var(--lb-blue-dark);
 }
 
@@ -393,10 +393,7 @@ section.newsletter h2 {
         margin-bottom: 2.5rem;
     }
 
-    /* Tablet hero heading: midpoint between desktop (76px) and mobile (38px) */
-    .hero .hero-body h1 {
-        font-size: 2.75rem; /* 44px */
-    }
+    /* h1 handled by clamp() in base style */
 
     /* Tablet body text */
     .hero .hero-body p {
