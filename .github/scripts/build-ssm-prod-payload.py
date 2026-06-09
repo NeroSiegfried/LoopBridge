@@ -56,7 +56,7 @@ env_file_lines = [
 ]
 env_file_content = '\\n'.join(env_file_lines)
 
-# nginx.conf — HTTP only; SSL added later via certbot + nginx reload
+# nginx.conf — HTTPS with HTTP→HTTPS redirect; certs managed by certbot on host
 nginx_conf = r"""events { worker_connections 1024; }
 
 http {
@@ -78,7 +78,26 @@ http {
 
     server {
         listen 80;
-        server_name _;
+        server_name loopbridge.network www.loopbridge.network;
+
+        location /.well-known/acme-challenge/ {
+            root /var/www/certbot;
+        }
+
+        location / {
+            return 301 https://$host$request_uri;
+        }
+    }
+
+    server {
+        listen 443 ssl;
+        server_name loopbridge.network www.loopbridge.network;
+
+        ssl_certificate     /etc/letsencrypt/live/loopbridge.network/fullchain.pem;
+        ssl_certificate_key /etc/letsencrypt/live/loopbridge.network/privkey.pem;
+        ssl_protocols TLSv1.2 TLSv1.3;
+        ssl_ciphers HIGH:!aNULL:!MD5;
+        ssl_prefer_server_ciphers on;
 
         location = /health {
             access_log off;
@@ -125,6 +144,8 @@ compose_yml = f"""services:
       - "443:443"
     volumes:
       - /opt/loopbridge/nginx.conf:/etc/nginx/nginx.conf:ro
+      - /opt/loopbridge/certbot/webroot:/var/www/certbot:ro
+      - /etc/letsencrypt:/etc/letsencrypt:ro
       - nginx-cache:/var/cache/nginx
     depends_on:
       app:
