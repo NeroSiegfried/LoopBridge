@@ -1,239 +1,172 @@
-# LoopBridge — Sandbox CI/CD Pipeline
-#
-# Mirrors the prod pipeline exactly, but:
-#   - Triggers on pushes to any branch EXCEPT main
-#   - Deploys to a separate container (loopbridge-sandbox) on port 3001
-#   - Uses a :sandbox-<sha> image tag (never overwrites :latest)
-#   - Uses a separate SQLite DB at /data/loopbridge-sandbox.db
-#   - Health-checks /api/articles on port 3001
-#
-# No extra secrets needed — reuses the same AWS creds as prod.
-# Access sandbox at:  http://<EC2_IP>:3001
+# ─────────────────────────────────────────────────────────────────────────────
+# LoopBridge — Sandbox CI/CD (non-main branches)
+# Mirrors production but runs on port 3001 with a separate DB and :sandbox tag.
+# ─────────────────────────────────────────────────────────────────────────────
 
-name: Deploy Sandbox
+name: Deploy (sandbox)
 
 on:
   push:
     branches-ignore: [main]
   workflow_dispatch:
-    inputs:
-      branch:
-        description: Branch to deploy to sandbox
-        required: false
-        default: ''
 
 env:
-  AWS_REGION:       us-east-1
-  ECR_REPOSITORY:   loopbridge-api
-  ECR_REGISTRY:     680128294518.dkr.ecr.us-east-1.amazonaws.com
-  EC2_INSTANCE_ID:  i-035f5e2909653efa0
-  S3_BUCKET:        loopbridge-uploads-680128294518
-  SANDBOX_PORT:     3001
-  CONTAINER_NAME:   loopbridge-sandbox
-  DB_PATH:          /data/loopbridge-sandbox.db
+  AWS_REGION:     us-east-1
+  ECR_REPO:       loopbridge-api
+  SANDBOX_PORT:   3001
+  CONTAINER_NAME: loopbridge-sandbox
+  DB_PATH:        /data/loopbridge-sandbox.db
 
 permissions:
   contents: read
+  id-token: write
 
 jobs:
-  # ─── Job 1: Build & Test ─────────────────────────────────────────────────
   build-and-test:
     name: Build & Test (sandbox)
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
           node-version: 22
           cache: npm
           cache-dependency-path: |
             client/package-lock.json
             server/package-lock.json
+      - run: cd client && npm ci --legacy-peer-deps
+      - run: cd server && npm ci
+      - run: cd client && npm run lint --if-present
+      - run: cd server && npm run lint --if-present
+      - run: cd server && npm test --if-present
+      - run: cd client && npm run build
 
-      - name: Install client dependencies
-        run: cd client && npm ci --legacy-peer-deps
-
-      - name: Install server dependencies
-        run: cd server && npm ci
-
-      - name: Lint (if configured)
-        run: |
-          cd client && npm run lint --if-present
-          cd ../server && npm run lint --if-present
-
-      - name: Server tests (if configured)
-        run: cd server && npm test --if-present
-
-      - name: Verify client builds cleanly
-        run: cd client && npm run build
-
-  # ─── Job 2: Push Docker image to ECR (sandbox tag) ───────────────────────
   push-image:
-    name: Push Sandbox Image to ECR
+    name: Push Sandbox Image
     needs: build-and-test
     runs-on: ubuntu-latest
     outputs:
-      image_tag: ${{ github.sha }}
+      ecr_registry: ${{ steps.aws.outputs.ecr_registry }}
     steps:
       - uses: actions/checkout@v4
 
-      - name: Configure AWS credentials
+      - name: Assume deploy role (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region:            ${{ env.AWS_REGION }}
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region:     ${{ env.AWS_REGION }}
 
-      - name: Login to Amazon ECR
-        uses: aws-actions/amazon-ecr-login@v2
-
-      - name: Build and push Docker image (sandbox tag only — never overwrites :latest)
+      - name: Derive ECR registry
+        id: aws
         run: |
-          IMAGE=${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}
-          SHA=${{ github.sha }}
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          ECR_REGISTRY="${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+          echo "ecr_registry=${ECR_REGISTRY}" >> $GITHUB_OUTPUT
+          echo "ECR_REGISTRY=${ECR_REGISTRY}" >> $GITHUB_ENV
+
+      - uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Build and push (sandbox tag — never overwrites :latest)
+        run: |
+          IMAGE="${ECR_REGISTRY}/${ECR_REPO}"
           BRANCH=$(echo "${GITHUB_REF_NAME}" | tr '/' '-')
-
-          docker build \
-            --platform linux/amd64 \
+          docker build --platform linux/amd64 \
             --file server/Dockerfile \
-            --tag $IMAGE:sandbox-$SHA \
-            --tag $IMAGE:sandbox-$BRANCH \
+            --tag "${IMAGE}:sandbox-${{ github.sha }}" \
+            --tag "${IMAGE}:sandbox-${BRANCH}" \
             .
+          docker push "${IMAGE}:sandbox-${{ github.sha }}"
+          docker push "${IMAGE}:sandbox-${BRANCH}"
 
-          docker push $IMAGE:sandbox-$SHA
-          docker push $IMAGE:sandbox-$BRANCH
-
-          echo "Pushed $IMAGE:sandbox-$SHA"
-
-  # ─── Job 3: Deploy sandbox container via SSM ─────────────────────────────
   deploy:
-    name: Deploy Sandbox to EC2 via SSM
+    name: Deploy Sandbox to EC2
     needs: push-image
     runs-on: ubuntu-latest
     steps:
-      - name: Configure AWS credentials
+      - uses: actions/checkout@v4
+
+      - name: Assume deploy role (OIDC)
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id:     ${{ secrets.AWS_ACCESS_KEY_ID }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region:            ${{ env.AWS_REGION }}
+          role-to-assume: ${{ vars.AWS_ROLE_ARN }}
+          aws-region:     ${{ env.AWS_REGION }}
 
-      - name: Checkout scripts
-        uses: actions/checkout@v4
-
-      - name: Send sandbox deploy command via SSM
-        id: ssm
+      - name: Discover targets
+        id: targets
         run: |
-          python3 .github/scripts/build-ssm-sandbox-payload.py > /tmp/ssm-sandbox.json
-          echo "--- SSM payload ---"
-          cat /tmp/ssm-sandbox.json
-          COMMAND_ID=$(aws ssm send-command \
-            --cli-input-json file:///tmp/ssm-sandbox.json \
-            --query 'Command.CommandId' \
+          ACCOUNT_ID=$(aws sts get-caller-identity --query Account --output text)
+          ECR_REGISTRY="${ACCOUNT_ID}.dkr.ecr.${AWS_REGION}.amazonaws.com"
+          S3_BUCKET="loopbridge-uploads-${ACCOUNT_ID}"
+          INSTANCE_ID=$(aws ec2 describe-instances \
+            --filters \
+              "Name=tag:Project,Values=LoopBridge" \
+              "Name=tag:Name,Values=loopbridge-app" \
+              "Name=instance-state-name,Values=running" \
+            --query "Reservations[0].Instances[0].InstanceId" \
             --output text)
-          echo "command_id=$COMMAND_ID" >> $GITHUB_OUTPUT
-          echo "SSM command sent: $COMMAND_ID"
+          echo "ecr_registry=${ECR_REGISTRY}" >> $GITHUB_OUTPUT
+          echo "s3_bucket=${S3_BUCKET}"       >> $GITHUB_OUTPUT
+          echo "instance_id=${INSTANCE_ID}"   >> $GITHUB_OUTPUT
+
+      - name: Send SSM command
+        id: ssm
         env:
-          IMAGE:     ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}
+          IMAGE:     ${{ steps.targets.outputs.ecr_registry }}/${{ env.ECR_REPO }}
           SHA:       ${{ github.sha }}
-          INSTANCE:  ${{ env.EC2_INSTANCE_ID }}
+          INSTANCE:  ${{ steps.targets.outputs.instance_id }}
           CONTAINER: ${{ env.CONTAINER_NAME }}
           PORT:      ${{ env.SANDBOX_PORT }}
           DBPATH:    ${{ env.DB_PATH }}
-          BUCKET:    ${{ env.S3_BUCKET }}
+          BUCKET:    ${{ steps.targets.outputs.s3_bucket }}
           REGION:    ${{ env.AWS_REGION }}
-
-      - name: Wait for SSM command to complete
         run: |
-          COMMAND_ID=${{ steps.ssm.outputs.command_id }}
-          INSTANCE=${{ env.EC2_INSTANCE_ID }}
+          python3 .github/scripts/build-ssm-sandbox-payload.py > /tmp/ssm-sandbox.json
+          COMMAND_ID=$(aws ssm send-command \
+            --cli-input-json file:///tmp/ssm-sandbox.json \
+            --query 'Command.CommandId' --output text)
+          echo "command_id=${COMMAND_ID}" >> $GITHUB_OUTPUT
 
-          echo "Waiting for command $COMMAND_ID ..."
-
-          for i in $(seq 1 30); do
+      - name: Wait for deploy
+        run: |
+          COMMAND_ID="${{ steps.ssm.outputs.command_id }}"
+          INSTANCE="${{ steps.targets.outputs.instance_id }}"
+          for i in $(seq 1 36); do
             STATUS=$(aws ssm get-command-invocation \
-              --command-id "$COMMAND_ID" \
-              --instance-id "$INSTANCE" \
-              --query 'StatusDetails' \
-              --output text 2>/dev/null || echo "Pending")
-
-            echo "  [$i/30] $STATUS"
-
-            if [[ "$STATUS" == "Success" ]]; then
-              echo "Sandbox deploy succeeded."
-              break
-            elif [[ "$STATUS" == "Failed" || "$STATUS" == "TimedOut" || "$STATUS" == "Cancelled" ]]; then
-              echo "Sandbox deploy command failed: $STATUS"
-              aws ssm get-command-invocation \
-                --command-id "$COMMAND_ID" \
-                --instance-id "$INSTANCE" \
-                --query 'StandardErrorContent' \
-                --output text || true
-              exit 1
-            fi
-
+              --command-id "$COMMAND_ID" --instance-id "$INSTANCE" \
+              --query 'StatusDetails' --output text 2>/dev/null || echo "Pending")
+            echo "  [$i/36] $STATUS"
+            [ "$STATUS" = "Success" ] && break
+            [[ "$STATUS" =~ ^(Failed|TimedOut|Cancelled) ]] && exit 1
             sleep 10
           done
 
-          if [[ "$STATUS" != "Success" ]]; then
-            echo "Timed out waiting for sandbox deploy."
-            exit 1
-          fi
-
-      - name: Show deploy output
+      - name: Show logs
         if: always()
         run: |
           aws ssm get-command-invocation \
             --command-id "${{ steps.ssm.outputs.command_id }}" \
-            --instance-id "${{ env.EC2_INSTANCE_ID }}" \
-            --query 'StandardOutputContent' \
-            --output text || true
+            --instance-id "${{ steps.targets.outputs.instance_id }}" \
+            --query 'StandardOutputContent' --output text || true
 
-      - name: Open port 3001 in security group (idempotent)
+      - name: Health check
         run: |
+          sleep 10
+          EC2_IP=$(aws ec2 describe-instances \
+            --instance-ids "${{ steps.targets.outputs.instance_id }}" \
+            --query 'Reservations[0].Instances[0].PublicIpAddress' --output text)
           SG_ID=$(aws ec2 describe-instances \
-            --instance-ids "${{ env.EC2_INSTANCE_ID }}" \
+            --instance-ids "${{ steps.targets.outputs.instance_id }}" \
             --query 'Reservations[0].Instances[0].SecurityGroups[0].GroupId' \
             --output text)
-
-          # Authorize ingress on 3001 — silently ignores "already exists" error
           aws ec2 authorize-security-group-ingress \
-            --group-id "$SG_ID" \
-            --protocol tcp \
-            --port ${{ env.SANDBOX_PORT }} \
+            --group-id "$SG_ID" --protocol tcp --port ${{ env.SANDBOX_PORT }} \
             --cidr 0.0.0.0/0 2>/dev/null || true
-
-          echo "Security group $SG_ID: port ${{ env.SANDBOX_PORT }} open"
-
-      - name: Health check (port 3001)
-        run: |
-          echo "Waiting 10s for sandbox container to settle..."
-          sleep 10
-
-          EC2_IP=$(aws ec2 describe-instances \
-            --instance-ids "${{ env.EC2_INSTANCE_ID }}" \
-            --query 'Reservations[0].Instances[0].PublicIpAddress' \
-            --output text)
-
-          echo "Sandbox URL: http://$EC2_IP:${{ env.SANDBOX_PORT }}"
-          echo "Checking http://$EC2_IP:${{ env.SANDBOX_PORT }}/api/articles ..."
-
           for i in 1 2 3; do
             STATUS=$(curl -s -o /dev/null -w "%{http_code}" --max-time 10 \
-              "http://$EC2_IP:${{ env.SANDBOX_PORT }}/api/articles" || echo "000")
+              "http://${EC2_IP}:${{ env.SANDBOX_PORT }}/api/articles" || echo "000")
             echo "  Attempt $i: HTTP $STATUS"
-            if [[ "$STATUS" == "200" ]]; then
-              echo "Sandbox health check passed."
-              echo ""
-              echo "================================================"
-              echo "  SANDBOX LIVE: http://$EC2_IP:${{ env.SANDBOX_PORT }}"
-              echo "================================================"
-              exit 0
-            fi
-            sleep 5
+            [ "$STATUS" = "200" ] && \
+              echo "Sandbox live: http://${EC2_IP}:${{ env.SANDBOX_PORT }}" && exit 0
+            sleep 10
           done
-
-          echo "Sandbox health check failed after 3 attempts!"
           exit 1

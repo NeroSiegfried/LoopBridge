@@ -384,7 +384,7 @@ section.newsletter h2 {
 
     .hero .section-container {
         flex-direction: column;
-        padding: var(--page-top) 0 3rem;
+        padding: var(--page-top) 20px 3rem;
         text-align: left;
     }
 
@@ -462,10 +462,6 @@ section.newsletter h2 {
 /* MOBILE (up to 768px): Figma mobile values */
 @media (max-width: 48rem) {
     /* Hero */
-    .hero {
-        padding-left: 20px;
-        padding-right: 20px;
-    }
 
     .hero .hero-body h1 {
         font-size: 38px;
@@ -503,12 +499,12 @@ section.newsletter h2 {
     }
 
     .why {
-        padding: 2.5rem 20px 3rem;
+        padding: 2.5rem 0 3rem;
     }
 
     /* Join */
     .join {
-        padding: 2.5rem 20px;
+        padding: 2.5rem 0;
     }
 
     .join-top {
@@ -528,7 +524,7 @@ section.newsletter h2 {
 
     /* Newsletter */
     section.newsletter {
-        padding: 2.5rem 20px;
+        padding: 2.5rem 0;
     }
 
     section.newsletter h2 {
