@@ -1,0 +1,405 @@
+/* ============================================= */
+/*   GLOSSARY PAGE                               */
+/*   Desktop: Figma symbol 1641:15593            */
+/*   Mobile:  Figma mobile frame 1778:23348      */
+/* ============================================= */
+
+/* --- Hero (dark navy, white text) --- */
+.glossary-hero {
+    background-color: var(--lb-blue-dark);
+    padding: 10.5rem var(--section-px) 6rem;
+}
+
+.glossary-hero .section-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: clamp(2rem, 6vw, 140px);
+}
+
+.glossary-hero-text {
+    max-width: 606px;
+}
+
+.glossary-hero h1 {
+    font-family: var(--font-heading-variable);
+    font-weight: 700;
+    font-size: 60px;
+    line-height: 64px;
+    letter-spacing: -0.02em;
+    color: #fff;
+}
+
+.glossary-hero p {
+    margin-top: 12px;
+    font-family: var(--font-body);
+    font-size: 20px;
+    line-height: 28px;
+    letter-spacing: -0.03em;
+    color: var(--gray-mid);
+    max-width: 575px;
+}
+
+.glossary-hero-img {
+    flex-shrink: 0;
+    width: 350px;
+    height: 350px;
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.glossary-hero-img img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    display: block;
+}
+
+/* --- Body --- */
+.glossary-section {
+    background-color: #fff;
+    padding: 5rem var(--section-px) 6.25rem;
+}
+
+.glossary-section .section-container {
+    display: block;
+}
+
+.glossary-layout {
+    display: grid;
+    grid-template-columns: 300px 1fr;
+    gap: 40px;
+    align-items: start;
+}
+
+/* --- Sidebar: gray card on the LEFT --- */
+.glossary-sidebar {
+    position: sticky;
+    top: 6.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 32px;
+    max-height: calc(100vh - 8rem);
+    background-color: var(--gray-light);   /* gray card on sidebar */
+    border-radius: 12px;
+    padding: 20px;
+}
+
+.glossary-search {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.glossary-search .glossary-search-icon {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: var(--black-mid);
+    font-size: 18px;
+    pointer-events: none;
+}
+
+.glossary-search input {
+    width: 100%;
+    height: 48px;
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 28px;
+    letter-spacing: -0.03em;
+    color: var(--black-mid);
+    padding: 0 16px 0 48px;
+    border: 1px solid var(--gray-dark);
+    border-radius: 34px;
+    background-color: #fff;
+    outline: none;
+    transition: border-color var(--transition-fast);
+}
+
+.glossary-search input::placeholder {
+    color: #8b9199;
+}
+
+.glossary-search input:focus {
+    border-color: var(--lb-green);
+}
+
+.glossary-search-clear {
+    position: absolute;
+    right: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    color: #8b9199;
+    font-size: 15px;
+    cursor: pointer;
+    padding: 6px;
+    line-height: 1;
+}
+
+.glossary-search-clear:hover {
+    color: var(--black-dark);
+}
+
+/* desktop A–Z term index */
+.glossary-index {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.glossary-index::-webkit-scrollbar { width: 5px; }
+.glossary-index::-webkit-scrollbar-thumb { background: var(--gray-dark); border-radius: 3px; }
+
+.index-group {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.index-letter {
+    font-family: var(--font-heading-variable);
+    font-weight: 500;
+    font-size: 20px;
+    line-height: 28px;
+    letter-spacing: -0.03em;
+    color: var(--black-mid);
+}
+
+.index-terms {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+}
+
+.index-term {
+    font-family: var(--font-body);
+    font-size: 16px;
+    line-height: 20px;
+    letter-spacing: -0.03em;
+    color: var(--black-mid);
+    background: none;
+    border: none;
+    text-align: left;
+    padding: 0;
+    cursor: pointer;
+    width: fit-content;
+    transition: color var(--transition-fast);
+}
+
+.index-term:hover {
+    color: var(--lb-green);
+}
+
+/* Mobile letter-filter card — hidden on desktop */
+.glossary-letterbox {
+    display: none;
+}
+
+/* --- Definitions panel: white/transparent on the RIGHT --- */
+.glossary-panel {
+    background: transparent;
+    border-radius: 0;
+    padding: 0 0 0 8px;
+    min-height: 0;
+}
+
+.glossary-entry {
+    margin-bottom: 28px;
+    scroll-margin-top: 6rem;
+}
+
+.glossary-entry:last-child {
+    margin-bottom: 0;
+}
+
+/* Letter header: Cabinet Grotesk Medium 28/28, navy */
+.glossary-entry .panel-letter {
+    font-family: var(--font-heading-variable);
+    font-weight: 500;
+    font-size: 28px;
+    line-height: 28px;
+    letter-spacing: -0.03em;
+    color: var(--lb-blue-text);
+    margin-bottom: 24px;
+}
+
+/* Term name: Schibsted Medium 18/20, gray */
+.glossary-entry .entry-term {
+    font-family: var(--font-body);
+    font-weight: 500;
+    font-size: 18px;
+    line-height: 20px;
+    letter-spacing: -0.03em;
+    color: var(--black-mid);
+    margin-bottom: 16px;
+}
+
+/* Definition: Schibsted Regular 16, near-black */
+.glossary-entry .entry-def {
+    font-family: var(--font-body);
+    font-weight: 400;
+    font-size: 16px;
+    line-height: 24px;
+    letter-spacing: -0.03em;
+    color: var(--black-dark);
+}
+
+.glossary-empty {
+    padding: 2rem 0;
+    color: var(--black-mid);
+    font-size: 16px;
+}
+
+.glossary-skeleton {
+    display: flex;
+    flex-direction: column;
+    gap: 1.5rem;
+}
+
+/* ============================================= */
+/*   RESPONSIVE                                  */
+/* ============================================= */
+
+/* Tablet */
+@media (max-width: 62rem) {
+    .glossary-hero {
+        padding-top: var(--page-top);
+        padding-bottom: 4rem;
+    }
+
+    .glossary-hero h1 {
+        font-size: 44px;
+        line-height: 48px;
+    }
+
+    .glossary-hero p {
+        font-size: 18px;
+        margin-top: 14px;
+    }
+
+    .glossary-hero-img {
+        width: 300px;
+        height: 300px;
+    }
+
+    .glossary-section {
+        padding-top: 3.5rem;
+        padding-bottom: 5rem;
+    }
+
+    .glossary-layout {
+        grid-template-columns: 240px 1fr;
+        gap: 28px;
+    }
+}
+
+/* Mobile — matches Figma mobile frame */
+@media (max-width: 48rem) {
+    .glossary-hero {
+        padding: var(--page-top) 20px 3rem;
+    }
+
+    .glossary-hero .section-container {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 2rem;
+    }
+
+    .glossary-hero-text {
+        max-width: none;
+    }
+
+    .glossary-hero h1 {
+        font-size: 38px;
+        line-height: 44px;
+    }
+
+    .glossary-hero p {
+        font-size: 16px;
+        line-height: 24px;
+        margin-top: 12px;
+    }
+
+    .glossary-hero-img {
+        width: 100%;
+        height: auto;
+        aspect-ratio: 1;
+    }
+
+    /* Section: plain white — no coloured background */
+    .glossary-section {
+        background-color: #fff;
+        padding: 2.5rem 20px 3.5rem;
+    }
+
+    .glossary-layout {
+        grid-template-columns: 1fr;
+        gap: 1.5rem;
+    }
+
+    /* Sidebar: no card on mobile — the letterbox is self-contained */
+    .glossary-sidebar {
+        position: static;
+        max-height: none;
+        background: none;
+        border-radius: 0;
+        padding: 0;
+        gap: 1.25rem;
+    }
+
+    /* Desktop search + term index hidden on mobile */
+    .glossary-sidebar > .glossary-search,
+    .glossary-index {
+        display: none;
+    }
+
+    /* Show letter-filter card */
+    .glossary-letterbox {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        background-color: var(--gray-light);
+        border-radius: 12px;
+        padding: 20px;
+    }
+
+    .glossary-letters {
+        display: grid;
+        grid-template-columns: repeat(9, 1fr);
+        gap: 10px 6px;
+    }
+
+    .glossary-letter {
+        font-family: var(--font-heading-variable);
+        font-weight: 500;
+        font-size: 18px;
+        line-height: 28px;
+        letter-spacing: -0.03em;
+        color: var(--black-mid);
+        background: none;
+        border: none;
+        padding: 0;
+        cursor: pointer;
+        text-align: center;
+        transition: color var(--transition-fast);
+    }
+
+    .glossary-letter:disabled {
+        color: #c7ccd2;
+        cursor: default;
+    }
+
+    .glossary-letter.active {
+        color: var(--lb-blue-dark);
+        font-weight: 700;
+    }
+
+    /* Definitions panel: no card on mobile */
+    .glossary-panel {
+        padding: 0;
+    }
+}

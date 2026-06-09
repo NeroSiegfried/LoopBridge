@@ -85,6 +85,7 @@ export const dashboardApi = {
 // ─── Misc ────────────────────────────────────────────────
 export const miscApi = {
   faqs: () => request('/faqs'),
+  glossary: () => request('/glossary'),
   site: () => request('/site'),
   siteConfig: () => request('/site/config'),
   team: () => request('/team'),

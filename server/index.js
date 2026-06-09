@@ -51,6 +51,13 @@ const messagesRoutes  = require('./routes/messages');
 // ─── Create Express App ─────────────────────────────────
 const app = express();
 
+// Behind a single proxy/load balancer (e.g. AWS ALB) in production, so that
+// req.ip reflects the real client IP (needed for rate limiting + secure-cookie
+// detection) instead of the proxy's address.
+if (config.nodeEnv === 'production') {
+    app.set('trust proxy', 1);
+}
+
 // ─── Security Headers ───────────────────────────────────
 app.disable('x-powered-by');
 app.use((req, res, next) => {
@@ -101,7 +108,15 @@ app.use(cors({
     origin: config.corsOrigin,
     credentials: true
 }));
-app.use(express.json({ limit: config.jsonBodyLimit }));
+// Capture the raw request body during JSON parsing so payment-provider
+// webhooks can verify HMAC signatures over the exact bytes received.
+// (Previously the per-route express.raw() in routes/payments.js ran AFTER
+//  this global parser had already consumed the stream, leaving rawBody empty
+//  and causing every webhook signature check to fail.)
+app.use(express.json({
+    limit: config.jsonBodyLimit,
+    verify: (req, _res, buf) => { req.rawBody = buf; }
+}));
 app.use(cookieParser());
 app.use(sessionMiddleware);
 

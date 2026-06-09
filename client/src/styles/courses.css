@@ -136,9 +136,17 @@
 }
 
 
+@media (max-width: 62rem) {
+    .courses-hero {
+        padding-top: var(--page-top);
+        padding-left: var(--section-px);
+        padding-right: var(--section-px);
+    }
+}
+
 @media (max-width: 760px) {
     .courses-hero {
-        padding: 12rem 1.75rem 2rem; /* 160px 20px 60px */
+        padding: var(--page-top) var(--section-px) 2rem;
         text-align: left;
     }
 
@@ -146,15 +154,22 @@
         flex-direction: column;
     }
 
+    /* Match Figma mobile: 38px/44px hero heading */
     .courses-hero h1 {
-        font-size: 3rem; /* 48px */
+        font-size: 38px;
+        line-height: 44px;
+    }
+
+    /* Body text reduction */
+    .courses-hero .hero-body p {
+        font-size: 16px;
+        line-height: 24px;
     }
 
     .courses-hero .hero-body {
-        margin-bottom: 2.5rem; /* 40px */
+        margin-bottom: 2.5rem;
         width: 100%;
     }
-
 
     .courses-hero-img {
         justify-content: center;

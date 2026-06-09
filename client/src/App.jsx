@@ -10,6 +10,7 @@ import Courses from './pages/Courses';
 import CourseOverview from './pages/CourseOverview';
 import Exchange from './pages/Exchange';
 import Faqs from './pages/Faqs';
+import Glossary from './pages/Glossary';
 import LearningTrack from './pages/LearningTrack';
 import LessonRouter from './pages/LessonRouter';
 import ArticleView from './pages/ArticleView';
@@ -45,6 +46,7 @@ export default function App() {
         <Route path="payment/cancel" element={<PaymentCancel />} />
         <Route path="exchange" element={<Exchange />} />
         <Route path="faqs" element={<Faqs />} />
+        <Route path="glossary" element={<Glossary />} />
         <Route path="beginner" element={<LearningTrack track="beginner" />} />
         <Route path="intermediate" element={<LearningTrack track="intermediate" />} />
         <Route path="advanced" element={<LearningTrack track="advanced" />} />

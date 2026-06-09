@@ -40,14 +40,11 @@ terraform {
 }
 
 provider "aws" {
-  region = var.aws_region
+  region  = local.aws_region
+  profile = var.aws_profile
 
   default_tags {
-    tags = {
-      Project     = "LoopBridge"
-      Environment = var.environment
-      ManagedBy   = "Terraform"
-    }
+    tags = local.tags
   }
 }
 
@@ -57,6 +54,5 @@ data "aws_caller_identity" "current" {}
 
 locals {
   account_id  = data.aws_caller_identity.current.account_id
-  bucket_name = "loopbridge-uploads-${local.account_id}"
-  name_prefix = "loopbridge"
+  bucket_name = "${local.name_prefix}-uploads-${local.account_id}"
 }

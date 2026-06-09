@@ -1,0 +1,56 @@
+# Production docker-compose — microservices foundation
+#
+# Two containers on one host:
+#   nginx   — HTTP/HTTPS termination, static file serving, reverse proxy
+#   app     — stateless Node.js API
+#
+# Scale path:
+#   1. t3.micro  → t3.small/medium  (more RAM, same compose)
+#   2. t3.medium → ALB + ECS Fargate (replace `nginx` with ALB, `app` becomes a service)
+#   3. SQLite    → RDS Aurora        (change DB_URL env var only)
+#
+# Usage (EC2, run as ec2-user):
+#   export $(cat /etc/loopbridge.env | xargs) && docker compose -f docker-compose.prod.yml up -d
+
+services:
+  nginx:
+    image: nginx:1.27-alpine
+    restart: unless-stopped
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - ./infrastructure/nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      - letsencrypt:/etc/letsencrypt:ro
+      - nginx-cache:/var/cache/nginx
+    depends_on:
+      app:
+        condition: service_healthy
+    logging:
+      driver: json-file
+      options: { max-size: "10m", max-file: "3" }
+
+  app:
+    image: ${APP_IMAGE:?APP_IMAGE must be set}
+    restart: unless-stopped
+    expose:
+      - "3000"
+    env_file:
+      - /etc/loopbridge.env        # written by the SSM deploy script
+    volumes:
+      - /data:/data                # SQLite + Litestream WAL
+    healthcheck:
+      test: ["CMD", "wget", "-qO-", "http://localhost:3000/api/health"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 20s
+    logging:
+      driver: json-file
+      options: { max-size: "50m", max-file: "5" }
+
+volumes:
+  letsencrypt:
+    external: true                 # managed by certbot outside compose
+    name: letsencrypt
+  nginx-cache: {}

@@ -498,10 +498,27 @@
     }
 }
 
+@media (max-width: 62rem) {
+    .blog-header {
+        padding-top: var(--page-top);
+        padding-left: var(--section-px);
+        padding-right: var(--section-px);
+    }
+
+    .blog-page .featured,
+    .blog-page .feed,
+    .blog-page .newsletter {
+        padding-left: var(--section-px);
+        padding-right: var(--section-px);
+    }
+}
+
 @media (max-width: 48rem) {
     .blog-header {
         padding-left: 20px;
         padding-right: 20px;
+        /* 8rem bottom → tighter at mobile */
+        padding-bottom: 3rem;
     }
 
     .blog-page .featured {

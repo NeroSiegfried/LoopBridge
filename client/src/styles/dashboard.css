@@ -181,6 +181,12 @@
 }
 
 /* Responsive */
+@media (max-width: 62rem) {
+    .dashboard-section {
+        padding-top: var(--page-top);
+    }
+}
+
 @media (max-width: 48rem) {
     .dashboard-body {
         padding: 0 20px 4rem;

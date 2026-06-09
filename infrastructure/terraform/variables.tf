@@ -2,40 +2,31 @@
 # infrastructure/terraform/variables.tf
 # ─────────────────────────────────────────────────────────────────────────────
 
+variable "aws_profile" {
+  description = "AWS CLI profile to use"
+  type        = string
+  default     = "loopbridge-developer"
+}
+
 variable "aws_region" {
-  description = "AWS region to deploy into"
+  description = "AWS region"
   type        = string
   default     = "us-east-1"
 }
 
-variable "environment" {
-  description = "Environment label (production / staging)"
-  type        = string
-  default     = "production"
-}
-
 variable "vpc_cidr" {
-  description = "CIDR block for the VPC"
-  type        = string
-  default     = "10.0.0.0/16"
+  type    = string
+  default = "10.0.0.0/16"
 }
 
 variable "subnet_cidr" {
-  description = "CIDR block for the public subnet"
-  type        = string
-  default     = "10.0.0.0/20"
+  type    = string
+  default = "10.0.0.0/20"
 }
 
 variable "availability_zone" {
-  description = "AZ for the subnet and EC2 instance"
-  type        = string
-  default     = "us-east-1a"
-}
-
-variable "instance_type" {
-  description = "EC2 instance type"
-  type        = string
-  default     = "t2.micro"
+  type    = string
+  default = "us-east-1a"
 }
 
 variable "root_volume_size_gb" {
@@ -45,19 +36,43 @@ variable "root_volume_size_gb" {
 }
 
 variable "ec2_key_pair_name" {
-  description = "Name of an existing EC2 Key Pair for SSH access (optional — SSM is used for CI/CD)"
+  description = "Existing EC2 Key Pair for SSH (optional — SSM is preferred)"
   type        = string
   default     = ""
 }
 
-variable "github_repo" {
-  description = "GitHub repository in owner/repo format (used in outputs)"
-  type        = string
-  default     = "NeroSiegfried/LoopBridge"
-}
-
 variable "allowed_ssh_cidrs" {
-  description = "CIDR list allowed SSH access. Leave empty to omit the rule (use SSM instead)."
+  description = "CIDRs allowed SSH. Empty = no SSH rule (SSM only)."
   type        = list(string)
   default     = []
+}
+
+# ─── App ──────────────────────────────────────────────────────────────────────
+
+variable "app_domain" {
+  description = "Domain name (e.g. loopbridge.network)"
+  type        = string
+  default     = ""
+}
+
+# ─── GitHub OIDC ──────────────────────────────────────────────────────────────
+
+variable "github_repo" {
+  description = <<-EOT
+    GitHub repository in owner/repo format.
+    This is the ONE variable to change when pointing CI/CD at a different repo.
+    It controls the OIDC trust condition — only this repo can assume the deploy role.
+    Example: "NeroSiegfried/LoopBridge"
+  EOT
+  type    = string
+  default = "NeroSiegfried/LoopBridge"
+}
+
+# ─── MediaConvert (optional) ──────────────────────────────────────────────────
+
+variable "transcode_webhook_secret" {
+  description = "HMAC secret for MediaConvert callback validation"
+  type        = string
+  sensitive   = true
+  default     = ""
 }

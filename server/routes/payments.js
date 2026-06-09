@@ -7,6 +7,11 @@
  * POST /api/payments/webhook/paystack      — Paystack webhook        (no auth — signed)
  * POST /api/payments/webhook/flutterwave   — Flutterwave webhook     (no auth — signed)
  * POST /api/payments/webhook/nowpayments   — NOWPayments IPN         (no auth — signed)
+ *
+ * NOTE: webhook signature verification reads `req.rawBody` (the exact bytes of
+ * the request), which is captured by the global `express.json({ verify })` in
+ * index.js. Do NOT add a separate body parser here — it would consume the
+ * already-read stream and leave rawBody empty.
  */
 'use strict';
 
@@ -15,17 +20,6 @@ const { requireAuth } = require('../middleware/auth');
 const { paymentService } = require('../services');
 
 const router = express.Router();
-
-// Webhooks need the raw body for signature verification — capture it here.
-// Must be mounted BEFORE express.json() parses the body, so we use
-// express.raw() selectively on webhook paths.
-function rawBody(req, res, next) {
-    express.raw({ type: '*/*' })(req, res, (err) => {
-        if (err) return next(err);
-        req.rawBody = req.body;
-        next();
-    });
-}
 
 // ─── Initiate payment ────────────────────────────────────
 router.post('/initiate', requireAuth, async (req, res) => {
@@ -64,8 +58,9 @@ router.get('/history', requireAuth, async (req, res) => {
     return res.json(payments);
 });
 
-// ─── Webhooks (raw body required for signature check) ────
-router.post('/webhook/paystack', rawBody, async (req, res) => {
+// ─── Webhooks ────────────────────────────────────────────
+// req.rawBody (Buffer) is captured globally in index.js for signature checks.
+router.post('/webhook/paystack', async (req, res) => {
     try {
         const sig = req.headers['x-paystack-signature'];
         await paymentService.handlePaystackWebhook(req.rawBody, sig);
@@ -75,7 +70,7 @@ router.post('/webhook/paystack', rawBody, async (req, res) => {
     }
 });
 
-router.post('/webhook/flutterwave', rawBody, async (req, res) => {
+router.post('/webhook/flutterwave', async (req, res) => {
     try {
         const sig = req.headers['verif-hash'];
         await paymentService.handleFlutterwaveWebhook(req.rawBody, sig);
@@ -85,7 +80,7 @@ router.post('/webhook/flutterwave', rawBody, async (req, res) => {
     }
 });
 
-router.post('/webhook/nowpayments', rawBody, async (req, res) => {
+router.post('/webhook/nowpayments', async (req, res) => {
     try {
         const sig = req.headers['x-nowpayments-sig'];
         await paymentService.handleNowpaymentsWebhook(req.rawBody, sig);

@@ -1,20 +1,21 @@
 # ─────────────────────────────────────────────────────────────────────────────
 # infrastructure/terraform/outputs.tf
+# After `terraform apply`, copy these values into your GitHub repo settings.
 # ─────────────────────────────────────────────────────────────────────────────
 
 output "ec2_public_ip" {
-  description = "Public IP of the EC2 instance (via Elastic IP)"
+  description = "EC2 public IP (add an A record for your domain)"
   value       = aws_eip.app.public_ip
 }
 
 output "ec2_instance_id" {
-  description = "EC2 instance ID — used in deploy.yml EC2_INSTANCE_ID env var"
+  description = "EC2 instance ID (CI/CD discovers this via tags — informational)"
   value       = aws_instance.app.id
 }
 
-output "ecr_registry" {
-  description = "ECR registry URL — used in deploy.yml ECR_REGISTRY env var"
-  value       = "${local.account_id}.dkr.ecr.${var.aws_region}.amazonaws.com"
+output "s3_bucket_name" {
+  description = "S3 uploads bucket name (CI/CD derives this from account ID — informational)"
+  value       = aws_s3_bucket.uploads.id
 }
 
 output "ecr_repository_url" {
@@ -22,37 +23,50 @@ output "ecr_repository_url" {
   value       = aws_ecr_repository.api.repository_url
 }
 
-output "s3_bucket_name" {
-  description = "S3 bucket name — used in deploy.yml S3_BUCKET env var"
-  value       = aws_s3_bucket.uploads.id
-}
-
 output "mediaconvert_role_arn" {
-  description = "MediaConvert IAM role ARN — used in docker run MEDIACONVERT_ROLE_ARN"
+  description = "MediaConvert IAM role ARN — pass as MEDIACONVERT_ROLE_ARN env var"
   value       = aws_iam_role.mediaconvert.arn
 }
 
-output "cicd_access_key_id" {
-  description = "AWS_ACCESS_KEY_ID for GitHub Actions — add to secrets.env"
-  value       = aws_iam_access_key.cicd.id
-  sensitive   = true
+# ── The ONE GitHub Actions secret you need ────────────────────────────────────
+
+output "github_actions_role_arn" {
+  description = <<-EOT
+    REQUIRED: Add this as a GitHub Actions variable named AWS_ROLE_ARN.
+    Settings → Secrets and variables → Actions → Variables → New repository variable
+    Name: AWS_ROLE_ARN
+    Value: (this output)
+
+    This is the only account-specific value GitHub needs.
+    Everything else (instance ID, bucket, registry) is discovered dynamically.
+  EOT
+  value = aws_iam_role.github_actions.arn
 }
 
-output "cicd_secret_access_key" {
-  description = "AWS_SECRET_ACCESS_KEY for GitHub Actions — add to secrets.env"
-  value       = aws_iam_access_key.cicd.secret
-  sensitive   = true
-}
+# ── Setup checklist (printed after apply) ─────────────────────────────────────
 
-# ── deploy.yml env block (copy-paste ready) ───────────────────────────────────
-output "deploy_yml_env_block" {
-  description = "Copy-paste this into the env: block of .github/workflows/deploy.yml"
+output "setup_checklist" {
+  description = "One-time steps to finish the setup"
   value       = <<-EOT
-    env:
-      AWS_REGION:       ${var.aws_region}
-      ECR_REPOSITORY:   ${local.name_prefix}-api
-      ECR_REGISTRY:     ${local.account_id}.dkr.ecr.${var.aws_region}.amazonaws.com
-      EC2_INSTANCE_ID:  ${aws_instance.app.id}
-      S3_BUCKET:        ${aws_s3_bucket.uploads.id}
+
+    ════════════ POST-APPLY CHECKLIST ════════════
+
+    1. Add GitHub Actions variable:
+       Repo → Settings → Secrets and variables → Actions → Variables
+       Name : AWS_ROLE_ARN
+       Value: ${aws_iam_role.github_actions.arn}
+
+    2. Add GitHub Actions secrets (one-time):
+       JWT_SECRET, SMTP_HOST, SMTP_PORT, SMTP_USER, SMTP_PASS,
+       NEWSLETTER_FROM_EMAIL, GOOGLE_CLIENT_ID,
+       TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN,
+       TWILIO_WHATSAPP_FROM, TWILIO_SMS_FROM
+
+    3. Point your domain DNS:
+       A record → ${aws_eip.app.public_ip}
+
+    4. Push to main → CI/CD deploys automatically.
+
+    ══════════════════════════════════════════════
   EOT
 }

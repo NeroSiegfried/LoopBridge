@@ -234,22 +234,23 @@ async function getJobStatus(jobId) {
 /**
  * Local ffmpeg HLS transcoder — used when MediaConvert is not configured.
  *
- * Generates a multi-variant HLS manifest at:
- *   <uploadsDir>/transcoded/<uploadId>/manifest.m3u8
- * with per-rendition subdirectories for segments.
+ * Generates HLS files and uploads them to S3 (if STORAGE_DRIVER=s3).
+ * If STORAGE_DRIVER=disk, files are served locally at /uploads/transcoded/<uploadId>/manifest.m3u8.
  *
- * The files are served by the existing `express.static(config.uploadsDir)`
- * middleware at /uploads/transcoded/<uploadId>/manifest.m3u8.
+ * The files are served by either:
+ *   - S3 CloudFront / direct S3 URL (if S3 mode)
+ *   - Express static middleware at /uploads/transcoded/<uploadId>/manifest.m3u8 (if disk mode)
  *
  * @param {string} uploadId   — the upload DB row id
  * @param {string} localPath  — absolute path OR path relative to uploadsDir
  *                              (e.g. "videos/abc.mp4" or "/abs/path/videos/abc.mp4")
- * @returns {{ hlsUrl: string }}
+ * @returns {{ hlsUrl: string, thumbnailUrl: string, videoWidth, videoHeight }}
  */
 async function transcodeVideoLocally(uploadId, localPath) {
     const ffmpeg = require('fluent-ffmpeg');
     const fs = require('fs');
     const path = require('path');
+    const fsPromises = require('fs').promises;
 
     // Resolve input path.
     // In local disk mode, rawRecord.path is "uploads/videos/<filename>" (relative to
@@ -369,9 +370,58 @@ async function transcodeVideoLocally(uploadId, localPath) {
             });
     });
 
-    const hlsUrl = `/uploads/transcoded/${uploadId}/manifest.m3u8`;
-    const thumbnailUrl = `/uploads/transcoded/${uploadId}/thumb.jpg`;
-    console.log(`[transcode:local] Complete — ${hlsUrl}`);
+    // ─── Upload transcoded files to S3 if configured ──────────────────────
+    let hlsUrl, thumbnailUrl;
+    
+    if (config.storageDriver === 's3' && config.s3Bucket) {
+        // Upload all HLS files to S3
+        const s3Prefix = config.s3Prefix || '';
+        const s3OutputPrefix = `${s3Prefix}transcoded/${uploadId}/`;
+        
+        console.log(`[transcode:local] Uploading to S3: s3://${config.s3Bucket}/${s3OutputPrefix}`);
+        
+        try {
+            // Upload master manifest, rendition playlists, segments, and thumbnail
+            const { uploadToS3 } = require('./storageService');
+            
+            // Recursively upload all files from outputDir to S3
+            const uploadDir = async (dir, s3Prefix) => {
+                const files = await fsPromises.readdir(dir, { withFileTypes: true });
+                for (const file of files) {
+                    const fullPath = path.join(dir, file.name);
+                    const s3Key = s3Prefix + file.name;
+                    
+                    if (file.isDirectory()) {
+                        await uploadDir(fullPath, s3Key + '/');
+                    } else {
+                        const fileContent = await fsPromises.readFile(fullPath);
+                        await uploadToS3(fileContent, s3Key, file.name);
+                        console.log(`[transcode:local]   uploaded: ${s3Key}`);
+                    }
+                }
+            };
+            
+            await uploadDir(outputDir, s3OutputPrefix);
+            
+            const cdnBaseUrl = config.cdnBaseUrl || `https://${config.s3Bucket}.s3.${config.s3Region || 'us-east-1'}.amazonaws.com`;
+            hlsUrl = `${cdnBaseUrl}/${s3OutputPrefix}manifest.m3u8`;
+            thumbnailUrl = `${cdnBaseUrl}/${s3OutputPrefix}thumb.jpg`;
+            
+            console.log(`[transcode:local] Complete (S3) — ${hlsUrl}`);
+        } catch (err) {
+            console.error('[transcode:local] S3 upload failed:', err.message);
+            console.error('[transcode:local] Falling back to local serving');
+            // Fallback to local serving
+            hlsUrl = `/uploads/transcoded/${uploadId}/manifest.m3u8`;
+            thumbnailUrl = `/uploads/transcoded/${uploadId}/thumb.jpg`;
+        }
+    } else {
+        // Disk mode — serve locally
+        hlsUrl = `/uploads/transcoded/${uploadId}/manifest.m3u8`;
+        thumbnailUrl = `/uploads/transcoded/${uploadId}/thumb.jpg`;
+        console.log(`[transcode:local] Complete (disk) — ${hlsUrl}`);
+    }
+    
     return { hlsUrl, thumbnailUrl, videoWidth: displayWidth, videoHeight: displayHeight };
 }
 

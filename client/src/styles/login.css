@@ -324,6 +324,12 @@
 }
 
 /* ─── Responsive ─── */
+@media (max-width: 62rem) {
+    .login-page {
+        padding-top: var(--page-top);
+    }
+}
+
 @media (max-width: 48rem) {
     .login-page {
         grid-template-columns: 1fr;

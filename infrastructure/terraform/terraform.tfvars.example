@@ -1,19 +1,23 @@
 # ─────────────────────────────────────────────────────────────────────────────
-# infrastructure/terraform/terraform.tfvars.example
-# Copy to terraform.tfvars and fill in — terraform.tfvars is gitignored
+# Copy to terraform.tfvars — this file is gitignored.
 # ─────────────────────────────────────────────────────────────────────────────
 
-aws_region        = "us-east-1"
-environment       = "production"
-instance_type     = "t2.micro"
-availability_zone = "us-east-1a"
+aws_profile = "loopbridge-developer"
 
-# Optional: name of an existing EC2 Key Pair if you want SSH access.
-# Leave blank to use SSM Session Manager only (recommended).
-ec2_key_pair_name = ""
-
-# Optional: restrict SSH to specific IPs. Leave empty to disable SSH rule.
-# allowed_ssh_cidrs = ["203.0.113.10/32"]
-allowed_ssh_cidrs = []
-
+# ── The ONE variable that controls which GitHub repo CI/CD trusts ─────────────
+# Only this repo can push images and trigger deploys via OIDC.
+# To point CI/CD at a different repo: change this and run terraform apply.
 github_repo = "NeroSiegfried/LoopBridge"
+
+# ── Tier: micro | small | production ─────────────────────────────────────────
+# micro      = t3.micro  (~$8/mo)  — default, fine for early stage
+# small      = t3.small  (~$17/mo) — more headroom for transcoding
+# production = t3.medium (~$34/mo) + CloudFront CDN
+#
+# Also set: export LOOPBRIDGE_ENV=micro  (before terraform commands)
+# deployment_env = "micro"
+
+# ── Optional ──────────────────────────────────────────────────────────────────
+# app_domain        = "loopbridge.network"
+# ec2_key_pair_name = ""        # leave blank — use SSM Session Manager
+# allowed_ssh_cidrs = []        # leave empty — SSH not needed

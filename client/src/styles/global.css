@@ -34,6 +34,13 @@
     --font-heading-medium: CabinetGrotesk-Medium, sans-serif;
     --font-body: 'Schibsted Grotesk', sans-serif;
     --max-width: 1400px;
+    --nav-offset: 9rem;
+    --page-top: 10.5rem;
+    --page-side: 2.5rem;
+    --nav-top: 5rem;
+    --nav-side: 2.5rem;
+    --section-px: 2.5rem;
+    --section-gap: 3.75rem;
 }
 
 /* --- Reset --- */
@@ -724,13 +731,33 @@ footer .social-icon:active {
 
 /* --- Responsive Breakpoints --- */
 @media (max-width: 62rem) {
+    :root {
+        --page-side: 1.25rem;
+        --nav-top: 2.5rem;
+        --nav-side: 1.25rem;
+        --page-top: 8rem;
+        --section-px: 1.25rem;
+        --section-gap: 2.5rem;
+    }
+
     .section-container {
         flex-direction: column;
-        padding: 0 1.25rem;
+        padding: 0;
     }
 
     .hide-mobile { display: none !important; }
     .show-mobile { display: block !important; }
+}
+
+@media (max-width: 48rem) {
+    :root {
+        --page-side: 1rem;
+        --nav-top: 2rem;
+        --nav-side: 1rem;
+        --page-top: 7.5rem;
+        --section-px: 1rem;
+        --section-gap: 2rem;
+    }
 }
 
 @media (min-width: 62.0625rem) {

@@ -1,5 +1,5 @@
 .articles-page .featured, .articles-page .article-section {
-    padding: 18rem 4rem 4rem;
+    padding: var(--page-top) var(--page-side) 4rem;
 }
 
 .articles-page .related-articles {
@@ -279,10 +279,6 @@
         grid-template-columns: repeat(2, 1fr);
     }
 
-    .articles-page .article-section {
-        padding-top: 12rem;
-    }
-
     .articles-page .article-section .section-container {
         padding: 0px 4rem;
     }
@@ -300,7 +296,7 @@
     }
 
     .articles-page section.featured, .articles-page section.article-section {
-        padding: 14rem 20px 3rem;
+        padding: var(--page-top) 20px 3rem;
     }
 
     .articles-page section.related-articles {
