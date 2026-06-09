@@ -3,6 +3,7 @@
  *
  * GET  /api/faqs              — all FAQs grouped by category
  * GET  /api/faqs/categories   — list of FAQ category names
+ * GET  /api/glossary          — A–Z glossary terms (from glossary.json)
  * GET  /api/site              — site config (from site.json)
  * GET  /api/site/config       — public site config from env vars (socials, contacts)
  * GET  /api/team              — team members
@@ -21,10 +22,16 @@ const { faqRepo, subscriberRepo } = require('../repositories');
 
 const router = express.Router();
 
+// Simple in-process cache for static JSON files (avoids re-reading on every hit)
+const _staticCache = new Map();
+
 function readStaticJSON(filename) {
+    if (_staticCache.has(filename)) return _staticCache.get(filename);
     const filePath = path.join(config.dataDir, filename);
     if (!fs.existsSync(filePath)) return null;
-    return JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+    const data = JSON.parse(fs.readFileSync(filePath, 'utf-8'));
+    if (config.nodeEnv === 'production') _staticCache.set(filename, data);
+    return data;
 }
 
 // ─── GET /api/faqs ──────────────────────────────────────
@@ -35,6 +42,15 @@ router.get('/faqs', async (req, res) => {
 // ─── GET /api/faqs/categories ───────────────────────────
 router.get('/faqs/categories', async (req, res) => {
     return res.json(await faqRepo.listCategories());
+});
+
+// ─── GET /api/glossary ──────────────────────────────────
+// Static reference content (crypto / Web3 terms). Served from
+// data/glossary.json, mirroring the site/team/platforms pattern.
+router.get('/glossary', (req, res) => {
+    const data = readStaticJSON('glossary.json');
+    if (!data) return res.status(404).json({ error: 'glossary.json not found.' });
+    return res.json({ terms: data.terms || [] });
 });
 
 // ─── GET /api/site ──────────────────────────────────────

@@ -36,9 +36,9 @@ async function seed() {
             const hash = bcrypt.hashSync(u.password, 10);
             await db.runNamed(
                 `INSERT OR REPLACE INTO users
-                    (id, username, password_hash, display_name, email, role, avatar, author_of)
+                    (id, username, password_hash, display_name, email, role, is_root, avatar, author_of)
                  VALUES
-                    (@id, @username, @password_hash, @display_name, @email, @role, @avatar, @author_of)`,
+                    (@id, @username, @password_hash, @display_name, @email, @role, @is_root, @avatar, @author_of)`,
                 {
                     id: u.id,
                     username: u.username,
@@ -46,6 +46,7 @@ async function seed() {
                     display_name: u.displayName || '',
                     email: u.email || '',
                     role: u.role || 'user',
+                    is_root: u.isRoot ? 1 : 0,
                     avatar: u.avatar || null,
                     author_of: JSON.stringify(u.authorOf || [])
                 }
@@ -61,12 +62,12 @@ async function seed() {
             await db.runNamed(
                 `INSERT OR REPLACE INTO articles
                     (id, title, slug, description, category, image,
-                     author_name, author_avatar, read_time,
-                     published_at, updated_at, featured, deleted, content)
+                     author_id, author_name, author_avatar, read_time,
+                     published_at, updated_at, featured, hidden, approved, deleted, content)
                  VALUES
                     (@id, @title, @slug, @description, @category, @image,
-                     @author_name, @author_avatar, @read_time,
-                     @published_at, @updated_at, @featured, @deleted, @content)`,
+                     @author_id, @author_name, @author_avatar, @read_time,
+                     @published_at, @updated_at, @featured, @hidden, @approved, @deleted, @content)`,
                 {
                     id: a.id,
                     title: a.title,
@@ -74,12 +75,16 @@ async function seed() {
                     description: a.description || null,
                     category: a.category || null,
                     image: a.image || null,
+                    // All seed articles belong to ngozi (user-002)
+                    author_id: 'user-002',
                     author_name: a.author ? (typeof a.author === 'string' ? a.author : a.author.name) : null,
                     author_avatar: a.author && typeof a.author === 'object' ? a.author.avatar : null,
                     read_time: a.readTime || null,
                     published_at: a.publishedAt || null,
                     updated_at: a.updatedAt || new Date().toISOString(),
                     featured: a.featured ? 1 : 0,
+                    hidden: a.hidden ? 1 : 0,
+                    approved: 1, // seed data goes live immediately
                     deleted: a.deleted ? 1 : 0,
                     content: JSON.stringify(a.content || [])
                 }
@@ -95,13 +100,13 @@ async function seed() {
             await db.runNamed(
                 `INSERT OR REPLACE INTO courses
                     (id, title, slug, description, image,
-                     author_name, author_avatar, duration, level, track, price,
-                     published_at, updated_at, approved, deleted,
+                     author_id, author_name, author_avatar, duration, level, track, price,
+                     published_at, updated_at, approved, hidden, deleted,
                      topics, overview, learning_objectives)
                  VALUES
                     (@id, @title, @slug, @description, @image,
-                     @author_name, @author_avatar, @duration, @level, @track, @price,
-                     @published_at, @updated_at, @approved, @deleted,
+                     @author_id, @author_name, @author_avatar, @duration, @level, @track, @price,
+                     @published_at, @updated_at, @approved, @hidden, @deleted,
                      @topics, @overview, @learning_objectives)`,
                 {
                     id: c.id,
@@ -109,6 +114,8 @@ async function seed() {
                     slug: c.slug || null,
                     description: c.description || null,
                     image: c.image || null,
+                    // All seed courses belong to ngozi (user-002)
+                    author_id: 'user-002',
                     author_name: c.author ? (typeof c.author === 'string' ? c.author : c.author.name) : null,
                     author_avatar: c.author && typeof c.author === 'object' ? c.author.avatar : null,
                     duration: c.duration || null,
@@ -117,7 +124,8 @@ async function seed() {
                     price: c.price || 0,
                     published_at: c.publishedAt || null,
                     updated_at: c.updatedAt || new Date().toISOString(),
-                    approved: c.approved !== false ? 1 : 0,
+                    approved: 1, // seed data goes live immediately
+                    hidden: 0,
                     deleted: c.deleted ? 1 : 0,
                     topics: JSON.stringify(c.topics || []),
                     overview: c.overview || null,

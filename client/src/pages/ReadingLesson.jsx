@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate } from 'react-router-dom';
 import SEO from '../components/SEO';
 import { coursesApi } from '../api';
 import { useAuth } from '../context/AuthContext';
@@ -21,10 +21,12 @@ import '../styles/lesson.css';
  */
 export default function ReadingLesson() {
   const { courseId, topicIdx, subIdx } = useParams();
+  const navigate = useNavigate();
   const { user } = useAuth();
 
   const [course, setCourse] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [accessDenied, setAccessDenied] = useState(false);
 
   // Quiz state
   const [showQuiz, setShowQuiz] = useState(false);
@@ -37,11 +39,28 @@ export default function ReadingLesson() {
 
   useEffect(() => {
     setLoading(true);
+    setAccessDenied(false);
     coursesApi.get(courseId)
-      .then(setCourse)
+      .then((c) => {
+        setCourse(c);
+        if (c.price > 0) {
+          return coursesApi.checkAccess(courseId)
+            .then(({ canAccess }) => { if (!canAccess) setAccessDenied(true); })
+            .catch((err) => {
+              if (err.status === 401 || err.status === 403) setAccessDenied(true);
+            });
+        }
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
   }, [courseId]);
+
+  // Redirect when access is denied (payment required)
+  useEffect(() => {
+    if (accessDenied) {
+      navigate(`/courses/${courseId}`, { replace: true, state: { paymentRequired: true } });
+    }
+  }, [accessDenied, courseId, navigate]);
 
   // Reset quiz/lesson state when navigating between lessons
   useEffect(() => {
@@ -178,6 +197,8 @@ export default function ReadingLesson() {
       </section>
     );
   }
+
+  if (accessDenied) return null; // useEffect below handles redirect
 
   if (!course || !topic || !sub) {
     return (

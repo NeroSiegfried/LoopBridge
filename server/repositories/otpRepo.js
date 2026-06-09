@@ -14,6 +14,14 @@ const otpRepo = {
             [phone, code, channel, expiresAt]);
     },
 
+    /** Invalidate all pending (unused, non-expired) OTPs for a phone/email target */
+    async invalidatePending(phone) {
+        await db.run(
+            "UPDATE otp_codes SET used = 1 WHERE phone = ? AND used = 0 AND expires_at > datetime('now')",
+            [phone]
+        );
+    },
+
     /**
      * Find the latest unused, non-expired code for a phone + channel.
      */

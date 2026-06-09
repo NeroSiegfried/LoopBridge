@@ -38,6 +38,31 @@ const PRESETS = [
 
 let mcClient = null;
 
+function toEven(value) {
+    const safe = Number.isFinite(value) ? value : 2;
+    return Math.max(2, Math.floor(safe / 2) * 2);
+}
+
+function fitWithinBox(targetWidth, targetHeight, srcWidth, srcHeight) {
+    if (!srcWidth || !srcHeight) {
+        return { width: targetWidth, height: targetHeight };
+    }
+
+    const ratio = srcWidth / srcHeight;
+    let width = targetWidth;
+    let height = Math.round(width / ratio);
+
+    if (height > targetHeight) {
+        height = targetHeight;
+        width = Math.round(height * ratio);
+    }
+
+    return {
+        width: toEven(width),
+        height: toEven(height),
+    };
+}
+
 function getClient() {
     if (!mcClient) {
         const { MediaConvertClient } = require('@aws-sdk/client-mediaconvert');
@@ -62,18 +87,34 @@ async function createTranscodeJob(uploadId, s3Key) {
 
     const bucket = config.s3Bucket;
     const inputUri = `s3://${bucket}/${s3Key}`;
-    const outputPrefix = `transcoded/${uploadId}/`;
+    const s3Prefix = config.s3Prefix || '';
+    const outputPrefix = `${s3Prefix}transcoded/${uploadId}/`;
     // Destination must include base filename — MediaConvert appends NameModifier + .m3u8
-    // e.g. s3://bucket/transcoded/<id>/stream  →  stream.m3u8 (master), stream_1080p.m3u8, etc.
+    // e.g. s3://bucket/sandbox/transcoded/<id>/stream  →  stream.m3u8 (master), stream_1080p.m3u8, etc.
     const hlsDestination = `s3://${bucket}/${outputPrefix}stream`;
     const thumbDestination = `s3://${bucket}/${outputPrefix}`;
+
+    // Preserve source aspect ratio in cloud transcodes (same behavior as local ffmpeg path).
+    // Without this, MediaConvert can force all renditions into fixed landscape boxes,
+    // making portrait uploads look wrong in sandbox/prod.
+    let sourceWidth = null;
+    let sourceHeight = null;
+    try {
+        const uploadRow = await uploadRepo.findById(uploadId);
+        sourceWidth = Number(uploadRow?.video_width) || null;
+        sourceHeight = Number(uploadRow?.video_height) || null;
+    } catch (_) {
+        // Keep defaults if upload lookup fails.
+    }
 
     const outputs = PRESETS.map((p) => ({
         NameModifier: `_${p.name}`,
         ContainerSettings: { Container: 'M3U8' },
         VideoDescription: {
-            Width: p.width,
-            Height: p.height,
+            ...(() => {
+                const fitted = fitWithinBox(p.width, p.height, sourceWidth, sourceHeight);
+                return { Width: fitted.width, Height: fitted.height };
+            })(),
             CodecSettings: {
                 Codec: 'H_264',
                 H264Settings: {
@@ -131,8 +172,10 @@ async function createTranscodeJob(uploadId, s3Key) {
                         NameModifier: '_thumb',
                         ContainerSettings: { Container: 'RAW' },
                         VideoDescription: {
-                            Width: 640,
-                            Height: 360,
+                            ...(() => {
+                                const fittedThumb = fitWithinBox(640, 360, sourceWidth, sourceHeight);
+                                return { Width: fittedThumb.width, Height: fittedThumb.height };
+                            })(),
                             CodecSettings: {
                                 Codec: 'FRAME_CAPTURE',
                                 FrameCaptureSettings: {
@@ -149,6 +192,11 @@ async function createTranscodeJob(uploadId, s3Key) {
         },
         UserMetadata: {
             uploadId,
+            // Lambda reads these and POSTs to the correct server instance.
+            // Allows prod and sandbox to coexist on the same EC2 with different ports.
+            callbackUrl: config.transcodeWebhookUrl || '',
+            callbackSecret: config.transcodeWebhookSecret || 'loopbridge-transcode-callback',
+            s3Prefix: config.s3Prefix || '',
         },
         StatusUpdateInterval: 'SECONDS_30',
     };
@@ -186,22 +234,23 @@ async function getJobStatus(jobId) {
 /**
  * Local ffmpeg HLS transcoder — used when MediaConvert is not configured.
  *
- * Generates a multi-variant HLS manifest at:
- *   <uploadsDir>/transcoded/<uploadId>/manifest.m3u8
- * with per-rendition subdirectories for segments.
+ * Generates HLS files and uploads them to S3 (if STORAGE_DRIVER=s3).
+ * If STORAGE_DRIVER=disk, files are served locally at /uploads/transcoded/<uploadId>/manifest.m3u8.
  *
- * The files are served by the existing `express.static(config.uploadsDir)`
- * middleware at /uploads/transcoded/<uploadId>/manifest.m3u8.
+ * The files are served by either:
+ *   - S3 CloudFront / direct S3 URL (if S3 mode)
+ *   - Express static middleware at /uploads/transcoded/<uploadId>/manifest.m3u8 (if disk mode)
  *
  * @param {string} uploadId   — the upload DB row id
  * @param {string} localPath  — absolute path OR path relative to uploadsDir
  *                              (e.g. "videos/abc.mp4" or "/abs/path/videos/abc.mp4")
- * @returns {{ hlsUrl: string }}
+ * @returns {{ hlsUrl: string, thumbnailUrl: string, videoWidth, videoHeight }}
  */
 async function transcodeVideoLocally(uploadId, localPath) {
     const ffmpeg = require('fluent-ffmpeg');
     const fs = require('fs');
     const path = require('path');
+    const fsPromises = require('fs').promises;
 
     // Resolve input path.
     // In local disk mode, rawRecord.path is "uploads/videos/<filename>" (relative to
@@ -229,12 +278,23 @@ async function transcodeVideoLocally(uploadId, localPath) {
 
     const videoStream = metadata.streams.find((s) => s.codec_type === 'video');
     const srcHeight = videoStream ? (videoStream.height || 9999) : 9999;
+    // Capture display dimensions (accounting for rotation metadata)
+    const rotate = parseInt(videoStream?.tags?.rotate || videoStream?.rotation || '0', 10);
+    const swapped = Math.abs(rotate) === 90 || Math.abs(rotate) === 270;
+    const displayWidth  = videoStream ? (swapped ? videoStream.height : videoStream.width)  : null;
+    const displayHeight = videoStream ? (swapped ? videoStream.width  : videoStream.height) : null;
 
     // Only encode presets whose height is <= source height
-    const activePresets = PRESETS.filter((p) => p.height <= srcHeight);
+    let activePresets = PRESETS.filter((p) => p.height <= srcHeight);
     if (activePresets.length === 0) {
         // Fallback: at least encode the lowest preset
-        activePresets.push(PRESETS[PRESETS.length - 1]);
+        activePresets = [PRESETS[PRESETS.length - 1]];
+    }
+    // Always generate at least 2 quality levels so the quality selector appears
+    if (activePresets.length < 2) {
+        // Add the next-lowest preset that isn't already included (ffmpeg will scale down gracefully)
+        const missing = PRESETS.filter((p) => !activePresets.includes(p));
+        if (missing.length > 0) activePresets = [...activePresets, missing[missing.length - 1]];
     }
 
     // Build per-rendition HLS streams — one ffmpeg invocation each so segment
@@ -252,7 +312,11 @@ async function transcodeVideoLocally(uploadId, localPath) {
                         `-b:v ${preset.videoBitrate}`,
                         `-maxrate ${Math.round(preset.videoBitrate * 1.2)}`,
                         `-bufsize ${preset.videoBitrate * 2}`,
-                        `-vf scale=${preset.width}:${preset.height}:force_original_aspect_ratio=decrease`,
+                        // force_original_aspect_ratio=decrease keeps aspect ratio, then
+                        // trunc(w/2)*2:trunc(h/2)*2 ensures both dimensions are even
+                        // (libx264 requires even width/height; odd values occur with portrait
+                        //  sources like 576x1024 scaled to fit a 640x360 box → 203x360)
+                        `-vf scale=${preset.width}:${preset.height}:force_original_aspect_ratio=decrease,scale=trunc(iw/2)*2:trunc(ih/2)*2`,
                         '-c:a aac',
                         `-b:a ${preset.audioBitrate}`,
                         '-ar 48000',
@@ -286,14 +350,17 @@ async function transcodeVideoLocally(uploadId, localPath) {
     masterLines.push(''); // trailing newline
     fs.writeFileSync(path.join(outputDir, 'manifest.m3u8'), masterLines.join('\n'));
 
-    // Capture a thumbnail at 3 s via ffmpeg
+    // Capture a thumbnail at 3 s via ffmpeg.
+    // Use '?x360' for landscape (auto-width, max 360 height) or '360x?' for portrait
+    // to preserve aspect ratio — fluent-ffmpeg's fixed '640x360' squashes portrait video.
+    const thumbSize = (displayHeight && displayWidth && displayHeight > displayWidth) ? '360x?' : '?x360';
     await new Promise((resolve) => {
         ffmpeg(inputPath)
             .screenshots({
                 timestamps: ['3'],
                 filename: 'thumb.jpg',
                 folder: outputDir,
-                size: '640x360',
+                size: thumbSize,
             })
             .on('end', resolve)
             .on('error', (err) => {
@@ -303,10 +370,59 @@ async function transcodeVideoLocally(uploadId, localPath) {
             });
     });
 
-    const hlsUrl = `/uploads/transcoded/${uploadId}/manifest.m3u8`;
-    const thumbnailUrl = `/uploads/transcoded/${uploadId}/thumb.jpg`;
-    console.log(`[transcode:local] Complete — ${hlsUrl}`);
-    return { hlsUrl, thumbnailUrl };
+    // ─── Upload transcoded files to S3 if configured ──────────────────────
+    let hlsUrl, thumbnailUrl;
+    
+    if (config.storageDriver === 's3' && config.s3Bucket) {
+        // Upload all HLS files to S3
+        const s3Prefix = config.s3Prefix || '';
+        const s3OutputPrefix = `${s3Prefix}transcoded/${uploadId}/`;
+        
+        console.log(`[transcode:local] Uploading to S3: s3://${config.s3Bucket}/${s3OutputPrefix}`);
+        
+        try {
+            // Upload master manifest, rendition playlists, segments, and thumbnail
+            const { uploadToS3 } = require('./storageService');
+            
+            // Recursively upload all files from outputDir to S3
+            const uploadDir = async (dir, s3Prefix) => {
+                const files = await fsPromises.readdir(dir, { withFileTypes: true });
+                for (const file of files) {
+                    const fullPath = path.join(dir, file.name);
+                    const s3Key = s3Prefix + file.name;
+                    
+                    if (file.isDirectory()) {
+                        await uploadDir(fullPath, s3Key + '/');
+                    } else {
+                        const fileContent = await fsPromises.readFile(fullPath);
+                        await uploadToS3(fileContent, s3Key, file.name);
+                        console.log(`[transcode:local]   uploaded: ${s3Key}`);
+                    }
+                }
+            };
+            
+            await uploadDir(outputDir, s3OutputPrefix);
+            
+            const cdnBaseUrl = config.cdnBaseUrl || `https://${config.s3Bucket}.s3.${config.s3Region || 'us-east-1'}.amazonaws.com`;
+            hlsUrl = `${cdnBaseUrl}/${s3OutputPrefix}manifest.m3u8`;
+            thumbnailUrl = `${cdnBaseUrl}/${s3OutputPrefix}thumb.jpg`;
+            
+            console.log(`[transcode:local] Complete (S3) — ${hlsUrl}`);
+        } catch (err) {
+            console.error('[transcode:local] S3 upload failed:', err.message);
+            console.error('[transcode:local] Falling back to local serving');
+            // Fallback to local serving
+            hlsUrl = `/uploads/transcoded/${uploadId}/manifest.m3u8`;
+            thumbnailUrl = `/uploads/transcoded/${uploadId}/thumb.jpg`;
+        }
+    } else {
+        // Disk mode — serve locally
+        hlsUrl = `/uploads/transcoded/${uploadId}/manifest.m3u8`;
+        thumbnailUrl = `/uploads/transcoded/${uploadId}/thumb.jpg`;
+        console.log(`[transcode:local] Complete (disk) — ${hlsUrl}`);
+    }
+    
+    return { hlsUrl, thumbnailUrl, videoWidth: displayWidth, videoHeight: displayHeight };
 }
 
 /**
@@ -321,12 +437,15 @@ async function transcodeVideo(uploadId, s3Key) {
     // When MediaConvert credentials are absent, fall back to local ffmpeg.
     if (!config.mediaConvertRoleArn) {
         try {
-            const { hlsUrl, thumbnailUrl } = await transcodeVideoLocally(uploadId, s3Key);
+            const { hlsUrl, thumbnailUrl, videoWidth, videoHeight } = await transcodeVideoLocally(uploadId, s3Key);
             await uploadRepo.updateTranscodeStatus(uploadId, {
                 hlsUrl,
                 thumbnailUrl,
                 transcodeStatus: 'complete',
             });
+            if (videoWidth && videoHeight) {
+                await uploadRepo.updateDimensions(uploadId, videoWidth, videoHeight);
+            }
             return { hlsUrl };
         } catch (err) {
             console.error(`[transcode:local] Failed for ${uploadId}:`, err.message);

@@ -2,8 +2,8 @@
 .exchange-hero {
     background-color: #f6fffa;
     padding: 300px 60px 60px;
-    position: relative; /* Create a positioning context for the vectors */
-    overflow: hidden; /* Hide any overflow from the vectors */
+    position: relative;
+    overflow: hidden;
 }
 
 .exchange-hero .section-container {
@@ -20,36 +20,33 @@
     align-items: center;
     justify-content: center;
     text-align: center;
-    position: relative; /* Ensure the content stays above the vectors */
-    z-index: 0; /* Place the banner content above the vectors */
+    position: relative;
+    z-index: 0;
     overflow: hidden;
 }
 
-/* Left Vector */
 .exchange-hero .left.vector {
     position: absolute;
-    top: 50%; /* Center vertically */
-    left: -20%; /* Push it slightly outside the banner */
-    transform: translateY(-50%); /* Adjust for vertical centering */
-    width: 40%; /* Limit the width to 40% of the banner */
-    height: auto; /* Maintain aspect ratio */
-    overflow: hidden; /* Hide overflow */
-    z-index: -1; /* Place it behind the banner content */
+    top: 50%;
+    left: -20%;
+    transform: translateY(-50%);
+    width: 40%;
+    height: auto;
+    overflow: hidden;
+    z-index: -1;
 }
 
-/* Right Vector */
 .exchange-hero .right.vector {
     position: absolute;
-    top: 50%; /* Center vertically */
-    right: -20%; /* Push it slightly outside the banner */
-    transform: translateY(-50%); /* Adjust for vertical centering */
-    width: 40%; /* Limit the width to 40% of the banner */
-    height: auto; /* Maintain aspect ratio */
-    overflow: hidden; /* Hide overflow */
-    z-index: -1; /* Place it behind the banner content */
+    top: 50%;
+    right: -20%;
+    transform: translateY(-50%);
+    width: 40%;
+    height: auto;
+    overflow: hidden;
+    z-index: -1;
 }
 
-/* Hero Heading */
 .exchange-hero h1 {
     font-family: CabinetGrotesk-Bold, sans-serif;
     font-size: 52px;
@@ -57,12 +54,10 @@
     color: white;
 }
 
-/* Hero Body */
 .exchange-hero .body {
     max-width: 40rem;
 }
 
-/* Hero Paragraph */
 .exchange-hero p {
     font-family: 'schibsted-grotesk', sans-serif;
     font-size: 1.25rem;
@@ -71,7 +66,6 @@
     color: white;
 }
 
-/* Hero Button */
 .exchange-hero-btn {
     font-weight: 300;
     font-size: 18px;
@@ -95,7 +89,6 @@
 }
 
 /* Marquee */
-
 .marquee {
     margin-top: 3.75rem;
     padding: 0.8125rem 2.5625rem;
@@ -107,7 +100,7 @@
     width: 100%;
 }
 
-.marquee-content{
+.marquee-content {
     display: flex;
     gap: 2.5rem;
     flex-shrink: 0;
@@ -115,8 +108,7 @@
     will-change: transform;
 }
 
-
-.currency .left{
+.currency .left {
     display: flex;
 }
 
@@ -136,12 +128,8 @@
 }
 
 @keyframes marquee {
-    from {
-        transform: translateX(0);
-    }
-    to {
-        transform: translateX(-100%);
-    }
+    from { transform: translateX(0); }
+    to   { transform: translateX(-100%); }
 }
 
 .currency .name, .currency .numbers {
@@ -152,7 +140,7 @@
     flex-direction: column;
     justify-content: center;
     gap: 0.25rem;
-    color: var(--lb-blue-dark)
+    color: var(--lb-blue-dark);
 }
 
 .currency .short, .currency .change {
@@ -161,18 +149,12 @@
     color: var(--black-mid);
 }
 
-.currency .change.positive {
-    color: #16a34a;
-}
-
-.currency .change.negative {
-    color: #dc2626;
-}
+.currency .change.positive { color: #16a34a; }
+.currency .change.negative { color: #dc2626; }
 
 .currency .numbers {
     text-align: right;
 }
-
 
 .exchange-pathways .section-container {
     display: block;
@@ -201,7 +183,6 @@
     color: var(--lb-blue-dark);
 }
 
-
 .exchange-pathways .section-body {
     display: flex;
     justify-content: space-between;
@@ -221,7 +202,7 @@
     border-radius: 50%;
 }
 
-.slide.active{
+.slide.active {
     background-color: var(--lb-green);
 }
 
@@ -232,7 +213,7 @@
     flex: 1;
 }
 
-.exchange-pathways .step{
+.exchange-pathways .step {
     display: flex;
     gap: 1.25rem;
     border: 1px solid var(--gray-dark);
@@ -244,9 +225,9 @@
     background: linear-gradient(180deg, #e1ffee2e 0%, #d9f8d22e 100%);
 }
 
-.step .number{
+.step .number {
     flex: 0 0 auto;
-    font-size: 16px;;
+    font-size: 16px;
     width: 30px;
     height: 30px;
     background-color: var(--gray-mid);
@@ -304,28 +285,26 @@
 }
 
 .perks {
-    margin-top: 5rem; /* 80px */
+    margin-top: 5rem;
     display: grid;
-    grid-template-columns: repeat(3, 1fr); /* Default: 5 items per row */
-    gap: 1.25rem; /* 20px gap between cards */
-    width: 100%; /* Allow the grid to span the full width of the container */
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.25rem;
+    width: 100%;
 }
 
-/* Platform card items */
 .perk-card-item {
     display: flex;
     flex-direction: column;
-    padding: 1.25rem; /* 20px */
+    padding: 1.25rem;
     background-color: var(--gray-light);
     border: 1px solid var(--gray-dark);
-    border-radius: 0.75rem; /* 12px */
+    border-radius: 0.75rem;
     box-sizing: border-box;
-    min-width: 200px; /* Ensure cards never shrink below 200px */
-    width: 100%; /* Allow cards to grow dynamically */
+    min-width: 200px;
+    width: 100%;
 }
 
-/* Platform body */
-.perk-body p{
+.perk-body p {
     font-family: 'schibsted-grotesk', sans-serif;
     text-align: left;
     color: var(--lb-blue-text);
@@ -333,11 +312,10 @@
     font-weight: 300;
 }
 
-/* Platform icon */
 .perk-icon {
-    width: 3rem; /* 48px */
-    height: 3rem; /* 48px */
-    margin-bottom: 1.25rem; /* 20px */
+    width: 3rem;
+    height: 3rem;
+    margin-bottom: 1.25rem;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -345,21 +323,10 @@
     border-radius: 50%;
 }
 
-.green {
-    color: var(--lb-green);
-}
-
-.blue {
-    color: #0b81ff;
-}
-
-.purple {
-    color: #9747ff;
-}
-
-.yellow {
-    color: #ffd42a;
-}
+.green  { color: var(--lb-green); }
+.blue   { color: #0b81ff; }
+.purple { color: #9747ff; }
+.yellow { color: #ffd42a; }
 
 .warnings {
     padding: 160px 60px;
@@ -367,13 +334,12 @@
     background-color: #f6fffa;
 }
 
-.warnings .section-container{
+.warnings .section-container {
     display: flex;
     gap: 2rem;
     font-family: 'schibsted-grotesk', sans-serif;
     font-size: 18px;
     font-weight: 200;
-    
 }
 
 .warnings h2 {
@@ -384,15 +350,17 @@
     font-weight: 300;
 }
 
+/* ========================================= */
+/*               RESPONSIVENESS              */
+/* ========================================= */
 
-/* Responsive Adjustments */
-
+/* Warnings stack early */
 @media (max-width: 1200px) {
-    .warnings{
+    .warnings {
         padding: 40px;
     }
 
-    .warnings .section-container{
+    .warnings .section-container {
         flex-direction: column;
     }
 
@@ -400,53 +368,104 @@
         max-width: 800px;
         margin: auto;
     }
-
-
-    
 }
 
-
-@media (max-width: 768px) {
+/* Tablet (up to 992px): reduce all big paddings */
+@media (max-width: 62rem) {
     .exchange-hero {
-        padding-left: 20px;
-        padding-right: 20px;
+        padding-top: var(--page-top);
+        padding-left: var(--section-px);
+        padding-right: var(--section-px);
+        padding-bottom: 3.5rem;         /* was 60px — reduce for tablet */
+    }
+
+    .exchange-hero h1 {
+        font-size: 44px;                /* between 52px desktop and 36px mobile */
+    }
+
+    .exchange-hero p {
+        font-size: 1.125rem;
     }
 
     .exchange-pathways {
+        padding: var(--section-gap) var(--section-px);
+    }
+
+    .exchange-pathways h2 {
+        font-size: 2.25rem;             /* 36px */
+    }
+
+    .exchange-pathways p {
+        font-size: 1.125rem;
+    }
+
+    .perks-section {
+        padding: var(--section-gap) var(--section-px);
+    }
+
+    .perks-section h2 {
+        font-size: 2.25rem;
+    }
+
+    .perks {
+        margin-top: 2.5rem;
+    }
+}
+
+/* Mobile (up to 768px): Figma mobile values */
+@media (max-width: 768px) {
+    .exchange-hero {
+        padding-top: var(--page-top);
         padding-left: 20px;
         padding-right: 20px;
+        padding-bottom: 2.5rem;
+    }
+
+    .exchange-hero h1 {
+        font-size: 36px;
+        line-height: 42px;
+    }
+
+    .exchange-hero p {
+        font-size: 16px;
+        line-height: 24px;
     }
 
     .exchange-hero .left.vector,
     .exchange-hero .right.vector {
-        width: 50%; /* Increase the width for smaller viewports */
+        width: 50%;
     }
 
-    .exchange-hero .left.vector {
-        left: -25%; /* Adjust positioning for smaller screens */
-    }
-
-    .exchange-hero .right.vector {
-        right: -25%; /* Adjust positioning for smaller screens */
-    }
-
-    .exchange-hero h1 {
-        font-size: 48px;
-    }
+    .exchange-hero .left.vector  { left: -25%; }
+    .exchange-hero .right.vector { right: -25%; }
 
     .exchange-hero .exchange-hero-btn {
         width: 100%;
-        padding: 18px 41px;
+        padding: 13px 41px;
+    }
+
+    .exchange-pathways {
+        padding: 2.5rem 20px 3rem;
     }
 
     .exchange-pathways h2,
     .perks-section h2,
     .warnings h2 {
-        font-size: 40px;
+        font-size: 28px;
+        line-height: 1.2;
+    }
+
+    .exchange-pathways p {
+        font-size: 16px;
+    }
+
+    .perks-section {
+        padding: 2.5rem 20px 3rem;
     }
 
     .perks {
         grid-template-columns: repeat(2, 1fr);
+        margin-top: 1.75rem;
     }
 
     .exchange-pathways .section-body {
@@ -464,41 +483,33 @@
 
     .exchange-pathways .step.active {
         display: flex;
-        padding: 40px;
+        padding: 20px;              /* was 40px */
     }
 
     .step.active .step-title {
-        font-size: 22px;
-    }
-
-    .step.active .step-description {
-        line-height: 1.5rem;
         font-size: 18px;
     }
 
+    .step.active .step-description {
+        font-size: 16px;
+        line-height: 1.5rem;
+    }
 }
 
 @media (max-width: 580px) {
     .perks {
-        grid-template-columns: repeat(1, 1fr);
+        grid-template-columns: 1fr;
         max-width: 400px;
-        margin: auto;
+        margin: 1.5rem auto 0;
     }
 }
 
 @media (max-width: 480px) {
     .exchange-hero .left.vector,
     .exchange-hero .right.vector {
-        width: 60%; /* Allow the vectors to take up more space */
+        width: 60%;
     }
 
-    .exchange-hero .left.vector {
-        left: -30%; /* Adjust positioning for very small screens */
-    }
-
-    .exchange-hero .right.vector {
-        right: -30%; /* Adjust positioning for very small screens */
-    }
-
-    
+    .exchange-hero .left.vector  { left: -30%; }
+    .exchange-hero .right.vector { right: -30%; }
 }

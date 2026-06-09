@@ -21,6 +21,9 @@
  */
 'use strict';
 
+// Load .env before any config/service modules read process.env
+require('dotenv').config();
+
 const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
@@ -40,9 +43,20 @@ const dashboardRoutes = require('./routes/dashboard');
 const analyticsRoutes = require('./routes/analytics');
 const recommendationsRoutes = require('./routes/recommendations');
 const transcodeRoutes = require('./routes/transcode');
+const adminUserRoutes = require('./routes/admin-users');
+const paymentRoutes   = require('./routes/payments');
+const profileRoutes   = require('./routes/profile');
+const messagesRoutes  = require('./routes/messages');
 
 // ─── Create Express App ─────────────────────────────────
 const app = express();
+
+// Behind a single proxy/load balancer (e.g. AWS ALB) in production, so that
+// req.ip reflects the real client IP (needed for rate limiting + secure-cookie
+// detection) instead of the proxy's address.
+if (config.nodeEnv === 'production') {
+    app.set('trust proxy', 1);
+}
 
 // ─── Security Headers ───────────────────────────────────
 app.disable('x-powered-by');
@@ -94,7 +108,15 @@ app.use(cors({
     origin: config.corsOrigin,
     credentials: true
 }));
-app.use(express.json({ limit: config.jsonBodyLimit }));
+// Capture the raw request body during JSON parsing so payment-provider
+// webhooks can verify HMAC signatures over the exact bytes received.
+// (Previously the per-route express.raw() in routes/payments.js ran AFTER
+//  this global parser had already consumed the stream, leaving rawBody empty
+//  and causing every webhook signature check to fail.)
+app.use(express.json({
+    limit: config.jsonBodyLimit,
+    verify: (req, _res, buf) => { req.rawBody = buf; }
+}));
 app.use(cookieParser());
 app.use(sessionMiddleware);
 
@@ -107,6 +129,10 @@ app.use('/api/dashboard', rateLimit(RATE_WINDOW_MS, RATE_MAX_GENERAL), dashboard
 app.use('/api/analytics', rateLimit(RATE_WINDOW_MS, RATE_MAX_GENERAL), analyticsRoutes);
 app.use('/api/recommendations', rateLimit(RATE_WINDOW_MS, RATE_MAX_GENERAL), recommendationsRoutes);
 app.use('/api/transcode', rateLimit(RATE_WINDOW_MS, RATE_MAX_GENERAL), transcodeRoutes);
+app.use('/api/admin',    rateLimit(RATE_WINDOW_MS, RATE_MAX_GENERAL), adminUserRoutes);
+app.use('/api/payments', rateLimit(RATE_WINDOW_MS, RATE_MAX_GENERAL), paymentRoutes);
+app.use('/api/profile',  rateLimit(RATE_WINDOW_MS, RATE_MAX_GENERAL), profileRoutes);
+app.use('/api/messages', rateLimit(RATE_WINDOW_MS, RATE_MAX_GENERAL), messagesRoutes);
 app.use('/api', miscRoutes);
 
 // ─── Uploaded files (served at /uploads/*) ──────────────

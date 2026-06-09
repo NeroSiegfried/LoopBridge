@@ -44,6 +44,10 @@ const config = {
     // ─── Video Transcoding (AWS MediaConvert) ────────────
     mediaConvertEndpoint: process.env.MEDIACONVERT_ENDPOINT || null,
     mediaConvertRoleArn: process.env.MEDIACONVERT_ROLE_ARN || null,
+    // Webhook the lambda will call back when a job completes.
+    // Must be reachable from Lambda (public IP/hostname of this server).
+    transcodeWebhookUrl: process.env.TRANSCODE_WEBHOOK_URL || null,
+    transcodeWebhookSecret: process.env.TRANSCODE_WEBHOOK_SECRET || 'loopbridge-transcode-callback',
 
     // ─── Social Media Links ─────────────────────────────────
     socialTelegram: process.env.SOCIAL_TELEGRAM || '',
@@ -67,6 +71,12 @@ const config = {
     newsletterFromEmail: process.env.NEWSLETTER_FROM_EMAIL || 'newsletter@loopbridge.network',
     newsletterFromName: process.env.NEWSLETTER_FROM_NAME || 'LoopBridge',
 
+    // ─── Twilio (WhatsApp / SMS OTP) ─────────────────────
+    twilioAccountSid:      process.env.TWILIO_ACCOUNT_SID  || null,
+    twilioAuthToken:       process.env.TWILIO_AUTH_TOKEN   || null,
+    twilioWhatsAppFrom:    process.env.TWILIO_WHATSAPP_FROM || null,  // e.g. whatsapp:+14155238886
+    twilioSmsSenderNumber: process.env.TWILIO_SMS_FROM      || null,  // E.164 fallback for SMS
+
     // ─── CORS ────────────────────────────────────────────
     corsOrigin: process.env.CORS_ORIGIN || true,                 // true = reflect
 
@@ -80,6 +90,20 @@ const config = {
     maxFileSize: parseInt(process.env.MAX_FILE_SIZE, 10) || 50 * 1024 * 1024,
     maxFiles: parseInt(process.env.MAX_FILES, 10) || 10,
     jsonBodyLimit: process.env.JSON_BODY_LIMIT || '50mb',
+
+    // ─── Payment Gateways ────────────────────────────────
+    // Paystack (Nigerian cards, bank transfers, USSD)
+    paystackSecretKey:  process.env.PAYSTACK_SECRET_KEY  || null,
+    paystackPublicKey:  process.env.PAYSTACK_PUBLIC_KEY  || null,
+    // Flutterwave (Nigerian + international)
+    flutterwaveSecretKey:  process.env.FLW_SECRET_KEY   || null,
+    flutterwavePublicKey:  process.env.FLW_PUBLIC_KEY   || null,
+    flutterwaveEncKey:     process.env.FLW_ENCRYPTION_KEY || null,
+    // NOWPayments (crypto — BTC, ETH, USDT, etc.)
+    nowpaymentsApiKey:  process.env.NOWPAYMENTS_API_KEY  || null,
+    nowpaymentsIpnSecret: process.env.NOWPAYMENTS_IPN_SECRET || null,
+    // App base URL (used for payment callbacks)
+    appBaseUrl: process.env.APP_BASE_URL || 'http://localhost:3000',
 };
 
 module.exports = config;

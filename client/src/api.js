@@ -30,6 +30,22 @@ export const authApi = {
   me: () => request('/auth/session'),
 };
 
+// ─── Profile ─────────────────────────────────────────────
+export const profileApi = {
+  get: () => request('/profile'),
+  requestChangeOtp: ({ field, value, channel }) =>
+    request('/profile/request-change-otp', { method: 'POST', body: JSON.stringify({ field, value, channel }) }),
+  verifyChangeOtp: ({ requestId, code }) =>
+    request('/profile/verify-change-otp', { method: 'POST', body: JSON.stringify({ requestId, code }) }),
+};
+
+// ─── Messages ────────────────────────────────────────────
+export const messagesApi = {
+  list: (limit = 40) => request(`/messages?limit=${limit}`),
+  markRead: (id) => request(`/messages/${id}/read`, { method: 'POST' }),
+  markAllRead: () => request('/messages/read-all', { method: 'POST' }),
+};
+
 // ─── Articles ────────────────────────────────────────────
 export const articlesApi = {
   list: (params = {}) => {
@@ -55,7 +71,8 @@ export const coursesApi = {
   delete: (id) => request(`/courses/${id}`, { method: 'DELETE' }),
   restore: (id) => request(`/courses/${id}/restore`, { method: 'POST' }),
   getProgress: (id) => request(`/courses/${id}/progress`),
-  enroll: (id) => request(`/courses/${id}/enroll`, { method: 'POST' }),
+  enroll: (id, paymentId) => request(`/courses/${id}/enroll`, { method: 'POST', body: JSON.stringify({ paymentId }) }),
+  checkAccess: (id) => request(`/courses/${id}/access`),
   updateProgress: (id, subsectionId, complete) =>
     request(`/courses/${id}/progress`, { method: 'POST', body: JSON.stringify({ subsectionId, complete }) }),
 };
@@ -68,6 +85,7 @@ export const dashboardApi = {
 // ─── Misc ────────────────────────────────────────────────
 export const miscApi = {
   faqs: () => request('/faqs'),
+  glossary: () => request('/glossary'),
   site: () => request('/site'),
   siteConfig: () => request('/site/config'),
   team: () => request('/team'),
@@ -101,8 +119,30 @@ export const recommendationsApi = {
     request('/recommendations/analyse', { method: 'POST', body: JSON.stringify(data) }),
 };
 
-// ─── Transcoding ─────────────────────────────────────────
+// ─── Transcoding ─────────────────────────────────────
 export const transcodeApi = {
   trigger: (uploadId) => request(`/transcode/${uploadId}`, { method: 'POST' }),
   status: (uploadId) => request(`/transcode/${uploadId}/status`),
+};
+
+// ─── Admin / User Management ─────────────────────────────
+export const adminApi = {
+  users: () => request('/admin/users'),
+  setRole: (id, role) =>
+    request(`/admin/users/${id}/role`, { method: 'PATCH', body: JSON.stringify({ role }) }),
+  promotionRequests: () => request('/admin/promotion-requests'),
+  requestPromotion: (targetUserId, requestedRole, note) =>
+    request('/admin/promotion-requests', { method: 'POST', body: JSON.stringify({ targetUserId, requestedRole, note }) }),
+  approvePromotion: (id) =>
+    request(`/admin/promotion-requests/${id}/approve`, { method: 'POST' }),
+  rejectPromotion: (id) =>
+    request(`/admin/promotion-requests/${id}/reject`, { method: 'POST' }),
+};
+
+// ─── Payments ────────────────────────────────────────────
+export const paymentsApi = {
+  initiate: ({ provider, courseId, currency }) =>
+    request('/payments/initiate', { method: 'POST', body: JSON.stringify({ provider, courseId, currency }) }),
+  verify: (reference) => request(`/payments/verify/${encodeURIComponent(reference)}`),
+  history: () => request('/payments/history'),
 };

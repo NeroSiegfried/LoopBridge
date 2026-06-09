@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import { authApi } from '../api';
@@ -10,7 +10,7 @@ import '../styles/signup.css';
 const STEPS = { PHONE: 'phone', VERIFY: 'verify', PROFILE: 'profile' };
 
 export default function Signup() {
-  const { otpLogin } = useAuth();
+  const { otpLogin, googleLogin } = useAuth();
   const navigate = useNavigate();
 
   const [step, setStep] = useState(STEPS.PHONE);
@@ -23,6 +23,50 @@ export default function Signup() {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [otpSent, setOtpSent] = useState(false);
+  const [googleClientId, setGoogleClientId] = useState(null);
+
+  // Read Google Client ID from server
+  useEffect(() => {
+    authApi.getGoogleClientId()
+      .then((data) => { if (data.clientId) setGoogleClientId(data.clientId); })
+      .catch(() => {});
+  }, []);
+
+  const handleGoogleResponse = useCallback(async (response) => {
+    setError('');
+    setLoading(true);
+    try {
+      await googleLogin(response.credential);
+      navigate('/');
+    } catch (err) {
+      setError(err.message || 'Google sign-in failed.');
+    } finally {
+      setLoading(false);
+    }
+  }, [googleLogin, navigate]);
+
+  useEffect(() => {
+    if (!googleClientId) return;
+    const init = () => {
+      window.google.accounts.id.initialize({
+        client_id: googleClientId,
+        callback: handleGoogleResponse,
+      });
+      const el = document.getElementById('google-signup-btn');
+      if (el) {
+        window.google.accounts.id.renderButton(el, {
+          theme: 'outline', size: 'large', width: '100%', text: 'continue_with',
+        });
+      }
+    };
+    if (window.google?.accounts?.id) { init(); return; }
+    const script = document.createElement('script');
+    script.src = 'https://accounts.google.com/gsi/client';
+    script.async = true; script.defer = true;
+    script.onload = init;
+    document.head.appendChild(script);
+    return () => { if (script.parentNode) script.parentNode.removeChild(script); };
+  }, [googleClientId, handleGoogleResponse]);
 
   const handleSendOtp = async (e) => {
     e.preventDefault();
@@ -48,8 +92,10 @@ export default function Signup() {
     if (!email.trim()) { setError('Please enter your email address.'); return; }
     setLoading(true);
     try {
-      // Send OTP to both channels
-      const emailResult = await authApi.sendOtp(phone.trim(), 'email');
+      // Send OTP to email address (delivers HTML email via SMTP/SES)
+      const emailResult = await authApi.sendOtp(email.trim(), 'email');
+      // Send OTP to WhatsApp/SMS using phone number with the same code
+      // The server stores the OTP keyed to the email; phone is linked on verify
       await authApi.sendOtp(phone.trim(), 'whatsapp');
       setOtpSent(true);
       if (emailResult.code) setDevCode(emailResult.code);
@@ -67,8 +113,10 @@ export default function Signup() {
     if (!otpCode.trim()) { setError('Please enter the OTP code.'); return; }
     setLoading(true);
     try {
+      // Use email as the lookup key when channel is 'email', phone when 'whatsapp'
+      const lookupTarget = channel === 'email' ? (email.trim() || phone.trim()) : phone.trim();
       await otpLogin({
-        phone: phone.trim(),
+        phone: lookupTarget,
         code: otpCode.trim(),
         channel,
         displayName: displayName.trim() || undefined,
@@ -137,6 +185,13 @@ export default function Signup() {
                 <p className="subtitle">We'll send a verification code to your email and WhatsApp</p>
 
                 {error && <div className="login-error visible">{error}</div>}
+
+                {googleClientId && (
+                  <div className="social-login" style={{ marginTop: 0, marginBottom: '1.25rem' }}>
+                    <div id="google-signup-btn" className="google-btn-wrapper" />
+                    <div className="divider"><span>or sign up with phone &amp; email</span></div>
+                  </div>
+                )}
 
                 <form onSubmit={handleSendBothChannels}>
                   <div className="form-group">

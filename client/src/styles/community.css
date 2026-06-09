@@ -31,6 +31,7 @@
     font-size: 1.25rem;
     color: var(--black-mid);
 }
+
 .community-hero-btn {
     margin-top: 3.75rem;
     padding: 0.8125rem 2.5625rem;
@@ -64,43 +65,39 @@
     padding: 160px 40px 100px;
 }
 
-/* Platforms container using CSS Grid */
-/* Platforms container using CSS Grid */
+/* Platforms grid */
 .platforms {
-    margin-top: 5rem; /* 80px */
+    margin-top: 5rem;
     display: grid;
-    grid-template-columns: repeat(5, 1fr); /* Default: 5 items per row */
-    gap: 1.25rem; /* 20px gap between cards */
-    width: 100%; /* Allow the grid to span the full width of the container */
+    grid-template-columns: repeat(5, 1fr);
+    gap: 1.25rem;
+    width: 100%;
 }
 
-/* Platform card items */
 .platform-card-item {
     display: flex;
     flex-direction: column;
-    padding: 1.25rem; /* 20px */
+    padding: 1.25rem;
     background-color: #fbfffd;
     border: 1px solid var(--gray-dark);
-    border-radius: 0.75rem; /* 12px */
+    border-radius: 0.75rem;
     box-sizing: border-box;
-    min-width: 200px; /* Ensure cards never shrink below 200px */
-    width: 100%; /* Allow cards to grow dynamically */
+    min-width: 200px;
+    width: 100%;
 }
 
-/* Platform body */
 .platform-body {
     display: flex;
     flex-grow: 1;
     flex-direction: column;
     justify-content: space-between;
-    gap: 1.25rem; /* 20px */
+    gap: 1.25rem;
 }
 
-/* Platform icon */
 .platform-icon {
-    width: 3rem; /* 48px */
-    height: 3rem; /* 48px */
-    margin-bottom: 1.25rem; /* 20px */
+    width: 3rem;
+    height: 3rem;
+    margin-bottom: 1.25rem;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -108,96 +105,127 @@
     border-radius: 50%;
 }
 
-/* Platform heading */
 .platforms h4 {
     font-family: CabinetGrotesk-Regular, sans-serif;
     color: var(--lb-blue-text);
-    font-size: 1.25rem; /* 20px */
-    margin-bottom: 0.625rem; /* 10px */
+    font-size: 1.25rem;
+    margin-bottom: 0.625rem;
 }
 
-/* Platform paragraph */
 .platforms p {
     font-family: 'schibsted-grotesk', sans-serif;
-    font-size: 1rem; /* 16px */
+    font-size: 1rem;
     color: var(--black-mid);
 }
 
-/* Platform link */
 .platforms a {
     text-decoration: none;
-    font-size: 1rem; /* 16px */
+    font-size: 1rem;
     color: var(--lb-blue-text);
 }
 
-/* Platform-specific icon styles (scoped to .platform-icon to avoid SPA bleed) */
-.platform-icon.whatsapp {
-    color: var(--lb-green);
-    background-color: #e4ffdf;
-}
+.platform-icon.whatsapp  { color: var(--lb-green); background-color: #e4ffdf; }
+.platform-icon.discord   { color: #5865f2; background-color: #e6e8fc; }
+.platform-icon.youtube   { color: #e83236; background-color: #ffb9bb; }
+.platform-icon.twitter   { color: #022d49; background-color: #e8eaeb; }
+.platform-icon.telegram  { color: #1e85f4; background-color: #d7eaff; }
 
-.platform-icon.discord {
-    color: #5865f2;
-    background-color: #e6e8fc;
-}
+/* ========================================= */
+/*               RESPONSIVENESS              */
+/* ========================================= */
 
-.platform-icon.youtube {
-    color: #e83236;
-    background-color: #ffb9bb;
-}
-
-.platform-icon.twitter {
-    color: #022d49;
-    background-color: #e8eaeb;
-}
-
-.platform-icon.telegram {
-    color: #1e85f4;
-    background-color: #d7eaff;
-}
-
-/* Responsive design: Adjust grid layout for smaller screens */
-
-/* Below 1200px: 3 items per row */
+/* Large: 3-col platform grid */
 @media (max-width: 1200px) {
     .platforms {
-        grid-template-columns: repeat(3, 1fr); /* 3 items per row */
+        grid-template-columns: repeat(3, 1fr);
     }
 }
 
-/* Below 900px: 2 items per row */
+/* Below 900px: 2-col platform grid */
 @media (max-width: 900px) {
     .platforms {
-        grid-template-columns: repeat(2, 1fr); /* 2 items per row */
+        grid-template-columns: repeat(2, 1fr);
     }
 }
 
-/* Adjustments for smaller screens */
-@media (max-width: 768px) {
+/* Tablet (up to 992px): reduce large paddings */
+@media (max-width: 62rem) {
     .community-hero {
-        padding-left: 20px;
-        padding-right: 20px;
+        padding-top: var(--page-top);
+        padding-left: var(--section-px);
+        padding-right: var(--section-px);
+        padding-bottom: 4rem;           /* was 160px */
+    }
+
+    .community-hero h1 {
+        font-size: 2.75rem;             /* 44px — midpoint between 60px and 38px */
+    }
+
+    .community-hero p {
+        font-size: 1.125rem;
     }
 
     .community-page .pathways {
+        padding-top: var(--section-gap);
+        padding-bottom: var(--section-gap);
+        padding-left: var(--section-px);
+        padding-right: var(--section-px);
+    }
+
+    .platforms {
+        margin-top: 2.5rem;
+    }
+}
+
+/* Mobile (up to 768px): Figma mobile values */
+@media (max-width: 768px) {
+    .community-hero {
+        padding-top: var(--page-top);
+        padding-left: 20px;
+        padding-right: 20px;
+        padding-bottom: 2.5rem;         /* was 160px */
+    }
+
+    .community-hero h1 {
+        font-size: 38px;                /* Figma mobile — was NEVER reduced before */
+        line-height: 44px;
+    }
+
+    .community-hero p {
+        font-size: 16px;
+        line-height: 24px;
+    }
+
+    .community-hero-btn {
+        margin-top: 2rem;
+        width: 100%;
+    }
+
+    .community-page .pathways {
+        padding-top: 2.5rem;
+        padding-bottom: 2.5rem;
         padding-left: 20px;
         padding-right: 20px;
     }
 
+    .platforms {
+        margin-top: 1.75rem;
+    }
+
     .community-hero-img {
-        width: 100%; /* Reduce the width to prevent excessive shrinking */
-        bottom: -40%; /* Adjust the bottom position to keep it visible */
+        width: 100%;
+        bottom: -40%;
     }
 }
 
-/* Below 480px: 1 item per row */
+/* Below 480px: single-col platform grid */
 @media (max-width: 480px) {
     .platforms {
-        grid-template-columns: 1fr; /* 1 item per row */
+        grid-template-columns: 1fr;
     }
 
     .community-hero-img {
-        width: 100%; /* Allow the image to take the full width */
-        bottom: -30%; /* Ensure the image stays visible */
+        width: 100%;
+        bottom: -30%;
     }
 }

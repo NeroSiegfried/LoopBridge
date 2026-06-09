@@ -725,6 +725,12 @@
 
 /* ─── Responsive ─────────────────────────────── */
 
+@media (max-width: 62rem) {
+    .lesson-section {
+        padding-top: var(--page-top);
+    }
+}
+
 @media (max-width: 768px) {
     .lesson-topbar {
         flex-direction: column;

@@ -7,7 +7,7 @@
     align-items: center;
     gap: 0.5rem;
     text-decoration: none;
-    color: white;
+    color: var(--black-dark);
     font-family: 'Schibsted Grotesk', sans-serif;
     font-size: 16px;
     font-weight: 600;
@@ -347,9 +347,17 @@ section.course-body a {
     font-size: 24px;
 }
 
+@media (max-width: 62rem) {
+    .course-hero {
+        padding-top: var(--page-top);
+        padding-left: var(--section-px);
+        padding-right: var(--section-px);
+    }
+}
+
 @media (max-width: 1024px) {
     .course-hero {
-        padding: 12rem 20px 2rem;
+        padding: var(--page-top) 20px 2rem;
     }
 
     section.course-body {
@@ -366,23 +374,6 @@ section.course-body a {
     section.course-body {
         padding-left: 20px;
         padding-right: 20px;
-    }
-
-    .legal-hero .left.vector,
-    .legal-hero .right.vector {
-        width: 50%; /* Increase the width for smaller viewports */
-    }
-
-    .legal-hero .left.vector {
-        left: -25%; /* Adjust positioning for smaller screens */
-    }
-
-    .legal-hero .right.vector {
-        right: -25%; /* Adjust positioning for smaller screens */
-    }
-
-    .legal-hero h1 {
-        font-size: 48px;
     }
 }
 

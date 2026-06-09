@@ -309,6 +309,14 @@
     }
 }
 
+@media (max-width: 62rem) {
+    .track-hero {
+        padding-top: var(--page-top);
+        padding-left: var(--section-px);
+        padding-right: var(--section-px);
+    }
+}
+
 @media (max-width: 768px) {
     .courses-section .courses {
         display: flex;

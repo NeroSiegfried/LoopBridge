@@ -46,7 +46,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
           cache: npm
           cache-dependency-path: |
             client/package-lock.json
@@ -120,44 +120,30 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region:            ${{ env.AWS_REGION }}
 
+      - name: Checkout scripts
+        uses: actions/checkout@v4
+
       - name: Send sandbox deploy command via SSM
         id: ssm
         run: |
-          IMAGE=${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}
-          SHA=${{ github.sha }}
-
+          python3 .github/scripts/build-ssm-sandbox-payload.py > /tmp/ssm-sandbox.json
+          echo "--- SSM payload ---"
+          cat /tmp/ssm-sandbox.json
           COMMAND_ID=$(aws ssm send-command \
-            --instance-ids "${{ env.EC2_INSTANCE_ID }}" \
-            --document-name AWS-RunShellScript \
-            --comment "Sandbox deploy $SHA" \
-            --timeout-seconds 300 \
-            --parameters "commands=[
-              \"set -euo pipefail\",
-              \"echo '--- Authenticating with ECR ---'\",
-              \"aws ecr get-login-password --region us-east-1 | sudo docker login --username AWS --password-stdin 680128294518.dkr.ecr.us-east-1.amazonaws.com\",
-              \"echo '--- Pulling sandbox image ---'\",
-              \"sudo docker pull ${IMAGE}:sandbox-${SHA}\",
-              \"echo '--- Stopping old sandbox container ---'\",
-              \"sudo docker stop ${{ env.CONTAINER_NAME }} 2>/dev/null || true\",
-              \"sudo docker rm   ${{ env.CONTAINER_NAME }} 2>/dev/null || true\",
-              \"echo '--- Checkpointing prod WAL so snapshot is complete ---'\",
-              \"sudo docker exec -w /app/server loopbridge node -e \\\"const db=require('better-sqlite3')(process.env.DB_PATH);db.pragma('wal_checkpoint(TRUNCATE)');db.close();console.log('WAL checkpoint done')\\\" || echo 'WARNING: checkpoint failed, snapshot may be incomplete'\",
-              \"echo '--- Snapshotting prod DB into sandbox DB ---'\",
-              \"sudo cp /data/loopbridge.db ${{ env.DB_PATH }} && sudo rm -f ${{ env.DB_PATH }}-wal ${{ env.DB_PATH }}-shm && echo 'DB snapshot done' || echo 'WARNING: prod DB not found, sandbox will start fresh'\",
-              \"echo '--- Starting sandbox container on port ${{ env.SANDBOX_PORT }} ---'\",
-              \"sudo docker run -d --name ${{ env.CONTAINER_NAME }} --restart unless-stopped -p ${{ env.SANDBOX_PORT }}:3000 -v /data:/data -e NODE_ENV=production -e DB_TYPE=sqlite -e DB_PATH=${{ env.DB_PATH }} -e STORAGE_DRIVER=s3 -e S3_BUCKET=${{ env.S3_BUCKET }} -e S3_REGION=${{ env.AWS_REGION }} -e S3_PREFIX=sandbox/ -e MEDIACONVERT_ENDPOINT=https://mediaconvert.us-east-1.amazonaws.com -e MEDIACONVERT_ROLE_ARN=arn:aws:iam::680128294518:role/loopbridge-mediaconvert-role -e COOKIE_SECURE=false -e CORS_ORIGIN=true ${IMAGE}:sandbox-${SHA}\",
-              \"echo '--- Container status ---'\",
-              \"sleep 5 && sudo docker ps --filter name=${{ env.CONTAINER_NAME }} --format 'table {{.Names}}\t{{.Status}}\t{{.Ports}}'\",
-              \"echo '--- Last 10 log lines ---'\",
-              \"sudo docker logs ${{ env.CONTAINER_NAME }} --tail 10\",
-              \"echo '--- Pruning old sandbox images ---'\",
-              \"sudo docker images ${IMAGE} --format '{{.Tag}}\t{{.ID}}' | grep '^sandbox-' | tail -n +4 | awk '{print \\$2}' | xargs -r sudo docker rmi -f 2>/dev/null || true\"
-            ]" \
+            --cli-input-json file:///tmp/ssm-sandbox.json \
             --query 'Command.CommandId' \
             --output text)
-
           echo "command_id=$COMMAND_ID" >> $GITHUB_OUTPUT
           echo "SSM command sent: $COMMAND_ID"
+        env:
+          IMAGE:     ${{ env.ECR_REGISTRY }}/${{ env.ECR_REPOSITORY }}
+          SHA:       ${{ github.sha }}
+          INSTANCE:  ${{ env.EC2_INSTANCE_ID }}
+          CONTAINER: ${{ env.CONTAINER_NAME }}
+          PORT:      ${{ env.SANDBOX_PORT }}
+          DBPATH:    ${{ env.DB_PATH }}
+          BUCKET:    ${{ env.S3_BUCKET }}
+          REGION:    ${{ env.AWS_REGION }}
 
       - name: Wait for SSM command to complete
         run: |

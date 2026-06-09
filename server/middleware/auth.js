@@ -26,6 +26,7 @@ async function sessionMiddleware(req, res, next) {
             displayName: session.display_name,
             email: session.email,
             role: session.role,
+            isRoot: !!session.is_root,
             avatar: session.avatar,
             authorOf: JSON.parse(session.author_of || '[]')
         };
@@ -70,12 +71,25 @@ function requireAdmin(req, res, next) {
 }
 
 /**
- * Check if current user is the owner of an item (by author_name) or admin.
+ * Require root (super-admin) status.
+ */
+function requireRoot(req, res, next) {
+    if (!req.user) {
+        return res.status(401).json({ error: 'Authentication required.' });
+    }
+    if (!req.user.isRoot) {
+        return res.status(403).json({ error: 'Root administrator access required.' });
+    }
+    next();
+}
+
+/**
+ * Check if current user is the owner of an item (by author_id) or admin.
  * Used inline in route handlers — returns false and sends 403 if denied.
  */
 function requireOwnerOrAdmin(req, res, item) {
     if (req.user.role === 'admin') return true;
-    if (req.user.role === 'author' && req.user.authorOf.includes(item.id)) return true;
+    if (req.user.role === 'author' && item.author_id === req.user.id) return true;
 
     res.status(403).json({ error: 'You do not have permission to modify this item.' });
     return false;
@@ -86,5 +100,6 @@ module.exports = {
     requireAuth,
     requireAuthor,
     requireAdmin,
+    requireRoot,
     requireOwnerOrAdmin
 };

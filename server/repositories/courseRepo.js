@@ -15,6 +15,7 @@ function rowToCourse(row) {
         slug: row.slug,
         description: row.description,
         image: row.image,
+        authorId: row.author_id || null,
         author: {
             name: row.author_name || 'LoopBridge Team',
             avatar: row.author_avatar || null
@@ -27,6 +28,7 @@ function rowToCourse(row) {
         updatedAt: row.updated_at,
         createdAt: row.created_at,
         approved: !!row.approved,
+        hidden: !!row.hidden,
         deleted: !!row.deleted,
         deletedAt: row.deleted_at,
         topics: JSON.parse(row.topics || '[]'),
@@ -46,15 +48,15 @@ const courseRepo = {
         return rowToCourse(await this.findById(id));
     },
 
-    async list({ track, includeDeleted } = {}) {
+    async list({ track, includeDeleted, includeHidden, includeUnapproved } = {}) {
         let sql = 'SELECT * FROM courses';
         const conditions = [];
         const params = {};
 
-        if (!includeDeleted) {
-            conditions.push('deleted = 0');
-            conditions.push('approved = 1');
-        }
+        if (!includeDeleted)    conditions.push('deleted = 0');
+        if (!includeHidden)     conditions.push('hidden = 0');
+        if (!includeUnapproved) conditions.push('approved = 1');
+
         if (track && track !== 'All') {
             conditions.push('track = @track');
             params.track = track;
@@ -73,12 +75,12 @@ const courseRepo = {
         await db.runNamed(`
             INSERT INTO courses
                 (id, title, slug, description, image,
-                 author_name, author_avatar, duration, level, track, price,
+                 author_id, author_name, author_avatar, duration, level, track, price,
                  published_at, updated_at, created_at, approved,
                  topics, overview, learning_objectives)
             VALUES
                 (@id, @title, @slug, @description, @image,
-                 @author_name, @author_avatar, @duration, @level, @track, @price,
+                 @author_id, @author_name, @author_avatar, @duration, @level, @track, @price,
                  @published_at, @updated_at, @created_at, @approved,
                  @topics, @overview, @learning_objectives)
         `, {
@@ -87,6 +89,7 @@ const courseRepo = {
             slug: data.slug || null,
             description: data.description || null,
             image: data.image || null,
+            author_id: data.authorId || null,
             author_name: data.authorName,
             author_avatar: data.authorAvatar || null,
             duration: data.duration || null,
@@ -148,6 +151,20 @@ const courseRepo = {
     async restore(id) {
         await db.run('UPDATE courses SET deleted = 0, deleted_at = NULL WHERE id = ?', [id]);
         return this.findByIdFormatted(id);
+    },
+
+    async setApproved(id, approved) {
+        await db.run('UPDATE courses SET approved = ? WHERE id = ?', [approved ? 1 : 0, id]);
+    },
+
+    async setHidden(id, hidden) {
+        await db.run('UPDATE courses SET hidden = ? WHERE id = ?', [hidden ? 1 : 0, id]);
+    },
+
+    async listByAuthorId(authorId) {
+        const { rows } = await db.query(
+            'SELECT * FROM courses WHERE author_id = ? ORDER BY published_at DESC', [authorId]);
+        return rows.map(rowToCourse);
     },
 
     async listByAuthorName(authorName) {

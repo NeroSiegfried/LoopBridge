@@ -293,7 +293,7 @@ section.newsletter h2 {
 }
 
 .inner-section::before {
-    content: ""; 
+    content: "";
     position: absolute;
     top: 0; left: 0; width: 100%; height: 100%;
     background-color: #ffffff10;
@@ -352,9 +352,6 @@ section.newsletter h2 {
     background-color: var(--lb-green-active, #209050);
 }
 
-/* .accent, .accent-two moved to global.css */
-/* Footer styles are in footer.css */
-
 @keyframes moveAndFade {
     0% { transform: translate(0, 0); opacity: 0; }
     10% { opacity: 1; }
@@ -369,25 +366,25 @@ section.newsletter h2 {
 /*               RESPONSIVENESS              */
 /* ========================================= */
 
-/* TABLET (up to 1024px) */
+/* TABLET (992px – 1024px): tighten join grid */
 @media (max-width: 64rem) {
-
     .join-top p {
         margin-left: 5rem;
     }
-    
     .join-bottom {
         grid-template-columns: repeat(2, 1fr);
     }
-
 }
 
-/* MOBILE AND SMALL TABLETS (up to 992px) */
+/* TABLET (up to 992px): collapse hero, reduce vertical spacing */
 @media (max-width: 62rem) {
+    .hero {
+        padding-top: 0;
+    }
 
     .hero .section-container {
         flex-direction: column;
-        padding: 10rem 1.25rem 3.75rem; 
+        padding: var(--page-top) 0 3rem;
         text-align: left;
     }
 
@@ -395,9 +392,15 @@ section.newsletter h2 {
         padding: 0;
         margin-bottom: 2.5rem;
     }
-    
+
+    /* Tablet hero heading: midpoint between desktop (76px) and mobile (38px) */
     .hero .hero-body h1 {
-        font-size: 3rem;
+        font-size: 2.75rem; /* 44px */
+    }
+
+    /* Tablet body text */
+    .hero .hero-body p {
+        font-size: 1.125rem; /* 18px */
     }
 
     .buttons {
@@ -413,10 +416,66 @@ section.newsletter h2 {
         flex: 1;
     }
 
-}    
+    /* Tablet: section headings 60px → 44px */
+    .why h2,
+    .join h2 {
+        font-size: 2.75rem; /* 44px */
+        margin: 2.5rem 0;
+    }
 
-/* MOBILE PHONES (up to 768px) */
+    .why .section-body {
+        font-size: 1.25rem;
+    }
+
+    /* Tablet: tighten vertical padding */
+    .why {
+        padding: 3rem 2.5rem 4rem;
+    }
+
+    .join {
+        padding: 3rem 2.5rem;
+    }
+
+    /* Tablet: newsletter */
+    section.newsletter {
+        padding: 5rem 2.5rem;
+    }
+
+    section.newsletter h2 {
+        font-size: 2.75rem;
+    }
+
+    .inner-section {
+        padding: 2.5rem;
+    }
+
+    .inner-section .body {
+        margin-left: 2rem;
+    }
+
+    .why, .join, section.newsletter {
+        padding-left: 0;
+        padding-right: 0;
+    }
+}
+
+/* MOBILE (up to 768px): Figma mobile values */
 @media (max-width: 48rem) {
+    /* Hero */
+    .hero {
+        padding-left: 20px;
+        padding-right: 20px;
+    }
+
+    .hero .hero-body h1 {
+        font-size: 38px;
+        line-height: 44px;
+    }
+
+    .hero .hero-body p {
+        font-size: 16px;
+        line-height: 24px;
+    }
 
     .buttons {
         flex-direction: column;
@@ -427,8 +486,29 @@ section.newsletter h2 {
         width: 100%;
     }
 
+    /* Why */
+    .why h2,
+    .join h2 {
+        font-size: 2rem; /* 32px */
+        margin: 1.5rem 0;
+    }
+
+    .why .section-body {
+        font-size: 1.125rem; /* 18px */
+        margin-top: 1.5rem;
+    }
+
     .sections {
         flex-direction: column;
+    }
+
+    .why {
+        padding: 2.5rem 20px 3rem;
+    }
+
+    /* Join */
+    .join {
+        padding: 2.5rem 20px;
     }
 
     .join-top {
@@ -438,47 +518,45 @@ section.newsletter h2 {
 
     .join-top p {
         margin-left: 0;
-        margin-top: 1rem;
+        margin-top: 0.75rem;
+        font-size: 16px;
     }
 
     .join-bottom {
         grid-template-columns: 1fr;
     }
 
+    /* Newsletter */
     section.newsletter {
-        padding: 6.25rem 1.25rem;
+        padding: 2.5rem 20px;
+    }
+
+    section.newsletter h2 {
+        font-size: 1.75rem; /* 28px */
     }
 
     .inner-section {
         flex-direction: column;
-        padding: 2.5rem 1.25rem;
+        padding: 1.75rem 1.25rem;
     }
 
     .inner-section .body {
         margin-left: 0;
-        margin-bottom: 2.5rem;
+        margin-bottom: 1.75rem;
+        font-size: 1rem;
     }
 
     .newsletter-button {
         width: 100%;
-    }
-    
-    .circle-effect {
-        bottom: 0; left: 0; width: 100%; height: 100%;
-    }
-}
-
-/* MOBILE — enforce 20px horizontal padding */
-@media (max-width: 48rem) {
-
-    .hero {
-        padding-left: 20px;
-        padding-right: 20px;
+        margin: 1.5rem 0 1.25rem;
     }
 
     .cta {
         padding-left: 20px;
         padding-right: 20px;
     }
-    
+
+    .circle-effect {
+        bottom: 0; left: 0; width: 100%; height: 100%;
+    }
 }

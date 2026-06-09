@@ -26,6 +26,9 @@ RUN apk add --no-cache curl && \
 FROM node:20-alpine
 WORKDIR /app
 
+# Runtime media tools required by fluent-ffmpeg (ffprobe + ffmpeg)
+RUN apk add --no-cache ffmpeg
+
 # Copy server + built frontend + data
 COPY --from=builder /app/server/node_modules ./server/node_modules
 COPY server/ ./server/

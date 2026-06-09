@@ -120,6 +120,9 @@ const s3Driver = {
                 Body: fileBuffer,
                 ContentType: file.mimetype,
                 ContentDisposition: 'inline',
+                // Public read is granted via bucket policy, not per-object ACL.
+                // (Per-object ACL requires "Block Public Access" to be fully disabled,
+                //  which is off by default and unsafe. Use the bucket policy below instead.)
             }));
 
             // Clean up temp file left by multer
@@ -186,4 +189,37 @@ const storageService = {
     }
 };
 
-module.exports = storageService;
+/**
+ * Upload a file buffer to S3.
+ * Used by transcodingService to upload transcoded HLS files.
+ * 
+ * @param {Buffer} fileContent - the file data
+ * @param {string} s3Key - the S3 object key (e.g., "transcoded/abc-123/manifest.m3u8")
+ * @param {string} filename - the original filename (for MIME type detection)
+ */
+async function uploadToS3(fileContent, s3Key, filename) {
+    if (!config.s3Bucket) {
+        throw new Error('[storage] S3_BUCKET env var is required for S3 uploads');
+    }
+    
+    const { S3Client, PutObjectCommand } = require('@aws-sdk/client-s3');
+    const s3 = new S3Client({ region: config.s3Region || 'us-east-1' });
+    
+    // Detect MIME type from filename
+    let contentType = 'application/octet-stream';
+    if (filename.endsWith('.m3u8')) contentType = 'application/vnd.apple.mpegurl';
+    else if (filename.endsWith('.ts')) contentType = 'video/mp2t';
+    else if (filename.endsWith('.jpg')) contentType = 'image/jpeg';
+    else if (filename.endsWith('.mp4')) contentType = 'video/mp4';
+    
+    const command = new PutObjectCommand({
+        Bucket: config.s3Bucket,
+        Key: s3Key,
+        Body: fileContent,
+        ContentType: contentType,
+    });
+    
+    await s3.send(command);
+}
+
+module.exports = { ...storageService, uploadToS3 };

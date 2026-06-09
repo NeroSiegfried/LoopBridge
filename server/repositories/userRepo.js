@@ -30,14 +30,30 @@ const userRepo = {
     },
 
     async getAll() {
-        const { rows } = await db.query('SELECT id, username, display_name, email, role, avatar, author_of, created_at FROM users ORDER BY created_at DESC');
+        const { rows } = await db.query(
+            'SELECT id, username, display_name, email, role, is_root, avatar, author_of, created_at FROM users ORDER BY created_at ASC'
+        );
         return rows;
     },
 
-    async create({ id, username, passwordHash, displayName, email, role, avatar, authorOf, googleId, phone }) {
+    async listAdmins() {
+        const { rows } = await db.query(
+            "SELECT * FROM users WHERE role = 'admin' ORDER BY created_at ASC"
+        );
+        return rows;
+    },
+
+    async listRoots() {
+        const { rows } = await db.query(
+            'SELECT * FROM users WHERE is_root = 1 ORDER BY created_at ASC'
+        );
+        return rows;
+    },
+
+    async create({ id, username, passwordHash, displayName, email, role, isRoot, avatar, authorOf, googleId, phone }) {
         await db.runNamed(`
-            INSERT INTO users (id, username, password_hash, display_name, email, role, avatar, author_of, google_id, phone)
-            VALUES (@id, @username, @password_hash, @display_name, @email, @role, @avatar, @author_of, @google_id, @phone)
+            INSERT INTO users (id, username, password_hash, display_name, email, role, is_root, avatar, author_of, google_id, phone)
+            VALUES (@id, @username, @password_hash, @display_name, @email, @role, @is_root, @avatar, @author_of, @google_id, @phone)
         `, {
             id,
             username,
@@ -45,6 +61,7 @@ const userRepo = {
             display_name: displayName || '',
             email,
             role: role || 'user',
+            is_root: isRoot ? 1 : 0,
             avatar: avatar || null,
             author_of: JSON.stringify(authorOf || []),
             google_id: googleId || null,
@@ -73,6 +90,15 @@ const userRepo = {
         return this.findById(id);
     },
 
+    /** Promote or demote a user's role. Root-only action gated in service. */
+    async setRole(id, role) {
+        await db.run(
+            "UPDATE users SET role = ?, updated_at = datetime('now') WHERE id = ?",
+            [role, id]
+        );
+        return this.findById(id);
+    },
+
     async linkGoogleId(userId, googleId) {
         await db.run("UPDATE users SET google_id = ?, updated_at = datetime('now') WHERE id = ?",
             [googleId, userId]);
@@ -81,6 +107,30 @@ const userRepo = {
     async setPhoneVerified(userId, phone) {
         await db.run("UPDATE users SET phone = ?, phone_verified = 1, updated_at = datetime('now') WHERE id = ?",
             [phone, userId]);
+    },
+
+    async setUsername(userId, username) {
+        await db.run(
+            "UPDATE users SET username = ?, updated_at = datetime('now') WHERE id = ?",
+            [username, userId]
+        );
+        return this.findById(userId);
+    },
+
+    async setEmail(userId, email) {
+        await db.run(
+            "UPDATE users SET email = ?, updated_at = datetime('now') WHERE id = ?",
+            [email, userId]
+        );
+        return this.findById(userId);
+    },
+
+    async setPhone(userId, phone) {
+        await db.run(
+            "UPDATE users SET phone = ?, phone_verified = 1, updated_at = datetime('now') WHERE id = ?",
+            [phone, userId]
+        );
+        return this.findById(userId);
     }
 };
 

@@ -68,7 +68,7 @@ export default function Academy() {
                 </div>
                 <div className="box-body">
                   <p>Clear, simple explanations of crypto and Web3 terms in plain language. Built to remove confusion so you can make informed decisions.</p>
-                  <button className="box-button" onClick={() => navigate('/articles')} title="Glossary coming soon — browse articles for now">Browse Glossary</button>
+                  <Link to="/glossary"><button className="box-button">Browse Glossary</button></Link>
                 </div>
               </div>
             </div>

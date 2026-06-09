@@ -12,7 +12,9 @@ function rowToProgress(row) {
     return {
         enrolledAt: row.enrolled_at,
         lastAccessedAt: row.last_accessed_at,
-        completedSubs: JSON.parse(row.completed_subs || '[]')
+        completedSubs: JSON.parse(row.completed_subs || '[]'),
+        paid: !!row.paid,
+        paymentId: row.payment_id || null
     };
 }
 
@@ -71,6 +73,14 @@ const progressRepo = {
             'SELECT * FROM progress WHERE user_id = ? ORDER BY last_accessed_at DESC',
             [userId]);
         return rows.map(rowToProgress);
+    },
+
+    async markPaid(userId, courseId, paymentId) {
+        await this.enroll(userId, courseId);
+        await db.run(
+            'UPDATE progress SET paid = 1, payment_id = ? WHERE user_id = ? AND course_id = ?',
+            [paymentId, userId, courseId]);
+        return this.findFormatted(userId, courseId);
     }
 };
 

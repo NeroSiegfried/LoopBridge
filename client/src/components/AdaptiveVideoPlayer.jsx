@@ -11,15 +11,17 @@ import '../styles/adaptive-player.css';
  * or for plain .mp4 URLs.
  *
  * Props:
- *   src           — video URL (.mp4 or .m3u8 HLS manifest)
- *   poster        — optional poster/thumbnail image
- *   onEnded       — callback when video ends
- *   onTimeUpdate  — callback with current time (for quiz pause-points)
- *   className     — CSS class for the container
- *   autoPlay      — boolean
+ *   src              — video URL (.mp4 or .m3u8 HLS manifest)
+ *   poster           — optional poster/thumbnail image
+ *   onEnded          — callback when video ends
+ *   onTimeUpdate     — callback with current time (for quiz pause-points)
+ *   className        — CSS class for the container
+ *   autoPlay         — boolean: start playing immediately
+ *   autoFullscreen   — boolean: enter fullscreen as soon as video is ready
+ *   quizOverlay      — overlay element rendered inside the player
  */
 const AdaptiveVideoPlayer = forwardRef(function AdaptiveVideoPlayer(
-  { src, poster, onEnded, onTimeUpdate, className = '', autoPlay = false, quizOverlay = null },
+  { src, poster, onEnded, onTimeUpdate, className = '', autoPlay = false, autoFullscreen = false, quizOverlay = null, isPortraitHint = null },
   ref
 ) {
   const videoRef = useRef(null);
@@ -35,7 +37,6 @@ const AdaptiveVideoPlayer = forwardRef(function AdaptiveVideoPlayer(
   const [buffering, setBuffering] = useState(false);
   const [currentBandwidth, setCurrentBandwidth] = useState(null);
   const [isFullscreen, setIsFullscreen] = useState(false);
-
   // Playback state for the custom control bar
   const [playing, setPlaying] = useState(false);
   const [currentTime, setCurrentTime] = useState(0);
@@ -47,6 +48,12 @@ const AdaptiveVideoPlayer = forwardRef(function AdaptiveVideoPlayer(
   const [playbackRate, setPlaybackRate] = useState(1);
   const [controlsVisible, setControlsVisible] = useState(true);
   const [seeking, setSeeking] = useState(false);
+  const hasPortraitHint = isPortraitHint !== null && isPortraitHint !== undefined;
+  const [isPortrait, setIsPortrait] = useState(hasPortraitHint ? isPortraitHint : false);
+
+  useEffect(() => {
+    if (hasPortraitHint) setIsPortrait(isPortraitHint);
+  }, [hasPortraitHint, isPortraitHint]);
 
   // Expose both the video element AND container to parent via ref
   useImperativeHandle(ref, () => ({
@@ -129,20 +136,26 @@ const AdaptiveVideoPlayer = forwardRef(function AdaptiveVideoPlayer(
       hls.attachMedia(videoEl);
 
       hls.on(Hls.Events.MANIFEST_PARSED, (_, data) => {
-        setLevels(data.levels || []);
+        const lvls = data.levels || [];
+        setLevels(lvls);
         setIsHLS(true);
+        // Use level dimensions as an early portrait hint before any segment decodes
+        if (!hasPortraitHint && lvls.length > 0 && lvls[0].width > 0) {
+          setIsPortrait(lvls[0].height > lvls[0].width);
+        }
         if (autoPlay) videoEl.play().catch(() => {});
       });
 
-      hls.on(Hls.Events.LEVEL_SWITCHED, (_, data) => {
-        setCurrentLevel(data.level);
-      });
-
+      // FRAG_BUFFERED: track bandwidth estimate
       hls.on(Hls.Events.FRAG_BUFFERED, (_, data) => {
         if (data.stats) {
           const bw = Math.round(data.stats.bwEstimate / 1000); // kbps
           setCurrentBandwidth(bw);
         }
+      });
+
+      hls.on(Hls.Events.LEVEL_SWITCHED, (_, data) => {
+        setCurrentLevel(data.level);
       });
 
       hls.on(Hls.Events.ERROR, (_, data) => {
@@ -173,7 +186,7 @@ const AdaptiveVideoPlayer = forwardRef(function AdaptiveVideoPlayer(
         hlsRef.current = null;
       }
     };
-  }, [src, isM3U8, autoPlay]);
+  }, [src, isM3U8, autoPlay, hasPortraitHint]);
 
   // Quality selection
   const setQuality = useCallback((levelIndex) => {
@@ -207,43 +220,87 @@ const AdaptiveVideoPlayer = forwardRef(function AdaptiveVideoPlayer(
     const onDurChng = () => setDuration(video.duration || 0);
     const onVolChng = () => { setVolume(video.volume); setMuted(video.muted); };
     const onRateChng= () => setPlaybackRate(video.playbackRate);
-    video.addEventListener('play',        onPlay);
-    video.addEventListener('pause',       onPause);
-    video.addEventListener('ended',       onEnded_);
-    video.addEventListener('waiting',     onWaiting);
-    video.addEventListener('playing',     onPlaying);
-    video.addEventListener('canplay',     onCanPlay);
-    video.addEventListener('timeupdate',  onTimeUpd);
-    video.addEventListener('durationchange', onDurChng);
-    video.addEventListener('volumechange',onVolChng);
-    video.addEventListener('ratechange',  onRateChng);
-    return () => {
-      video.removeEventListener('play',        onPlay);
-      video.removeEventListener('pause',       onPause);
-      video.removeEventListener('ended',       onEnded_);
-      video.removeEventListener('waiting',     onWaiting);
-      video.removeEventListener('playing',     onPlaying);
-      video.removeEventListener('canplay',     onCanPlay);
-      video.removeEventListener('timeupdate',  onTimeUpd);
-      video.removeEventListener('durationchange', onDurChng);
-      video.removeEventListener('volumechange',onVolChng);
-      video.removeEventListener('ratechange',  onRateChng);
+    const onMeta    = () => {
+      if (hasPortraitHint) return;
+      if (video.videoWidth > 0) setIsPortrait(video.videoHeight > video.videoWidth);
     };
-  }, [seeking]);
+    const onResize   = () => {
+      if (hasPortraitHint) return;
+      if (video.videoWidth > 0) setIsPortrait(video.videoHeight > video.videoWidth);
+    };
+    video.addEventListener('play',           onPlay);
+    video.addEventListener('pause',          onPause);
+    video.addEventListener('ended',          onEnded_);
+    video.addEventListener('waiting',        onWaiting);
+    video.addEventListener('playing',        onPlaying);
+    video.addEventListener('canplay',        onCanPlay);
+    video.addEventListener('timeupdate',     onTimeUpd);
+    video.addEventListener('durationchange', onDurChng);
+    video.addEventListener('volumechange',   onVolChng);
+    video.addEventListener('ratechange',     onRateChng);
+    video.addEventListener('loadedmetadata', onMeta);
+    video.addEventListener('resize',         onResize);
+    return () => {
+      video.removeEventListener('play',           onPlay);
+      video.removeEventListener('pause',          onPause);
+      video.removeEventListener('ended',          onEnded_);
+      video.removeEventListener('waiting',        onWaiting);
+      video.removeEventListener('playing',        onPlaying);
+      video.removeEventListener('canplay',        onCanPlay);
+      video.removeEventListener('timeupdate',     onTimeUpd);
+      video.removeEventListener('durationchange', onDurChng);
+      video.removeEventListener('volumechange',   onVolChng);
+      video.removeEventListener('ratechange',     onRateChng);
+      video.removeEventListener('loadedmetadata', onMeta);
+      video.removeEventListener('resize',         onResize);
+    };
+  }, [seeking, hasPortraitHint]);
 
-  // Fullscreen tracking
+  // Fullscreen tracking (desktop + iOS Safari)
   useEffect(() => {
     const onFSChange = () => {
       const fsEl = document.fullscreenElement || document.webkitFullscreenElement;
       setIsFullscreen(fsEl === containerRef.current);
     };
+    // iOS Safari fires these on the <video> element, not the document
+    const onIOSEnter = () => setIsFullscreen(true);
+    const onIOSExit  = () => setIsFullscreen(false);
+
     document.addEventListener('fullscreenchange', onFSChange);
     document.addEventListener('webkitfullscreenchange', onFSChange);
+
+    const vid = videoRef.current;
+    if (vid) {
+      vid.addEventListener('webkitbeginfullscreen', onIOSEnter);
+      vid.addEventListener('webkitendfullscreen', onIOSExit);
+    }
     return () => {
       document.removeEventListener('fullscreenchange', onFSChange);
       document.removeEventListener('webkitfullscreenchange', onFSChange);
+      if (vid) {
+        vid.removeEventListener('webkitbeginfullscreen', onIOSEnter);
+        vid.removeEventListener('webkitendfullscreen', onIOSExit);
+      }
     };
   }, []);
+
+  // Auto-fullscreen on load
+  useEffect(() => {
+    if (!autoFullscreen) return;
+    const vid = videoRef.current;
+    if (!vid) return;
+    const onReady = () => {
+      // Use a tiny timeout so the browser doesn't block the gesture requirement
+      setTimeout(() => {
+        const el = containerRef.current;
+        if (vid.webkitEnterFullscreen) vid.webkitEnterFullscreen();
+        else if (el?.requestFullscreen) el.requestFullscreen();
+        else if (el?.webkitRequestFullscreen) el.webkitRequestFullscreen();
+      }, 100);
+    };
+    vid.addEventListener('loadedmetadata', onReady, { once: true });
+    return () => vid.removeEventListener('loadedmetadata', onReady);
+  }, [autoFullscreen]);
 
   // Close settings when clicking outside
   useEffect(() => {
@@ -269,11 +326,25 @@ const AdaptiveVideoPlayer = forwardRef(function AdaptiveVideoPlayer(
 
   const toggleFullscreen = useCallback(() => {
     const el = containerRef.current;
+    const vid = videoRef.current;
     if (!el) return;
-    if (document.fullscreenElement || document.webkitFullscreenElement) {
-      (document.exitFullscreen || document.webkitExitFullscreen).call(document);
+
+    const isInFS = document.fullscreenElement || document.webkitFullscreenElement
+      || (vid && vid.webkitDisplayingFullscreen);
+
+    if (isInFS) {
+      if (document.exitFullscreen) document.exitFullscreen();
+      else if (document.webkitExitFullscreen) document.webkitExitFullscreen();
+      else if (vid?.webkitExitFullscreen) vid.webkitExitFullscreen();
     } else {
-      (el.requestFullscreen || el.webkitRequestFullscreen).call(el);
+      // iOS Safari only supports fullscreen on the <video> element itself
+      if (vid && vid.webkitEnterFullscreen) {
+        vid.webkitEnterFullscreen();
+      } else if (el.requestFullscreen) {
+        el.requestFullscreen();
+      } else if (el.webkitRequestFullscreen) {
+        el.webkitRequestFullscreen();
+      }
     }
   }, []);
 
@@ -321,7 +392,7 @@ const AdaptiveVideoPlayer = forwardRef(function AdaptiveVideoPlayer(
   return (
     <div
       ref={containerRef}
-      className={`adaptive-player ${className} ${isFullscreen ? 'is-fullscreen' : ''}`}
+      className={`adaptive-player ${className} ${isFullscreen ? 'is-fullscreen' : ''} ${isPortrait ? 'is-portrait' : ''}`}
       onMouseMove={resetHideTimer}
       onMouseEnter={resetHideTimer}
       onMouseLeave={() => { clearTimeout(hideControlsTimer.current); setControlsVisible(false); }}
@@ -335,7 +406,7 @@ const AdaptiveVideoPlayer = forwardRef(function AdaptiveVideoPlayer(
         poster={poster || undefined}
         onEnded={onEnded}
         onTimeUpdate={onTimeUpdate ? (e) => onTimeUpdate(e.target.currentTime) : undefined}
-        style={{ width: '100%', height: '100%', display: 'block', background: '#000' }}
+        style={{ display: 'block' }}
         playsInline
         onContextMenu={(e) => e.preventDefault()}
       />

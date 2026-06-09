@@ -24,6 +24,8 @@ function rowToUpload(row) {
         transcodeJobId: row.transcode_job_id || null,
         transcodeStatus: row.transcode_status || 'none',
         transcodeError: row.transcode_error || null,
+        videoWidth: row.video_width || null,
+        videoHeight: row.video_height || null,
     };
 }
 
@@ -83,6 +85,13 @@ const uploadRepo = {
 
     async deleteById(id) {
         await db.run('DELETE FROM uploads WHERE id = ?', [id]);
+    },
+
+    async updateDimensions(id, videoWidth, videoHeight) {
+        await db.run(
+            'UPDATE uploads SET video_width = ?, video_height = ? WHERE id = ?',
+            [videoWidth, videoHeight, id]
+        );
     },
 
     async updateTranscodeStatus(id, { transcodeJobId, hlsUrl, thumbnailUrl, transcodeStatus, transcodeError }) {

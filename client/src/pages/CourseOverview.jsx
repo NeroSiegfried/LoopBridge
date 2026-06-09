@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { useParams, Link, useNavigate } from 'react-router-dom';
+import { useParams, Link, useNavigate, useLocation } from 'react-router-dom';
 import SEO from '../components/SEO';
 import { coursesApi } from '../api';
 import { useAuth } from '../context/AuthContext';
@@ -8,19 +8,38 @@ import '../styles/course_overview.css';
 export default function CourseOverview() {
   const { id } = useParams();
   const navigate = useNavigate();
-  const { user } = useAuth();
+  const location = useLocation();
+  const { user, loading: authLoading } = useAuth();
   const [course, setCourse] = useState(null);
   const [activeTopic, setActiveTopic] = useState(null);
   const [completedSubs, setCompletedSubs] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [canAccess, setCanAccess] = useState(null); // null = unknown, true/false once checked
+  // Flag set when redirected back here from a lesson due to unpaid access
+  const paymentRequired = location.state?.paymentRequired === true;
 
   useEffect(() => {
     setLoading(true);
     coursesApi.get(id)
-      .then((data) => setCourse(data))
+      .then((data) => {
+        setCourse(data);
+        // For paid courses, check if current user already has access.
+        // Wait until auth has resolved before checking (avoids false canAccess=false flash).
+        if (!authLoading) {
+          if (data.price > 0 && user) {
+            coursesApi.checkAccess(id)
+              .then(({ canAccess: ca }) => setCanAccess(ca))
+              .catch(() => setCanAccess(false));
+          } else if (!data.price || data.price === 0) {
+            setCanAccess(true);
+          } else {
+            setCanAccess(false); // not logged in
+          }
+        }
+      })
       .catch(() => {})
       .finally(() => setLoading(false));
-  }, [id]);
+  }, [id, user, authLoading]);
 
   // Load progress for logged-in users
   useEffect(() => {
@@ -90,22 +109,51 @@ export default function CourseOverview() {
 
       <section className="course-hero">
         <div className="section-container">
-          <Link to="/courses" className="back-to-courses">
+          <Link
+            to={course.track ? `/${course.track}` : '/courses'}
+            className="back-to-courses"
+          >
             <i className="fa-solid fa-angle-left" />
-            <span>Back to all courses</span>
+            <span>
+              Back to {course.track
+                ? `${course.track.charAt(0).toUpperCase() + course.track.slice(1)} Track`
+                : 'All Courses'
+              }
+            </span>
           </Link>
           <div className="banner">
             <div className="body">
               <h1>{course.title}</h1>
               <p>{course.description}</p>
-              <button className="course-enroll-btn btn-primary hero-btn" onClick={() => {
-                const topics = course.topics || [];
-                if (topics.length > 0 && topics[0].subsections?.length > 0) {
-                  navigate(`/courses/${id}/lessons/0/0`);
-                } else {
-                  navigate(`/courses/${id}/lessons/0/0`);
-                }
-              }}>Start Course</button>
+              {/* Payment notice if redirected back from a lesson */}
+              {paymentRequired && (
+                <p style={{ color: 'var(--lb-yellow, #f5c518)', fontWeight: 600, marginBottom: '0.5rem' }}>
+                  This course requires payment to access lessons.
+                </p>
+              )}
+              {canAccess === false && course.price > 0 ? (
+                // Paid course, user hasn't paid yet
+                <button
+                  className="course-enroll-btn btn-primary hero-btn"
+                  onClick={() => {
+                    if (!user) {
+                      navigate('/login', { state: { from: `/courses/${id}` } });
+                    } else {
+                      // TODO: open payment modal — for now navigate to a payment page
+                      navigate(`/courses/${id}/pay`);
+                    }
+                  }}
+                >
+                  Enroll — {course.currency || 'NGN'} {course.price?.toLocaleString()}
+                </button>
+              ) : (
+                <button
+                  className="course-enroll-btn btn-primary hero-btn"
+                  onClick={() => navigate(`/courses/${id}/lessons/0/0`)}
+                >
+                  {completedCount > 0 ? 'Continue Course' : 'Start Course'}
+                </button>
+              )}
               <div className="metadata">
                 {course.author && (
                   <div className="author">

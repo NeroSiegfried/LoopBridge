@@ -222,6 +222,7 @@ CREATE TABLE IF NOT EXISTS users (
     display_name  TEXT NOT NULL DEFAULT '',
     email         TEXT UNIQUE NOT NULL,
     role          TEXT NOT NULL DEFAULT 'user' CHECK(role IN ('admin','author','user')),
+    is_root       INTEGER NOT NULL DEFAULT 0,
     avatar        TEXT,
     author_of     TEXT DEFAULT '[]',
     google_id     TEXT,
@@ -249,7 +250,10 @@ CREATE TABLE IF NOT EXISTS articles (
     published_at TEXT,
     updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    author_id    TEXT REFERENCES users(id) ON DELETE SET NULL,
     featured     INTEGER NOT NULL DEFAULT 0,
+    hidden       INTEGER NOT NULL DEFAULT 0,
+    approved     INTEGER NOT NULL DEFAULT 0,
     deleted      INTEGER NOT NULL DEFAULT 0,
     deleted_at   TEXT,
     content      TEXT DEFAULT '[]',
@@ -270,7 +274,9 @@ CREATE TABLE IF NOT EXISTS courses (
     published_at TEXT,
     updated_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-    approved     INTEGER NOT NULL DEFAULT 1,
+    author_id    TEXT REFERENCES users(id) ON DELETE SET NULL,
+    approved     INTEGER NOT NULL DEFAULT 0,
+    hidden       INTEGER NOT NULL DEFAULT 0,
     deleted      INTEGER NOT NULL DEFAULT 0,
     deleted_at   TEXT,
     topics       TEXT DEFAULT '[]',
@@ -290,7 +296,35 @@ CREATE TABLE IF NOT EXISTS progress (
     enrolled_at      TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     last_accessed_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     completed_subs   TEXT DEFAULT '[]',
+    paid             INTEGER NOT NULL DEFAULT 0,
+    payment_id       TEXT,
     PRIMARY KEY (user_id, course_id)
+);
+CREATE TABLE IF NOT EXISTS payments (
+    id             TEXT PRIMARY KEY,
+    user_id        TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    course_id      TEXT REFERENCES courses(id) ON DELETE SET NULL,
+    provider       TEXT NOT NULL,
+    reference      TEXT UNIQUE NOT NULL,
+    amount         REAL NOT NULL,
+    currency       TEXT NOT NULL DEFAULT 'NGN',
+    status         TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','success','failed','refunded')),
+    provider_data  TEXT DEFAULT '{}',
+    created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+    updated_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_payments_user    ON payments(user_id);
+CREATE INDEX IF NOT EXISTS idx_payments_ref     ON payments(reference);
+CREATE TABLE IF NOT EXISTS promotion_requests (
+    id             TEXT PRIMARY KEY,
+    requester_id   TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    target_user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    requested_role TEXT NOT NULL DEFAULT 'admin',
+    status         TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','approved','rejected')),
+    note           TEXT,
+    reviewed_by    TEXT REFERENCES users(id) ON DELETE SET NULL,
+    reviewed_at    TIMESTAMPTZ,
+    created_at     TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
 CREATE TABLE IF NOT EXISTS uploads (
     id          TEXT PRIMARY KEY,
@@ -306,7 +340,9 @@ CREATE TABLE IF NOT EXISTS uploads (
     thumbnail_url    TEXT,
     transcode_job_id TEXT,
     transcode_status TEXT DEFAULT 'none',
-    transcode_error  TEXT
+    transcode_error  TEXT,
+    video_width      INTEGER,
+    video_height     INTEGER
 );
 CREATE TABLE IF NOT EXISTS analytics_events (
     id           SERIAL PRIMARY KEY,
@@ -350,6 +386,33 @@ CREATE TABLE IF NOT EXISTS subscribers (
     unsubscribed_at TIMESTAMPTZ
 );
 CREATE INDEX IF NOT EXISTS idx_subscribers_email ON subscribers(email);
+CREATE TABLE IF NOT EXISTS messages (
+    id           TEXT PRIMARY KEY,
+    recipient_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    type         TEXT NOT NULL DEFAULT 'system',
+    title        TEXT NOT NULL,
+    body         TEXT NOT NULL,
+    link         TEXT,
+    metadata     TEXT DEFAULT '{}',
+    read         INTEGER NOT NULL DEFAULT 0,
+    read_at      TIMESTAMPTZ,
+    created_at   TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_messages_recipient_created ON messages(recipient_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_messages_unread ON messages(recipient_id, read);
+CREATE TABLE IF NOT EXISTS profile_change_requests (
+    id         TEXT PRIMARY KEY,
+    user_id    TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    field      TEXT NOT NULL,
+    new_value  TEXT NOT NULL,
+    target     TEXT NOT NULL,
+    channel    TEXT NOT NULL,
+    code       TEXT NOT NULL,
+    expires_at TIMESTAMPTZ NOT NULL,
+    used       INTEGER NOT NULL DEFAULT 0,
+    created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+CREATE INDEX IF NOT EXISTS idx_profile_change_user ON profile_change_requests(user_id, created_at DESC);
 `;
 
 const SQLITE_SCHEMA = `
@@ -360,6 +423,7 @@ const SQLITE_SCHEMA = `
         display_name  TEXT NOT NULL DEFAULT '',
         email         TEXT UNIQUE NOT NULL,
         role          TEXT NOT NULL DEFAULT 'user' CHECK(role IN ('admin','author','user')),
+        is_root       INTEGER NOT NULL DEFAULT 0,
         avatar        TEXT,
         author_of     TEXT DEFAULT '[]',
         google_id     TEXT,
@@ -387,7 +451,10 @@ const SQLITE_SCHEMA = `
         published_at TEXT,
         updated_at   TEXT NOT NULL DEFAULT (datetime('now')),
         created_at   TEXT NOT NULL DEFAULT (datetime('now')),
+        author_id    TEXT REFERENCES users(id) ON DELETE SET NULL,
         featured     INTEGER NOT NULL DEFAULT 0,
+        hidden       INTEGER NOT NULL DEFAULT 0,
+        approved     INTEGER NOT NULL DEFAULT 0,
         deleted      INTEGER NOT NULL DEFAULT 0,
         deleted_at   TEXT,
         content      TEXT DEFAULT '[]',
@@ -408,7 +475,9 @@ const SQLITE_SCHEMA = `
         published_at TEXT,
         updated_at   TEXT NOT NULL DEFAULT (datetime('now')),
         created_at   TEXT NOT NULL DEFAULT (datetime('now')),
-        approved     INTEGER NOT NULL DEFAULT 1,
+        author_id    TEXT REFERENCES users(id) ON DELETE SET NULL,
+        approved     INTEGER NOT NULL DEFAULT 0,
+        hidden       INTEGER NOT NULL DEFAULT 0,
         deleted      INTEGER NOT NULL DEFAULT 0,
         deleted_at   TEXT,
         topics       TEXT DEFAULT '[]',
@@ -428,7 +497,35 @@ const SQLITE_SCHEMA = `
         enrolled_at      TEXT NOT NULL DEFAULT (datetime('now')),
         last_accessed_at TEXT NOT NULL DEFAULT (datetime('now')),
         completed_subs   TEXT DEFAULT '[]',
+        paid             INTEGER NOT NULL DEFAULT 0,
+        payment_id       TEXT,
         PRIMARY KEY (user_id, course_id)
+    );
+    CREATE TABLE IF NOT EXISTS payments (
+        id             TEXT PRIMARY KEY,
+        user_id        TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        course_id      TEXT REFERENCES courses(id) ON DELETE SET NULL,
+        provider       TEXT NOT NULL,
+        reference      TEXT UNIQUE NOT NULL,
+        amount         REAL NOT NULL,
+        currency       TEXT NOT NULL DEFAULT 'NGN',
+        status         TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','success','failed','refunded')),
+        provider_data  TEXT DEFAULT '{}',
+        created_at     TEXT NOT NULL DEFAULT (datetime('now')),
+        updated_at     TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_payments_user ON payments(user_id);
+    CREATE INDEX IF NOT EXISTS idx_payments_ref  ON payments(reference);
+    CREATE TABLE IF NOT EXISTS promotion_requests (
+        id             TEXT PRIMARY KEY,
+        requester_id   TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        target_user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        requested_role TEXT NOT NULL DEFAULT 'admin',
+        status         TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','approved','rejected')),
+        note           TEXT,
+        reviewed_by    TEXT REFERENCES users(id) ON DELETE SET NULL,
+        reviewed_at    TEXT,
+        created_at     TEXT NOT NULL DEFAULT (datetime('now'))
     );
     CREATE TABLE IF NOT EXISTS uploads (
         id          TEXT PRIMARY KEY,
@@ -444,7 +541,9 @@ const SQLITE_SCHEMA = `
         thumbnail_url    TEXT,
         transcode_job_id TEXT,
         transcode_status TEXT DEFAULT 'none',
-        transcode_error  TEXT
+        transcode_error  TEXT,
+        video_width      INTEGER,
+        video_height     INTEGER
     );
     CREATE TABLE IF NOT EXISTS analytics_events (
         id           INTEGER PRIMARY KEY AUTOINCREMENT,
@@ -488,6 +587,33 @@ const SQLITE_SCHEMA = `
         unsubscribed_at TEXT
     );
     CREATE INDEX IF NOT EXISTS idx_subscribers_email ON subscribers(email);
+    CREATE TABLE IF NOT EXISTS messages (
+        id           TEXT PRIMARY KEY,
+        recipient_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        type         TEXT NOT NULL DEFAULT 'system',
+        title        TEXT NOT NULL,
+        body         TEXT NOT NULL,
+        link         TEXT,
+        metadata     TEXT DEFAULT '{}',
+        read         INTEGER NOT NULL DEFAULT 0,
+        read_at      TEXT,
+        created_at   TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_messages_recipient_created ON messages(recipient_id, created_at DESC);
+    CREATE INDEX IF NOT EXISTS idx_messages_unread ON messages(recipient_id, read);
+    CREATE TABLE IF NOT EXISTS profile_change_requests (
+        id         TEXT PRIMARY KEY,
+        user_id    TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        field      TEXT NOT NULL,
+        new_value  TEXT NOT NULL,
+        target     TEXT NOT NULL,
+        channel    TEXT NOT NULL,
+        code       TEXT NOT NULL,
+        expires_at TEXT NOT NULL,
+        used       INTEGER NOT NULL DEFAULT 0,
+        created_at TEXT NOT NULL DEFAULT (datetime('now'))
+    );
+    CREATE INDEX IF NOT EXISTS idx_profile_change_user ON profile_change_requests(user_id, created_at DESC);
 `;
 
 /* ================================================================
@@ -513,6 +639,8 @@ async function initTables() {
 
     // ── Schema migrations (add columns that may be missing on existing DBs) ──
     await runMigrations();
+    // ── Create new tables that may be missing on older DBs ──
+    await runTableMigrations();
 }
 
 /**
@@ -521,11 +649,25 @@ async function initTables() {
  */
 async function runMigrations() {
     const migrations = [
-        { table: 'uploads', column: 'hls_url',          type: 'TEXT',                     pgType: 'TEXT' },
-        { table: 'uploads', column: 'thumbnail_url',    type: 'TEXT',                     pgType: 'TEXT' },
-        { table: 'uploads', column: 'transcode_job_id', type: 'TEXT',                     pgType: 'TEXT' },
-        { table: 'uploads', column: 'transcode_status', type: "TEXT DEFAULT 'none'",      pgType: "TEXT DEFAULT 'none'" },
-        { table: 'uploads', column: 'transcode_error',  type: 'TEXT',                     pgType: 'TEXT' },
+        { table: 'uploads',   column: 'hls_url',          type: 'TEXT',                          pgType: 'TEXT' },
+        { table: 'uploads',   column: 'thumbnail_url',    type: 'TEXT',                          pgType: 'TEXT' },
+        { table: 'uploads',   column: 'transcode_job_id', type: 'TEXT',                          pgType: 'TEXT' },
+        { table: 'uploads',   column: 'transcode_status', type: "TEXT DEFAULT 'none'",           pgType: "TEXT DEFAULT 'none'" },
+        { table: 'uploads',   column: 'transcode_error',  type: 'TEXT',                          pgType: 'TEXT' },
+        { table: 'uploads',   column: 'video_width',       type: 'INTEGER',                       pgType: 'INTEGER' },
+        { table: 'uploads',   column: 'video_height',      type: 'INTEGER',                       pgType: 'INTEGER' },
+        // users
+        { table: 'users',     column: 'is_root',          type: 'INTEGER NOT NULL DEFAULT 0',    pgType: 'INTEGER NOT NULL DEFAULT 0' },
+        // articles
+        { table: 'articles',  column: 'author_id',        type: 'TEXT',                          pgType: 'TEXT' },
+        { table: 'articles',  column: 'hidden',           type: 'INTEGER NOT NULL DEFAULT 0',    pgType: 'INTEGER NOT NULL DEFAULT 0' },
+        { table: 'articles',  column: 'approved',         type: 'INTEGER NOT NULL DEFAULT 0',    pgType: 'INTEGER NOT NULL DEFAULT 0' },
+        // courses
+        { table: 'courses',   column: 'author_id',        type: 'TEXT',                          pgType: 'TEXT' },
+        { table: 'courses',   column: 'hidden',           type: 'INTEGER NOT NULL DEFAULT 0',    pgType: 'INTEGER NOT NULL DEFAULT 0' },
+        // progress
+        { table: 'progress',  column: 'paid',             type: 'INTEGER NOT NULL DEFAULT 0',    pgType: 'INTEGER NOT NULL DEFAULT 0' },
+        { table: 'progress',  column: 'payment_id',       type: 'TEXT',                          pgType: 'TEXT' },
     ];
 
     for (const m of migrations) {
@@ -542,6 +684,75 @@ async function runMigrations() {
             // PG uses IF NOT EXISTS so should never throw, but guard anyway
             console.error(`[db] migration warning for ${m.table}.${m.column}:`, err.message);
         }
+    }
+}
+
+/**
+ * Create new tables that didn't exist in older DB versions.
+ * Uses CREATE TABLE IF NOT EXISTS so always safe to run.
+ */
+async function runTableMigrations() {
+    const pgPayments = `CREATE TABLE IF NOT EXISTS payments (
+        id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        course_id TEXT REFERENCES courses(id) ON DELETE SET NULL, provider TEXT NOT NULL,
+        reference TEXT UNIQUE NOT NULL, amount REAL NOT NULL, currency TEXT NOT NULL DEFAULT 'NGN',
+        status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','success','failed','refunded')),
+        provider_data TEXT DEFAULT '{}',
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(), updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`;
+    const pgPromo = `CREATE TABLE IF NOT EXISTS promotion_requests (
+        id TEXT PRIMARY KEY, requester_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        target_user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        requested_role TEXT NOT NULL DEFAULT 'admin',
+        status TEXT NOT NULL DEFAULT 'pending' CHECK(status IN ('pending','approved','rejected')),
+        note TEXT, reviewed_by TEXT REFERENCES users(id) ON DELETE SET NULL,
+        reviewed_at TIMESTAMPTZ, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`;
+    const sqlitePayments = `CREATE TABLE IF NOT EXISTS payments (
+        id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        course_id TEXT REFERENCES courses(id) ON DELETE SET NULL, provider TEXT NOT NULL,
+        reference TEXT UNIQUE NOT NULL, amount REAL NOT NULL, currency TEXT NOT NULL DEFAULT 'NGN',
+        status TEXT NOT NULL DEFAULT 'pending', provider_data TEXT DEFAULT '{}',
+        created_at TEXT NOT NULL DEFAULT (datetime('now')), updated_at TEXT NOT NULL DEFAULT (datetime('now')))`;
+    const sqlitePromo = `CREATE TABLE IF NOT EXISTS promotion_requests (
+        id TEXT PRIMARY KEY, requester_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        target_user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        requested_role TEXT NOT NULL DEFAULT 'admin', status TEXT NOT NULL DEFAULT 'pending',
+        note TEXT, reviewed_by TEXT REFERENCES users(id) ON DELETE SET NULL,
+        reviewed_at TEXT, created_at TEXT NOT NULL DEFAULT (datetime('now')))`;
+    const pgMessages = `CREATE TABLE IF NOT EXISTS messages (
+        id TEXT PRIMARY KEY, recipient_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        type TEXT NOT NULL DEFAULT 'system', title TEXT NOT NULL, body TEXT NOT NULL,
+        link TEXT, metadata TEXT DEFAULT '{}', read INTEGER NOT NULL DEFAULT 0,
+        read_at TIMESTAMPTZ, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`;
+    const sqliteMessages = `CREATE TABLE IF NOT EXISTS messages (
+        id TEXT PRIMARY KEY, recipient_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        type TEXT NOT NULL DEFAULT 'system', title TEXT NOT NULL, body TEXT NOT NULL,
+        link TEXT, metadata TEXT DEFAULT '{}', read INTEGER NOT NULL DEFAULT 0,
+        read_at TEXT, created_at TEXT NOT NULL DEFAULT (datetime('now')))`;
+    const pgProfileChange = `CREATE TABLE IF NOT EXISTS profile_change_requests (
+        id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        field TEXT NOT NULL, new_value TEXT NOT NULL, target TEXT NOT NULL,
+        channel TEXT NOT NULL, code TEXT NOT NULL, expires_at TIMESTAMPTZ NOT NULL,
+        used INTEGER NOT NULL DEFAULT 0, created_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`;
+    const sqliteProfileChange = `CREATE TABLE IF NOT EXISTS profile_change_requests (
+        id TEXT PRIMARY KEY, user_id TEXT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+        field TEXT NOT NULL, new_value TEXT NOT NULL, target TEXT NOT NULL,
+        channel TEXT NOT NULL, code TEXT NOT NULL, expires_at TEXT NOT NULL,
+        used INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL DEFAULT (datetime('now')))`;
+
+    try {
+        await db.exec(isPg ? pgPayments : sqlitePayments);
+        await db.exec(isPg
+            ? `CREATE INDEX IF NOT EXISTS idx_payments_user ON payments(user_id)`
+            : `CREATE INDEX IF NOT EXISTS idx_payments_user ON payments(user_id)`);
+        await db.exec(isPg ? pgPromo : sqlitePromo);
+        await db.exec(isPg ? pgMessages : sqliteMessages);
+        await db.exec('CREATE INDEX IF NOT EXISTS idx_messages_recipient_created ON messages(recipient_id, created_at DESC)');
+        await db.exec('CREATE INDEX IF NOT EXISTS idx_messages_unread ON messages(recipient_id, read)');
+        await db.exec(isPg ? pgProfileChange : sqliteProfileChange);
+        await db.exec('CREATE INDEX IF NOT EXISTS idx_profile_change_user ON profile_change_requests(user_id, created_at DESC)');
+        console.log('[db] payments + promotion_requests tables ready.');
+    } catch (err) {
+        console.error('[db] table migration warning:', err.message);
     }
 }
 

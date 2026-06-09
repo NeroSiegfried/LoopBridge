@@ -53,11 +53,8 @@
     object-position: center;
 }
 
-
-
 .what-we-do, .mission, .vision {
     padding: 160px 60px 140px;
-    
 }
 
 .what-we-do, .vision {
@@ -66,7 +63,7 @@
 }
 
 .what-we-do::before, .vision::before {
-    content: ""; 
+    content: "";
     position: absolute;
     top: 0; left: 0; width: 100%; height: 100%;
     background-color: #31ad5f06;
@@ -85,8 +82,6 @@
     z-index: 1;
     flex-direction: row;
 }
-
-
 
 .what-we-do .section-body,
 .mission .section-body,
@@ -135,26 +130,25 @@
 }
 
 .mission .cards {
-    margin-top: 5rem; /* 80px */
+    margin-top: 5rem;
     display: grid;
-    grid-template-columns: repeat(2, 1fr); /* Default: 5 items per row */
-    gap: 1.25rem; /* 20px gap between cards */
-    width: 100%; /* Allow the grid to span the full width of the container */
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1.25rem;
+    width: 100%;
 }
-
 
 .mission .card-item {
     flex: 1;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    padding: 28px 20px 32px; /* 20px */
+    padding: 28px 20px 32px;
     background-color: white;
     border: 1px solid var(--gray-mid);
-    border-radius: 1rem; /* 12px */
+    border-radius: 1rem;
     box-sizing: border-box;
-    min-width: 300px; /* Ensure cards never shrink below 200px */
-    width: 100%; /* Allow cards to grow dynamically */
+    min-width: 300px;
+    width: 100%;
 }
 
 .mission .card-item p {
@@ -167,11 +161,10 @@ h4.card-name {
     margin-bottom: 15px;
 }
 
-
 .mission .card-icon {
-    width: 60px; /* 48px */
-    height: 60px; /* 48px */
-    margin-bottom: 1.25rem; /* 20px */
+    width: 60px;
+    height: 60px;
+    margin-bottom: 1.25rem;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -188,7 +181,7 @@ h4.card-name {
     background-color: #31ad5f06;
 }
 
-section.team{
+section.team {
     display: flex;
     padding: 140px 60px 120px;
 }
@@ -246,32 +239,19 @@ section.team{
     color: #33434d;
 }
 
+.green-bg  { background-color: var(--lb-green); }
+.blue-bg   { background-color: #00c1df; }
+.purple-bg { background-color: #9747ff; }
+.yellow-bg { background-color: #ffd42a; }
+.orange-bg { background-color: #ff6e2a; }
 
+/* ========================================= */
+/*               RESPONSIVENESS              */
+/* ========================================= */
 
-.green-bg {
-    background-color: var(--lb-green);
-}
-
-.blue-bg {
-    background-color: #00c1df;
-}
-
-.purple-bg {
-    background-color: #9747ff;
-}
-
-.yellow-bg {
-    background-color: #ffd42a;
-}
-
-.orange-bg {
-    background-color: #ff6e2a;
-}
-
-/* .accent-three moved to global.css */
-
+/* Large tablet: collapse photo row, mission to single column */
 @media (max-width: 1200px) {
-    .mission .section-container{
+    .mission .section-container {
         flex-direction: column;
     }
 
@@ -288,6 +268,7 @@ section.team{
         width: 100%;
         aspect-ratio: 19/9;
     }
+
     .middle-pics {
         flex-direction: row;
     }
@@ -302,26 +283,81 @@ section.team{
     }
 }
 
+/* Tablet (up to 992px): reduce all the big desktop padding values */
+@media (max-width: 62rem) {
+    .about-hero {
+        padding-top: var(--page-top);       /* clears nav */
+        padding-left: var(--section-px);
+        padding-right: var(--section-px);
+        padding-bottom: 4rem;               /* was 160px */
+    }
+
+    .about-hero .heading {
+        margin-bottom: 3rem;                /* was 140px */
+    }
+
+    .what-we-do,
+    .mission,
+    .vision,
+    section.team {
+        padding-top: var(--section-gap);    /* 3.75rem */
+        padding-bottom: var(--section-gap);
+        padding-left: var(--section-px);
+        padding-right: var(--section-px);
+    }
+
+    .mission .cards {
+        margin-top: 2.5rem;
+    }
+}
+
+/* Mobile (up to 768px): Figma mobile values */
 @media (max-width: 768px) {
-    .about-hero,
+    .about-hero {
+        padding-top: var(--page-top);
+        padding-left: 20px;
+        padding-right: 20px;
+        padding-bottom: 2.5rem;             /* was 160px */
+    }
+
+    .about-hero .heading {
+        margin-bottom: 2rem;                /* was 140px */
+        max-width: none;
+        text-align: left;
+    }
+
+    .about-hero h1 {
+        font-size: 38px;
+        line-height: 44px;
+    }
+
+    .about-hero p {
+        font-size: 16px;
+        line-height: 24px;
+    }
+
     .what-we-do,
     .mission,
     .vision,
     .team {
+        padding-top: 2.5rem;
+        padding-bottom: 2.5rem;
         padding-left: 20px;
         padding-right: 20px;
     }
 
-    .what-we-do .section-container, .vision .section-container {
-        flex-direction: column-reverse;
-    }
-
     .mission .cards {
-        grid-template-columns: 1fr; /* Stack cards vertically on small screens */
+        grid-template-columns: 1fr;
+        margin-top: 1.5rem;
     }
 
     .mission .card-item {
-        min-width: none;
+        min-width: 0;
+    }
+
+    .what-we-do .section-container,
+    .vision .section-container {
+        flex-direction: column-reverse;
     }
 
     .members {
