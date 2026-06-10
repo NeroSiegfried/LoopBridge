@@ -229,7 +229,7 @@
     flex: 1;
 }
 
-.courses-section .course-image {
+.course-image {
     height: 200px;
     border-radius: 16px;
     overflow: hidden;
@@ -238,7 +238,7 @@
     position: relative;
 }
 
-.courses-section .course-image img {
+.course-image img {
     width: 100%;
     height: 100%;
     object-fit: cover;
@@ -270,7 +270,7 @@
     background-color: var(--lb-green);
 }
 
-.courses-section .course-title {
+.course-title {
     font-family: 'CabinetGrotesk-Variable', sans-serif;
     font-weight: 600;
     color: var(--lb-blue-text);
@@ -278,14 +278,14 @@
     margin: 6px 0;
 }
 
-.courses-section .course-description {
+.course-description {
     font-family: 'Schibsted Grotesk', sans-serif;
     font-weight: 200;
     color: var(--lb-blue-pt);
     font-size: clamp(14px, 1.5vw, 16px);
 }
 
-.courses-section .course-author {
+.course-author {
     font-family: 'Schibsted Grotesk', sans-serif;
     font-weight: 200;
     color: var(--black-mid);
@@ -336,36 +336,4 @@
         padding-left: 20px;
         padding-right: 20px;
     }
-}
-
-/* ─── Course Progress Bar on Cards ─── */
-.course-progress-bar {
-    display: flex;
-    align-items: center;
-    gap: 0.5rem;
-    margin-top: 0.5rem;
-    padding: 0 0 0.25rem;
-}
-
-.course-progress-bar .progress-track {
-    flex: 1;
-    height: 6px;
-    background: var(--gray-dark, #e8ebef);
-    border-radius: 3px;
-    overflow: hidden;
-}
-
-.course-progress-bar .progress-fill {
-    height: 100%;
-    background: var(--lb-green, #30c070);
-    border-radius: 3px;
-    transition: width 0.3s ease;
-}
-
-.course-progress-bar .progress-label {
-    font-size: 0.75rem;
-    font-weight: 600;
-    color: var(--lb-green, #30c070);
-    min-width: 2.5rem;
-    text-align: right;
 }

@@ -26,6 +26,7 @@ import CoursePay from './pages/CoursePay';
 import PaymentSuccess from './pages/PaymentSuccess';
 import PaymentCancel from './pages/PaymentCancel';
 import Profile from './pages/Profile';
+import MyLearning from './pages/MyLearning';
 import NotFound from './pages/NotFound';
 
 export default function App() {
@@ -57,6 +58,7 @@ export default function App() {
         <Route path="login" element={<Login />} />
         <Route path="signup" element={<Signup />} />
         <Route path="profile" element={<Profile />} />
+        <Route path="my-learning" element={<MyLearning />} />
       </Route>
       <Route element={<Layout />}>
         <Route path="admin/dashboard" element={<Dashboard />} />

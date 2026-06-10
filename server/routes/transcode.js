@@ -27,12 +27,17 @@ router.post('/:uploadId', requireAuthor, async (req, res) => {
             return res.status(400).json({ error: 'Only video files can be transcoded.' });
         }
 
-        const result = await transcodingService.transcodeVideo(upload.id, upload.path);
-        if (!result) {
-            return res.status(503).json({ error: 'Transcoding failed to start. Check server logs for details.' });
-        }
+        // Fire and forget — same pattern as the auto-trigger on upload
+        // (see routes/uploads.js). Without this, the local-ffmpeg fallback
+        // path (used when MediaConvert isn't configured) would block this
+        // request for the full duration of the transcode. Progress is
+        // pollable via GET /api/transcode/:uploadId/status.
+        await uploadRepo.updateTranscodeStatus(upload.id, { transcodeStatus: 'processing' });
+        transcodingService.transcodeVideo(upload.id, upload.path).catch((err) => {
+            console.error('[transcode route] Transcode failed for', upload.id, err.message);
+        });
 
-        return res.json(result);
+        return res.status(202).json({ uploadId: upload.id, status: 'processing' });
     } catch (err) {
         console.error('[transcode route]', err.message);
         return res.status(500).json({ error: 'Failed to start transcoding.' });

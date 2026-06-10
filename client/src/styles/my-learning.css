@@ -1,0 +1,112 @@
+/* My Learning — student course progress dashboard */
+
+.my-learning-hero {
+    padding: var(--page-top) 0 2.5rem;
+    background-color: #f6fffa;
+}
+
+.my-learning-hero .section-container {
+    display: block;
+}
+
+.my-learning-hero h1 {
+    margin-bottom: 0.5rem;
+}
+
+.my-learning-hero > .section-container > p {
+    color: var(--black-mid);
+    font-size: 1.0625rem;
+    margin-bottom: 2rem;
+}
+
+.learning-stats {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1.25rem;
+}
+
+.stat-card {
+    background-color: white;
+    border: 1px solid var(--gray-mid);
+    border-radius: var(--radius-card);
+    padding: 1.25rem;
+    text-align: center;
+}
+
+.stat-value {
+    font-family: var(--font-heading);
+    font-size: clamp(1.75rem, 3vw, 2.5rem);
+    color: var(--lb-blue-dark);
+}
+
+.stat-label {
+    font-size: 0.875rem;
+    color: var(--black-mid);
+    margin-top: 0.25rem;
+}
+
+.my-learning-section {
+    padding: 2.5rem 0 6rem;
+}
+
+.my-learning-section .section-container {
+    display: block;
+}
+
+.my-learning-section h2 {
+    font-size: 1.5rem;
+    margin: 0 0 1.25rem;
+}
+
+.my-learning-section h2:not(:first-child) {
+    margin-top: 3rem;
+}
+
+.my-learning-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 1.5rem;
+}
+
+.my-learning-empty {
+    text-align: center;
+    padding: 4rem 1rem;
+}
+
+.my-learning-empty i {
+    font-size: 2.5rem;
+    color: var(--lb-green);
+    margin-bottom: 1rem;
+}
+
+.my-learning-empty h2 {
+    margin-bottom: 0.5rem;
+}
+
+.my-learning-empty p {
+    color: var(--black-mid);
+    margin: 0 auto 1.5rem;
+    max-width: 32rem;
+}
+
+@media (max-width: 1100px) {
+    .learning-stats {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .my-learning-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 48rem) {
+    .learning-stats {
+        gap: 0.75rem;
+    }
+
+    .my-learning-grid {
+        display: flex;
+        flex-direction: column;
+        gap: 1.5rem;
+    }
+}

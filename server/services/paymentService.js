@@ -194,6 +194,17 @@ const nowpaymentsService = {
     }
 };
 
+// ─── Webhook audit logging ─────────────────────────────────────────────────────
+// Best-effort: a logging failure must never fail webhook processing (that
+// would cause the provider to retry a webhook that already succeeded).
+async function logWebhook(provider, reference, status, payload, error) {
+    try {
+        await paymentRepo.logWebhookEvent({ provider, reference, status, payload, error });
+    } catch (err) {
+        console.error(`[payments] Failed to log ${provider} webhook event:`, err.message);
+    }
+}
+
 // ─── Main Payment Service ─────────────────────────────────────────────────────
 const paymentService = {
     paystackService,
@@ -266,13 +277,25 @@ const paymentService = {
             throw Object.assign(new Error('Invalid webhook signature.'), { status: 401 });
         }
         const event = JSON.parse(rawBody.toString());
-        if (event.event === 'charge.success') {
-            const { reference } = event.data;
-            const payment = await paymentRepo.findByReference(reference);
-            if (payment && payment.status !== 'success') {
-                await paymentRepo.updateStatus(reference, 'success', event.data);
-                await progressRepo.markPaid(payment.userId, payment.courseId, payment.id);
+        const reference = event.data?.reference || null;
+        let outcome = 'ignored';
+        try {
+            if (event.event === 'charge.success') {
+                const payment = await paymentRepo.findByReference(reference);
+                if (!payment) {
+                    outcome = 'unmatched';
+                } else if (payment.status !== 'success') {
+                    await paymentRepo.updateStatus(reference, 'success', event.data);
+                    await progressRepo.markPaid(payment.userId, payment.courseId, payment.id);
+                    outcome = 'processed';
+                } else {
+                    outcome = 'duplicate';
+                }
             }
+            await logWebhook('paystack', reference, outcome, event);
+        } catch (err) {
+            await logWebhook('paystack', reference, 'error', event, err.message);
+            throw err;
         }
         return { received: true };
     },
@@ -285,13 +308,25 @@ const paymentService = {
             throw Object.assign(new Error('Invalid webhook signature.'), { status: 401 });
         }
         const event = JSON.parse(rawBody.toString());
-        if (event.event === 'charge.completed' && event.data?.status === 'successful') {
-            const reference = event.data.tx_ref;
-            const payment = await paymentRepo.findByReference(reference);
-            if (payment && payment.status !== 'success') {
-                await paymentRepo.updateStatus(reference, 'success', event.data);
-                await progressRepo.markPaid(payment.userId, payment.courseId, payment.id);
+        const reference = event.data?.tx_ref || null;
+        let outcome = 'ignored';
+        try {
+            if (event.event === 'charge.completed' && event.data?.status === 'successful') {
+                const payment = await paymentRepo.findByReference(reference);
+                if (!payment) {
+                    outcome = 'unmatched';
+                } else if (payment.status !== 'success') {
+                    await paymentRepo.updateStatus(reference, 'success', event.data);
+                    await progressRepo.markPaid(payment.userId, payment.courseId, payment.id);
+                    outcome = 'processed';
+                } else {
+                    outcome = 'duplicate';
+                }
             }
+            await logWebhook('flutterwave', reference, outcome, event);
+        } catch (err) {
+            await logWebhook('flutterwave', reference, 'error', event, err.message);
+            throw err;
         }
         return { received: true };
     },
@@ -304,14 +339,34 @@ const paymentService = {
             throw Object.assign(new Error('Invalid IPN signature.'), { status: 401 });
         }
         const event = JSON.parse(rawBody.toString());
-        // payment_status: 'finished' or 'confirmed' = success
-        if (['finished', 'confirmed'].includes(event.payment_status)) {
-            const reference = event.order_id;
-            const payment = await paymentRepo.findByReference(reference);
-            if (payment && payment.status !== 'success') {
-                await paymentRepo.updateStatus(reference, 'success', event);
-                await progressRepo.markPaid(payment.userId, payment.courseId, payment.id);
+        const reference = event.order_id || null;
+        let outcome = 'ignored';
+        try {
+            // payment_status: 'finished' or 'confirmed' = success
+            if (['finished', 'confirmed'].includes(event.payment_status)) {
+                const payment = await paymentRepo.findByReference(reference);
+                if (!payment) {
+                    outcome = 'unmatched';
+                } else if (payment.status !== 'success') {
+                    // Sanity-check the invoiced amount/currency against what we
+                    // recorded at initiate() time. A mismatch doesn't block
+                    // enrollment (the IPN is HMAC-signed with our secret), but
+                    // it's flagged in the audit log for follow-up.
+                    const expectedAmount = Number(payment.amount);
+                    const paidAmount = Number(event.price_amount);
+                    const currencyMatches = String(event.price_currency || '').toUpperCase() === String(payment.currency || '').toUpperCase();
+                    const amountMatches = Number.isFinite(paidAmount) && Math.abs(paidAmount - expectedAmount) < 0.01;
+                    await paymentRepo.updateStatus(reference, 'success', event);
+                    await progressRepo.markPaid(payment.userId, payment.courseId, payment.id);
+                    outcome = (amountMatches && currencyMatches) ? 'processed' : 'processed_amount_mismatch';
+                } else {
+                    outcome = 'duplicate';
+                }
             }
+            await logWebhook('nowpayments', reference, outcome, event);
+        } catch (err) {
+            await logWebhook('nowpayments', reference, 'error', event, err.message);
+            throw err;
         }
         return { received: true };
     },

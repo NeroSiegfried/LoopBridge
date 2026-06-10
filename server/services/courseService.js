@@ -182,6 +182,47 @@ const courseService = {
     },
 
     /**
+     * List all courses a user is enrolled in, with progress summaries.
+     * Used by the student "My Learning" dashboard.
+     */
+    async listEnrolled(userId) {
+        const progressList = await progressRepo.listByUser(userId);
+        const results = [];
+
+        for (const progress of progressList) {
+            const course = await courseRepo.findByIdFormatted(progress.courseId);
+            if (!course || course.deleted) continue;
+
+            const totalSubsections = (course.topics || [])
+                .reduce((sum, topic) => sum + (topic.subsections?.length || 0), 0);
+            const completedCount = progress.completedSubs.length;
+
+            results.push({
+                course: {
+                    id: course.id,
+                    title: course.title,
+                    slug: course.slug,
+                    description: course.description,
+                    image: course.image,
+                    track: course.track,
+                    level: course.level,
+                    duration: course.duration,
+                    price: course.price,
+                    author: course.author
+                },
+                enrolledAt: progress.enrolledAt,
+                lastAccessedAt: progress.lastAccessedAt,
+                paid: progress.paid,
+                completedCount,
+                totalSubsections,
+                progressPct: totalSubsections > 0 ? Math.round((completedCount / totalSubsections) * 100) : 0
+            });
+        }
+
+        return results;
+    },
+
+    /**
      * Enroll a user in a course.
      * - Free courses: enroll immediately.
      * - Paid courses: only if a successful payment exists (verified by paymentId param).

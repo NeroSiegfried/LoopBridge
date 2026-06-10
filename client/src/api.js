@@ -66,6 +66,7 @@ export const coursesApi = {
     return request(`/courses${qs ? '?' + qs : ''}`);
   },
   get: (id) => request(`/courses/${id}`),
+  listEnrolled: () => request('/courses/enrolled'),
   create: (data) => request('/courses', { method: 'POST', body: JSON.stringify(data) }),
   update: (id, data) => request(`/courses/${id}`, { method: 'PUT', body: JSON.stringify(data) }),
   delete: (id) => request(`/courses/${id}`, { method: 'DELETE' }),

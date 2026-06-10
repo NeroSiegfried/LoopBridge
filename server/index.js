@@ -24,13 +24,16 @@
 // Load .env before any config/service modules read process.env
 require('dotenv').config();
 
+const path = require('path');
 const express = require('express');
 const cors = require('cors');
 const cookieParser = require('cookie-parser');
+const compression = require('compression');
 
 const config = require('./config');
 const { initTables } = require('./db');
 const { sessionMiddleware } = require('./middleware/auth');
+const { rateLimit, WINDOW_MS: RATE_WINDOW_MS, MAX_GENERAL: RATE_MAX_GENERAL, MAX_AUTH: RATE_MAX_AUTH } = require('./middleware/rateLimit');
 const { storageService } = require('./services');
 
 // Route modules
@@ -72,36 +75,9 @@ app.use((req, res, next) => {
     next();
 });
 
-// ─── Rate Limiting (in-memory, simple) ──────────────────
-const rateLimitMap = new Map();
-const RATE_WINDOW_MS = 60 * 1000; // 1 minute
-const RATE_MAX_GENERAL = 120;     // 120 req/min general
-const RATE_MAX_AUTH = 10;         // 10 req/min for login
-
-function rateLimit(windowMs, max) {
-    return (req, res, next) => {
-        const key = (req.ip || 'unknown') + ':' + req.baseUrl;
-        const now = Date.now();
-        const record = rateLimitMap.get(key);
-        if (!record || now - record.start > windowMs) {
-            rateLimitMap.set(key, { start: now, count: 1 });
-            return next();
-        }
-        record.count++;
-        if (record.count > max) {
-            return res.status(429).json({ error: 'Too many requests. Please try again later.' });
-        }
-        next();
-    };
-}
-
-// Clean up stale entries every 5 minutes
-setInterval(() => {
-    const now = Date.now();
-    for (const [key, record] of rateLimitMap) {
-        if (now - record.start > RATE_WINDOW_MS * 2) rateLimitMap.delete(key);
-    }
-}, 5 * 60 * 1000).unref();
+// Gzip/brotli-negotiated compression for JSON + HTML/CSS/JS responses —
+// cuts bandwidth (and therefore data-transfer cost) with no new infra.
+app.use(compression());
 
 // ─── Middleware ──────────────────────────────────────────
 app.use(cors({
@@ -136,9 +112,22 @@ app.use('/api/messages', rateLimit(RATE_WINDOW_MS, RATE_MAX_GENERAL), messagesRo
 app.use('/api', miscRoutes);
 
 // ─── Uploaded files (served at /uploads/*) ──────────────
-app.use('/uploads', express.static(config.uploadsDir));
+// Filenames are content-addressed (uuid-based, see storageService) so a
+// given URL's content never changes — safe to cache for a year. Reduces
+// repeat origin requests/bandwidth as the file library grows.
+app.use('/uploads', express.static(config.uploadsDir, {
+    maxAge: '1y',
+    immutable: true,
+}));
 
 // ─── Static Files (React SPA from client/dist) ─────────
+// Vite's build output hashes filenames under /assets, so those are also
+// safe to cache for a year. Everything else (index.html, fonts, images)
+// keeps default (no special) caching so deploys are picked up immediately.
+app.use('/assets', express.static(path.join(config.staticRoot, 'assets'), {
+    maxAge: '1y',
+    immutable: true,
+}));
 app.use(express.static(config.staticRoot, {
     index: 'index.html'
 }));
@@ -146,7 +135,7 @@ app.use(express.static(config.staticRoot, {
 // SPA-style fallback (only for non-API, non-file requests)
 app.use((req, res, next) => {
     if (req.path.startsWith('/api/')) return next();
-    res.sendFile(require('path').join(config.staticRoot, 'index.html'));
+    res.sendFile(path.join(config.staticRoot, 'index.html'));
 });
 
 // ─── Error Handler ──────────────────────────────────────

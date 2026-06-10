@@ -303,6 +303,46 @@ h1, h2, h3, h4, h5, h6 {
     flex-grow: 1;
 }
 
+/* --- Course Progress Bar (used on course cards) --- */
+.course-progress-bar {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+    padding: 0 0 0.25rem;
+}
+
+.course-progress-bar .progress-track {
+    flex: 1;
+    height: 6px;
+    background: var(--gray-dark);
+    border-radius: 3px;
+    overflow: hidden;
+}
+
+.course-progress-bar .progress-fill {
+    height: 100%;
+    background: var(--lb-green);
+    border-radius: 3px;
+    transition: width 0.3s ease;
+}
+
+.course-progress-bar .progress-label {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--lb-green);
+    min-width: 2.5rem;
+    text-align: right;
+}
+
+.course-progress-bar.completed .progress-fill {
+    background: var(--lb-blue-light);
+}
+
+.course-progress-bar.completed .progress-label {
+    color: var(--lb-blue-light);
+}
+
 /* --- Category Buttons / Pills --- */
 .category-pill {
     display: inline-block;

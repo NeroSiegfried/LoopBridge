@@ -2,6 +2,7 @@
  * LoopBridge — Courses Routes
  *
  * GET    /api/courses                    — list (public: approved + not hidden + not deleted)
+ * GET    /api/courses/enrolled           — courses the current user is enrolled in, with progress
  * GET    /api/courses/:id                — single course
  * POST   /api/courses                    — create         (author+)
  * PUT    /api/courses/:id                — edit           (author-owner or admin)
@@ -41,6 +42,11 @@ router.get('/', async (req, res) => {
         includeHidden:     isAdmin,
         includeUnapproved: isAdmin
     }));
+});
+
+// ─── Enrolled courses (student "My Learning" dashboard) ──
+router.get('/enrolled', requireAuth, async (req, res) => {
+    return res.json(await courseService.listEnrolled(req.user.id));
 });
 
 // ─── Single course ───────────────────────────────────────

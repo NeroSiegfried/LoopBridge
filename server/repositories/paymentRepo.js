@@ -3,6 +3,7 @@
  */
 'use strict';
 
+const { v4: uuidv4 } = require('uuid');
 const { db } = require('../db');
 
 function rowToPayment(row) {
@@ -60,6 +61,25 @@ const paymentRepo = {
             "SELECT * FROM payments WHERE user_id = ? AND course_id = ? AND status = 'pending' ORDER BY created_at DESC LIMIT 1",
             [userId, courseId]
         ));
+    },
+
+    /**
+     * Persist a webhook delivery for audit/replay, independent of whether
+     * it could be matched to a payment record or processed successfully.
+     */
+    async logWebhookEvent({ provider, reference, status, payload, error }) {
+        await db.runNamed(`
+            INSERT INTO payment_webhook_events (id, provider, reference, status, payload, error, created_at)
+            VALUES (@id, @provider, @reference, @status, @payload, @error, @now)
+        `, {
+            id: uuidv4(),
+            provider,
+            reference: reference || null,
+            status: status || 'received',
+            payload: typeof payload === 'string' ? payload : JSON.stringify(payload),
+            error: error || null,
+            now: new Date().toISOString()
+        });
     }
 };
 

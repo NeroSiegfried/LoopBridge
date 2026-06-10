@@ -35,6 +35,14 @@ function createSqliteDriver() {
             _db = new Database(DB_PATH);
             _db.pragma('journal_mode = WAL');
             _db.pragma('foreign_keys = ON');
+            // Let SQLite retry for up to 5s instead of throwing SQLITE_BUSY
+            // immediately when another connection (e.g. Litestream, or a
+            // concurrent request) holds the write lock.
+            _db.pragma('busy_timeout = 5000');
+            // NORMAL is safe (and much faster) under WAL: the WAL file itself
+            // guarantees consistency, and at most the last commit could be
+            // lost on an OS crash (not a process crash).
+            _db.pragma('synchronous = NORMAL');
         }
         return _db;
     }
@@ -738,6 +746,18 @@ async function runTableMigrations() {
         field TEXT NOT NULL, new_value TEXT NOT NULL, target TEXT NOT NULL,
         channel TEXT NOT NULL, code TEXT NOT NULL, expires_at TEXT NOT NULL,
         used INTEGER NOT NULL DEFAULT 0, created_at TEXT NOT NULL DEFAULT (datetime('now')))`;
+    // Audit trail of every payment-provider webhook delivery, independent of
+    // whether it could be matched/processed — lets support investigate
+    // disputes and lets us replay events without relying on the provider's
+    // own retry window.
+    const pgWebhookEvents = `CREATE TABLE IF NOT EXISTS payment_webhook_events (
+        id TEXT PRIMARY KEY, provider TEXT NOT NULL, reference TEXT,
+        status TEXT NOT NULL DEFAULT 'received', payload TEXT NOT NULL, error TEXT,
+        created_at TIMESTAMPTZ NOT NULL DEFAULT NOW())`;
+    const sqliteWebhookEvents = `CREATE TABLE IF NOT EXISTS payment_webhook_events (
+        id TEXT PRIMARY KEY, provider TEXT NOT NULL, reference TEXT,
+        status TEXT NOT NULL DEFAULT 'received', payload TEXT NOT NULL, error TEXT,
+        created_at TEXT NOT NULL DEFAULT (datetime('now')))`;
 
     try {
         await db.exec(isPg ? pgPayments : sqlitePayments);
@@ -750,6 +770,9 @@ async function runTableMigrations() {
         await db.exec('CREATE INDEX IF NOT EXISTS idx_messages_unread ON messages(recipient_id, read)');
         await db.exec(isPg ? pgProfileChange : sqliteProfileChange);
         await db.exec('CREATE INDEX IF NOT EXISTS idx_profile_change_user ON profile_change_requests(user_id, created_at DESC)');
+        await db.exec(isPg ? pgWebhookEvents : sqliteWebhookEvents);
+        await db.exec('CREATE INDEX IF NOT EXISTS idx_webhook_events_reference ON payment_webhook_events(reference)');
+        await db.exec('CREATE INDEX IF NOT EXISTS idx_webhook_events_provider_created ON payment_webhook_events(provider, created_at DESC)');
         console.log('[db] payments + promotion_requests tables ready.');
     } catch (err) {
         console.error('[db] table migration warning:', err.message);

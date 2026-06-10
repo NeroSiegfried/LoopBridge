@@ -263,10 +263,17 @@
     color: var(--black-mid);
 }
 
+.exchange-pathways video {
+    width: 100%;
+    object-fit: cover;
+    object-position: center;
+}
+
 .section-body .gif {
     flex: 2;
     border-radius: 12px;
     border: 1px solid var(--gray-dark);
+    overflow: hidden;
 }
 
 .perks-section .section-container {
@@ -391,12 +398,38 @@
         padding: var(--section-gap) var(--section-px);
     }
 
+     .exchange-pathways .section-body {
+        flex-direction: column;
+    }
+
     .exchange-pathways h2 {
         font-size: 2.25rem;             /* 36px */
     }
 
     .exchange-pathways p {
         font-size: 1.125rem;
+    }
+
+    .exchange-pathways .steps {
+        width: 100%;
+    }
+
+    .exchange-pathways .step {
+        display: none;
+    }
+
+    .exchange-pathways .step.active {
+        display: flex;
+        padding: 20px;              /* was 40px */
+    }
+
+    .slide-counter {
+        display: flex;
+        gap: 10px;
+    }
+
+    .gif {
+        width: 100%;
     }
 
     .perks-section {
@@ -468,23 +501,6 @@
         margin-top: 1.75rem;
     }
 
-    .exchange-pathways .section-body {
-        flex-direction: column;
-    }
-
-    .slide-counter {
-        display: flex;
-        gap: 10px;
-    }
-
-    .exchange-pathways .step {
-        display: none;
-    }
-
-    .exchange-pathways .step.active {
-        display: flex;
-        padding: 20px;              /* was 40px */
-    }
 
     .step.active .step-title {
         font-size: 18px;

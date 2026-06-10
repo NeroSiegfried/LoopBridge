@@ -156,6 +156,7 @@ export default function Navbar({ onOpenMessages, unreadCount = 0 }) {
                 {isAuthor && <Link to="/admin/dashboard" className="mobile-auth-link">Dashboard</Link>}
                 {isAuthor && <Link to="/admin/edit-article" className="mobile-auth-link">New Article</Link>}
                 {isAuthor && <Link to="/admin/edit-course" className="mobile-auth-link">New Course</Link>}
+                <Link to="/my-learning" className="mobile-auth-link">My Learning</Link>
                 <Link to="/profile" className="mobile-auth-link">Profile</Link>
                 <button className="mobile-auth-link" onClick={() => { onOpenMessages?.(); setMenuOpen(false); }}>
                   Messages{unreadCount > 0 ? ` (${unreadCount})` : ''}
@@ -179,6 +180,7 @@ export default function Navbar({ onOpenMessages, unreadCount = 0 }) {
                 {isAuthor && <Link to="/admin/dashboard" onClick={() => setDropdownOpen(false)}>Dashboard</Link>}
                 {isAuthor && <Link to="/admin/edit-article" onClick={() => setDropdownOpen(false)}>New Article</Link>}
                 {isAuthor && <Link to="/admin/edit-course" onClick={() => setDropdownOpen(false)}>New Course</Link>}
+                <Link to="/my-learning" onClick={() => setDropdownOpen(false)}>My Learning</Link>
                 <Link to="/profile" onClick={() => setDropdownOpen(false)}>Profile</Link>
                 <button className="logout-btn" onClick={() => { onOpenMessages?.(); setDropdownOpen(false); }}>
                   Messages{unreadCount > 0 ? ` (${unreadCount})` : ''}

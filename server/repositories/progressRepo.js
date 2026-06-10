@@ -10,6 +10,7 @@ const { db } = require('../db');
 function rowToProgress(row) {
     if (!row) return null;
     return {
+        courseId: row.course_id,
         enrolledAt: row.enrolled_at,
         lastAccessedAt: row.last_accessed_at,
         completedSubs: JSON.parse(row.completed_subs || '[]'),
